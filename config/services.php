@@ -47,6 +47,9 @@ return [
         'modele' => env('CLAUDE_MODELE', 'claude-haiku-5-5'),
         'url' => env('CLAUDE_URL', 'https://api.anthropic.com/v1'),
         'version' => env('CLAUDE_API_VERSION', '2023-06-01'),
+        // Estimation du coût affichée dans l'admin (FCFA par million de tokens)
+        'cout_entree_fcfa_par_million' => (int) env('CLAUDE_COUT_ENTREE_FCFA', 600),
+        'cout_sortie_fcfa_par_million' => (int) env('CLAUDE_COUT_SORTIE_FCFA', 3000),
     ],
 
 ];

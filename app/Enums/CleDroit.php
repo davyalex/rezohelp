@@ -65,7 +65,7 @@ enum CleDroit: string
 
     /**
      * Clé de quota : devient illimitée quand le paramètre quotas_actifs vaut false (§14.5).
-     * Les canaux, plafonds de SMS, avantages inclus et durées restent soumis aux plans.
+     * Les canaux, plafonds de SMS, avantages inclus, photos et durées restent soumis aux plans.
      */
     public function estQuota(): bool
     {
@@ -74,7 +74,6 @@ enum CleDroit: string
             self::EmploiOffresMois,
             self::ServiceOffresActives,
             self::FormationOffresActives,
-            self::PublicationPhotosMax,
             self::ReponsesDemandesMois => true,
             default => false,
         };

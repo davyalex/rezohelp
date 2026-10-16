@@ -8,7 +8,7 @@
 | 1 | Base de données, modèles, référentiels | terminé (tag `lot-1`) |
 | 2 | Authentification par téléphone | terminé (tag `lot-2`) |
 | 3 | Fil public et pages de publication | terminé (tag `lot-3`) |
-| 4 | Publication par les utilisateurs | à faire |
+| 4 | Publication par les utilisateurs | en cours |
 | 5 | Mon espace, alertes et notifications | à faire |
 | 6 | Abonnements, paiements, SMS, visibilité payante | à faire |
 | 7 | Back-office | à faire |
@@ -209,3 +209,24 @@
 - [ ] « Partager » ouvre WhatsApp avec le titre et le lien court `/p/…`.
 - [ ] Connecté : J'aime change tout de suite, Enregistrer, commenter, répondre, supprimer son commentaire, signaler.
 - [ ] Une offre d'emploi passe le test des résultats enrichis de Google (code source : bloc `application/ld+json`).
+
+---
+
+## Lot 4 — Publication par les utilisateurs
+
+### Plan d'implémentation
+
+- **Droits (version minimale)** : `App\Services\Droits::pour($titulaire)` → `peut()`, `limite()`, `restant()`, `verifierOuEchouer()` ; plans par défaut des cibles du titulaire (utilisateur : membre + artisan ; entreprise : recruteur + organisme), combinaison max / -1 / OU, `quotas_actifs`, consommation calculée par requête ; `QuotaAtteintException`. Abonnements, crédits et cache au lot 6.
+- **Actions** (`app/Actions/Publication`) : `PublierPublication` (transaction : entreprise créée en ligne, publication, détails, médias, champs dénormalisés, `slug`, `code_court`, `tri_le`), `AnalyserRisquePublication` (§11.5), `DeciderStatutPublication` (§11.6), `AttribuerRoleAuteur`, `ModifierPublication`, `CloturerPublication`, `ProlongerPublication`, `DupliquerPublication`, `SupprimerPublication`, `RenvoyerPublication`, `RepondrePublication`, `ChangerStatutReponse`, `MettreAJourConfiance`.
+- **Événement** `PublicationPubliee` ; **job** `EnrichirPublicationIA` (`ClientIA`, journal `appels_ia`, remise en attente sous `seuil_remise_en_attente`) ; écouteur de conversion médias (image de la carte en WebP).
+- **FormRequests** : `PublierEmploiRequest`, `PublierServiceOffreRequest`, `PublierServiceDemandeRequest`, `PublierFormationRequest` (base commune), `RepondreRequest`, `ChangerStatutReponseRequest`, `CloturerRequest`.
+- **Policies** : `PublicationPolicy@create` (suspendu, restreint, `max_publications_par_jour`), `update` / `delete` / `cloturer` (auteur), `repondre` (connecté, pas l'auteur, publiée) ; `ReponsePolicy@update` (auteur de la publication).
+- **Écrans** : choix du type, formulaires des 4 parcours (blocs repliables, compteurs, brouillon navigateur Alpine + `localStorage`, « Enregistrer en brouillon »), aperçu par `x-carte-publication`, confirmation, « Quota atteint », « Mes publications » (statuts, motif de rejet, statistiques, actions), réponses reçues, formulaires de réponse sur la page détail.
+- **Notifications** (database) : nouvelle réponse, statut de réponse modifié, publication remise en attente.
+- **Tests** : chaque ligne du tableau §11.6, chaque règle du §11.5, quota journalier, doublon sur 7 jours, téléphone d'un demandeur jamais exposé, réponse unique, modification par un auteur `nouveau` puis `fiable`, prolongation limitée à 3, droits minimaux.
+
+### Point de reprise (pause demandée par Alex pour tester — 2026-10-16)
+
+- **Dernier lot terminé** : lot 3 (tag `lot-3`). Commit `wip lot 4` par-dessus.
+- **Déjà écrit pour le lot 4** (non branché aux routes, sans tests) : `Droits` (version minimale) + `QuotaAtteintException`, `SignalRisque`, `ParcoursPublication`, actions `AnalyserRisquePublication`, `DeciderStatutPublication`, `PublierPublication`, `DetecterDoublon`, `AttribuerRoleAuteur`, `MettreAJourConfiance`, `ModifierPublication`, `CloturerPublication`, `ProlongerPublication`, `DupliquerPublication`, `RepondrePublication`, `ChangerStatutReponse` ; services `RemplissagePublication`, `IdentifiantsPublication` ; événement `PublicationPubliee`, job `EnrichirPublicationIA`, notifications `NouvelleReponse`, `StatutReponseModifie`, `PublicationRemiseEnAttente`, écouteur `MettreAJourImagePublication` ; `PublicationObserver` met à jour la confiance de l'auteur. `publication.photos_max` n'est plus une clé de quota (D-015 révisée).
+- **Reste à faire** : FormRequests des 4 parcours (valider les contacts en `email` / `url:http,https` / téléphone), `PublicationPolicy@create|update|delete|cloturer|repondre`, `ReponsePolicy`, limiteur `max_envois_par_heure`, contrôleurs `PublierController`, `Espace\PublicationController`, `Espace\ReponseController`, `ReponseController`, routes §11.9, vues (choix, formulaires, aperçu, confirmation, quota atteint, Mes publications, réponses, formulaire de réponse sur la page détail), JS brouillon `localStorage` + aperçu, entrée « Publier » dans la navigation, tests du lot, puis validation complète et commit `lot 4`.

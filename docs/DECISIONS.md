@@ -76,7 +76,7 @@
 - **Raison** : une chaîne simplifie les recherches, les empreintes SHA-256 et l'envoi de SMS. Affichage : les numéros ivoiriens sont groupés par deux (« 07 08 09 10 11 ») au lieu du format libphonenumber (« 07 08 09 1011 »), comme dans le CONTEXTE.
 
 ### D-015 · 2026-10-16 · Clés de quota (`CleDroit::estQuota()`)
-- **Choix** : quand `quotas_actifs = false`, deviennent illimitées : `alertes.max`, `emploi.offres_mois`, `service.offres_actives`, `formation.offres_actives`, `publication.photos_max`, `reponses.demandes_mois`. Restent soumises aux plans : les canaux (`canal_sms`, `canal_whatsapp`), `alertes.sms_par_jour`, `publication.remontees_mois`, `publication.duree_max_jours`, et les booléens.
+- **Choix** : quand `quotas_actifs = false`, deviennent illimitées : `alertes.max`, `emploi.offres_mois`, `service.offres_actives`, `formation.offres_actives`, `reponses.demandes_mois`. Restent soumises aux plans : les canaux (`canal_sms`, `canal_whatsapp`), `alertes.sms_par_jour`, `publication.remontees_mois`, `publication.photos_max` et `publication.duree_max_jours` (limites de taille d'une annonce, révisé au lot 4), et les booléens.
 - **Raison** : §14.5 ne libère que les « clés de quota ». Rendre illimités les SMS ou les remontées incluses coûterait de l'argent ou viderait le produit `remontee`, actif dès le lancement (§14.12).
 
 ### D-016 · 2026-10-16 · Valeurs non précisées de la grille §14.4
