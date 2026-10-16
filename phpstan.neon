@@ -9,3 +9,5 @@ parameters:
         - database
         - routes
     tmpDir: storage/framework/cache/phpstan
+    # Lit le contenu des méthodes casts() pour typer les attributs (enums, dates…)
+    parseModelCastsMethod: true

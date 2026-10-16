@@ -2,6 +2,7 @@
 
 use App\Enums\ConfianceUtilisateur;
 use App\Models\Utilisateur;
+use Database\Factories\PaysFactory;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
@@ -11,6 +12,8 @@ it('est le modèle d’authentification, sur la table utilisateurs', function ()
 });
 
 it('hache le mot de passe dans la colonne mot_de_passe et authentifie avec', function () {
+    PaysFactory::coteDivoire();
+
     $utilisateur = Utilisateur::query()->create([
         'nom' => 'Koné',
         'prenoms' => 'Awa',

@@ -12,11 +12,12 @@ return new class extends Migration
             $table->id();
             $table->string('nom', 100);
             $table->string('prenoms', 150)->nullable();
-            $table->string('telephone', 20)->unique()->comment('E.164, ex. +2250708091011');
+            $table->string('telephone', 20)->nullable()->unique()->comment('E.164 ; null après anonymisation');
             $table->char('pays_code', 2)->default('CI');
             $table->timestamp('telephone_verifie_le')->nullable();
             $table->string('email')->nullable();
             $table->string('mot_de_passe');
+            $table->foreignId('commune_id')->nullable()->constrained('communes')->nullOnDelete();
             $table->string('confiance', 20)->default('nouveau');
             $table->timestamp('derniere_connexion_le')->nullable();
             $table->timestamp('suspendu_le')->nullable();
@@ -27,6 +28,9 @@ return new class extends Migration
             $table->timestamp('cree_le')->nullable();
             $table->timestamp('modifie_le')->nullable();
             $table->softDeletes('supprime_le');
+
+            $table->foreign('pays_code')->references('code')->on('pays')->cascadeOnUpdate()->restrictOnDelete();
+            $table->index('cree_le');
         });
     }
 
