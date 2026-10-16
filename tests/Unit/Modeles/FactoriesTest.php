@@ -31,7 +31,11 @@ use App\Models\Signalement;
 use App\Models\SmsEnvoye;
 use App\Models\SourceVeille;
 use App\Models\Utilisateur;
+use Database\Seeders\ParametresSeeder;
 use Illuminate\Database\Eloquent\Model;
+
+// Les observers (signalements…) lisent les paramètres.
+beforeEach(fn () => $this->seed(ParametresSeeder::class));
 
 it('crée un modèle valide en base avec sa factory', function (string $classe) {
     /** @var class-string<Model> $classe */

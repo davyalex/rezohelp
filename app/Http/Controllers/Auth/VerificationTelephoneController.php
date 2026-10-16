@@ -23,7 +23,7 @@ class VerificationTelephoneController extends Controller
         $utilisateur = $this->utilisateur($request);
 
         if ($utilisateur->telephone_verifie_le !== null) {
-            return redirect()->intended(route('accueil'));
+            return redirect()->intended(route('fil.index'));
         }
 
         return view('auth.verification-telephone', ['telephone' => (string) $utilisateur->telephone]);
@@ -52,7 +52,7 @@ class VerificationTelephoneController extends Controller
 
         $utilisateur->forceFill(['telephone_verifie_le' => now()])->save();
 
-        return redirect()->intended(route('accueil'))->with('statut', 'Votre numéro est vérifié. Merci !');
+        return redirect()->intended(route('fil.index'))->with('statut', 'Votre numéro est vérifié. Merci !');
     }
 
     private function utilisateur(Request $request): Utilisateur

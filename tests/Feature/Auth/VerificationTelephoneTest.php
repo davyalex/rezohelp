@@ -26,7 +26,7 @@ it('affiche le numéro au format national', function () {
 it('vérifie le numéro avec le bon code', function () {
     $this->actingAs($this->membre)
         ->post('/verification-telephone', ['code' => $this->code])
-        ->assertRedirect(route('accueil'))
+        ->assertRedirect(route('fil.index'))
         ->assertSessionHas('statut');
 
     expect($this->membre->refresh()->telephone_verifie_le)->not->toBeNull();
@@ -83,7 +83,7 @@ it('ne renvoie pas de code à un numéro déjà vérifié', function () {
     $this->membre->forceFill(['telephone_verifie_le' => now()])->save();
 
     $this->actingAs($this->membre)->post('/verification-telephone/code');
-    $this->get('/verification-telephone')->assertRedirect(route('accueil'));
+    $this->get('/verification-telephone')->assertRedirect(route('fil.index'));
 
     expect($this->sms->envoyes)->toHaveCount(1);
 });

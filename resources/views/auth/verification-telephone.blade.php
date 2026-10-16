@@ -18,7 +18,7 @@
         </form>
 
         <p class="mt-2 text-center">
-            <a href="{{ session('url.intended', route('accueil')) }}" class="inline-flex min-h-11 items-center text-sm text-slate-600 underline-offset-4 hover:underline">Vérifier plus tard</a>
+            <a href="{{ session('url.intended', route('fil.index')) }}" class="inline-flex min-h-11 items-center text-sm text-slate-600 underline-offset-4 hover:underline">Vérifier plus tard</a>
         </p>
     </x-carte-formulaire>
 @endsection

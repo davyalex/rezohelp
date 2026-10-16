@@ -6,9 +6,12 @@ use App\Enums\MotifRejet;
 use App\Enums\SourcePublication;
 use App\Enums\SousTypeService;
 use App\Enums\StatutPublication;
+use App\Enums\TypeContrat;
 use App\Enums\TypePublication;
 use App\Models\Concerns\HorodatageFrancais;
+use App\Observers\PublicationObserver;
 use Database\Factories\PublicationFactory;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -26,6 +29,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * Élément du fil : offre d'emploi, service (offre ou demande) ou formation.
  * Les colonnes lues par les cartes du fil sont dénormalisées ici.
  */
+#[ObservedBy(PublicationObserver::class)]
 class Publication extends Model implements HasMedia
 {
     /** @use HasFactory<PublicationFactory> */
@@ -53,6 +57,12 @@ class Publication extends Model implements HasMedia
         'entreprise_id',
         'auteur_nom_affiche',
         'auteur_avatar_url',
+        'auteur_verifie',
+        'faits_cles',
+        'type_contrat',
+        'image_url',
+        'image_largeur',
+        'image_hauteur',
         'source',
         'source_nom',
         'source_url',
@@ -75,6 +85,11 @@ class Publication extends Model implements HasMedia
             'source' => SourcePublication::class,
             'motif_rejet' => MotifRejet::class,
             'signaux_risque' => 'array',
+            'faits_cles' => 'array',
+            'type_contrat' => TypeContrat::class,
+            'auteur_verifie' => 'boolean',
+            'image_largeur' => 'integer',
+            'image_hauteur' => 'integer',
             'score_fiabilite' => 'integer',
             'nb_jaime' => 'integer',
             'nb_commentaires' => 'integer',

@@ -21,6 +21,7 @@ use App\Models\Publication;
 use App\Models\Reaction;
 use App\Models\SourceVeille;
 use App\Models\Utilisateur;
+use App\Services\FaitsCles;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
@@ -217,6 +218,7 @@ class DemoSeeder extends Seeder
             $publications->push($publication);
         }
 
+        $this->denormaliser($publications);
         $this->interagir($publications, $membres);
         $this->creerAlertes($membres);
     }
@@ -286,6 +288,23 @@ class DemoSeeder extends Seeder
             default => "Formation « {$titre} » : cours pratiques, formateurs expérimentés, petits groupes. "
                 .'Attestation remise en fin de formation. Places limitées, inscrivez-vous dès maintenant.',
         };
+    }
+
+    /**
+     * Champs lus par les cartes du fil : faits clés, type de contrat, entreprise vérifiée.
+     *
+     * @param  \Illuminate\Support\Collection<int, Publication>  $publications
+     */
+    private function denormaliser(\Illuminate\Support\Collection $publications): void
+    {
+        $faitsCles = app(FaitsCles::class);
+
+        foreach ($publications as $publication) {
+            $publication->load(['detailEmploi', 'detailService', 'detailFormation', 'entreprise']);
+            $faitsCles->appliquer($publication);
+            $publication->auteur_verifie = (bool) $publication->entreprise?->verifiee;
+            $publication->save();
+        }
     }
 
     /**

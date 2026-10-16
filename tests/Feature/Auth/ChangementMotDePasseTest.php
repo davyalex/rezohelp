@@ -25,7 +25,7 @@ it('enregistre le nouveau mot de passe et lève l’obligation', function () {
         'mot_de_passe_actuel' => 'mot-de-passe-test',
         'password' => 'Nouveau-Secret-2026',
         'password_confirmation' => 'Nouveau-Secret-2026',
-    ])->assertRedirect(route('accueil'));
+    ])->assertRedirect(route('fil.index'));
 
     $this->membre->refresh();
     expect($this->membre->doit_changer_mot_de_passe)->toBeFalse()

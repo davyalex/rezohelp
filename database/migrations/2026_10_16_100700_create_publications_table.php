@@ -29,6 +29,12 @@ return new class extends Migration
             // Dénormalisés pour les cartes du fil
             $table->string('auteur_nom_affiche', 150)->nullable();
             $table->string('auteur_avatar_url')->nullable();
+            $table->boolean('auteur_verifie')->default(false)->comment('entreprise vérifiée');
+            $table->json('faits_cles')->nullable()->comment('puces de la carte : contrat, salaire, tarif, durée, prix');
+            $table->string('type_contrat', 20)->nullable()->comment('copie de details_emploi pour le filtre du fil');
+            $table->string('image_url')->nullable();
+            $table->unsignedSmallInteger('image_largeur')->nullable();
+            $table->unsignedSmallInteger('image_hauteur')->nullable();
 
             // Origine
             $table->string('source', 20)->default('utilisateur');
@@ -64,6 +70,7 @@ return new class extends Migration
             $table->index(['statut', 'tri_le', 'id']);
             $table->index(['type', 'statut', 'tri_le', 'id']);
             $table->index(['commune_id', 'statut', 'tri_le', 'id']);
+            $table->index(['type_contrat', 'statut', 'tri_le', 'id']);
             $table->index(['auteur_id', 'type', 'statut']);
             $table->index(['entreprise_id', 'type', 'statut']);
             $table->index(['statut', 'expire_le']);

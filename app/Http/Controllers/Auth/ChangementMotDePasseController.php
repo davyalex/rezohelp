@@ -24,6 +24,6 @@ class ChangementMotDePasseController extends Controller
         $changer->executer($utilisateur, $request->string('password')->toString());
         $request->session()->regenerate();
 
-        return redirect()->intended(route('accueil'))->with('statut', 'Votre nouveau mot de passe est enregistré.');
+        return redirect()->intended(route('fil.index'))->with('statut', 'Votre nouveau mot de passe est enregistré.');
     }
 }

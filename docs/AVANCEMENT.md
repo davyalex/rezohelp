@@ -7,7 +7,7 @@
 | 0 | Socle technique | terminé (tag `lot-0`) |
 | 1 | Base de données, modèles, référentiels | terminé (tag `lot-1`) |
 | 2 | Authentification par téléphone | terminé (tag `lot-2`) |
-| 3 | Fil public et pages de publication | à faire |
+| 3 | Fil public et pages de publication | terminé (tag `lot-3`) |
 | 4 | Publication par les utilisateurs | à faire |
 | 5 | Mon espace, alertes et notifications | à faire |
 | 6 | Abonnements, paiements, SMS, visibilité payante | à faire |
@@ -158,3 +158,54 @@
 - [ ] Se déconnecter, se reconnecter en tapant « +225 05 06 07 08 09 » (autre format) : connexion réussie.
 - [ ] « Mot de passe oublié ? » : recevoir le code dans `storage/logs/sms.log`, choisir un nouveau mot de passe, se connecter avec.
 - [ ] Six mauvaises tentatives de connexion en moins d'une minute : la sixième est refusée (« Trop de tentatives »).
+
+---
+
+## Lot 3 — Fil public et pages de publication
+
+### Plan d'implémentation
+
+- **Données** : colonnes dénormalisées ajoutées à `publications` pour que les cartes ne lisent jamais `details_*` : `faits_cles` (JSON), `type_contrat`, `auteur_verifie`, `image_url` / `image_largeur` / `image_hauteur` ; service `FaitsCles` + helper `Montant::fcfa()`.
+- **Cache** : `CacheFil` complet (`fil:version`, salves `fil:v{n}:…`, cartes `carte:{id}:{ts}`, compteurs, verrous `Cache::lock`) ; `PublicationObserver` (incrémente `fil:version`) ; gabarit de carte partagé avec jetons (compteurs, « il y a… », état J'aime / enregistré, CSRF) remplacés à chaque requête : aucune donnée de l'utilisateur dans le cache.
+- **Fil** : `FiltresFil` + `FilRequest`, `FilService` (`cursorPaginate(12)` sur `tri_le DESC, id DESC`), `FilController` (`/`, `/emplois`, `/services`, `/formations`, `/recherche`, `/fil/suite` fragment + `X-Curseur-Suivant`, `/fil/nouvelles`), JS vanilla `fil.js` (IntersectionObserver, squelettes, « Charger plus », `aria-live`, bandeau « N nouvelles publications »).
+- **Publication** : `PublicationController@show` (`/publication/{slug}`, policy `view`, JSON-LD `JobPosting`, Open Graph), `/p/{code}`, partage WhatsApp compté.
+- **Interactions** : actions `BasculerJaime`, `BasculerEnregistrement`, `PublierCommentaire`, `SupprimerCommentaire`, `SignalerPublication` ; `SignalementObserver` (masquage à `seuil_masquage_signalements`) + notification des modérateurs.
+- **Recherche** : FULLTEXT (mode booléen) + job `EnregistrerRecherche`.
+- **SEO** : `sitemap.xml`, `robots.txt` ; pages d'erreur en français.
+- **Composants** : `x-carte-publication`, `x-badge-type`, layout public (en-tête, onglets, puces, trois colonnes, navigation basse).
+- **Tests** : curseur sans doublon ni trou (avec insertion entre deux salves), filtres combinés, invalidation du cache, absence de données personnelles dans le cache, 404, JSON-LD, masquage après 3 signalements, interactions, recherche.
+
+### Fait
+
+- Fil par curseur : `/`, `/emplois`, `/services`, `/formations`, `/recherche` ; filtres commune, contrat, catégorie (avec ses métiers), « Aujourd'hui », combinables ; `cursorPaginate(12)` sur `tri_le DESC, id DESC` ; première salve rendue par le serveur ; `/fil/suite` (fragment + `X-Curseur-Suivant`, `Cache-Control: public, max-age=60` pour les visiteurs) ; `/fil/nouvelles` pour le bandeau « N nouvelles publications ».
+- `fil.js` : IntersectionObserver (800 px avant la fin), squelettes, « Charger plus » de secours, `aria-live="polite"` / `aria-busy`, « Vous êtes à jour 🎉 ». JS public : 1,3 Ko gzip + Alpine 19 Ko gzip.
+- `CacheFil` : version du fil, salves (5 min), gabarits de cartes (24 h), référentiels, compteurs (10 min), verrou anti-ruée sur chaque recalcul. `PublicationObserver` incrémente `fil:version` (publication, dépublication, suppression, restauration).
+- `x-carte-publication` (avatar ou initiale, entreprise vérifiée, « il y a 2 h · Cocody », badge de type, menu Enregistrer / Signaler, extrait 4 lignes + « Voir plus », puces, « via Emploi.ci », bandeau de prévention sur les emplois, image différée avec dimensions, compteurs, J'aime optimiste, Commenter, Partager, bouton principal par type) et `x-badge-type`.
+- Page détail : contenu complet, détails par type, contact selon le mode (lien, e-mail, téléphone, WhatsApp si l'artisan l'autorise ; jamais le numéro d'un demandeur), lien « Voir l'annonce » pour la veille, bandeaux clôturée / expirée, commentaires (publier, répondre sur un niveau, supprimer les siens ; la modération peut supprimer), signalement, JSON-LD `JobPosting`, Open Graph, canonique. `/p/{code}` (301) et partage WhatsApp compté.
+- Signalement : `SignalementObserver` masque la publication au 3e signalement « arnaque » non traité (seuil réglable) et notifie les modérateurs (`PublicationMasquee`, canal `database`, en file).
+- Recherche FULLTEXT (mode booléen, préfixes, insensible aux accents) + job `EnregistrerRecherche`.
+- `sitemap.xml` (publications en ligne, en cache), `robots.txt` (exclut `/mon-espace`, `/admin`, fragments), pages d'erreur 403 / 404 / 419 / 429 / 500 / 503 en français, image Open Graph par défaut.
+- Layout public : en-tête (recherche, connexion), onglets, puces de filtre défilantes, trois colonnes à partir de `lg` (catégories, fil 640 px, communes populaires et formations récentes), navigation basse mobile.
+- DemoSeeder : faits clés, type de contrat et entreprise vérifiée calculés pour les 60 publications.
+- Vérifié en réel : pages du fil, fragment suivant (12 cartes + curseur), JSON-LD, lien court, 404, partage.
+
+### Tests ajoutés (72 tests, 10 fichiers ; total 280)
+
+- `tests/Feature/Fil/FilCurseurTest.php` (salves 12/12/6 sans doublon ni trou, insertion entre deux salves, remontée, exclusions) · `FiltresFilTest.php` · `CacheFilTest.php` (clé versionnée, invalidation à la publication / dépublication / suppression, compteurs sans invalidation, aucune donnée personnelle dans le cache, date relative fraîche) · `FilSuiteTest.php`
+- `tests/Feature/Publications/PageDetailTest.php` (404, auteur et modération, clôturée, JSON-LD valide et échappé, Open Graph, téléphones, veille, lien court, partage) · `InteractionsTest.php` · `SignalementTest.php` (masquage à 3, motifs et traités exclus, seuil paramétrable, un par membre)
+- `tests/Feature/ReferencementTest.php` · `tests/Unit/Services/FaitsClesTest.php` · `tests/Recherche/RechercheTest.php` (suite sans transaction)
+
+### Écarts avec le CONTEXTE
+
+- Colonnes dénormalisées (D-025), gabarit à jetons (D-026), bouton principal vers la page détail (D-027), visibilité des pages (D-028), signalement réservé aux membres (D-029).
+- Bloc « Créer une alerte », cloche, entrées Publier / Alertes / Mon espace : lots 4 et 5 ; « À la une » / « Sponsorisé » : lot 6 (D-031).
+- À faire au lot 4 : valider en `http(s)` / e-mail les contacts saisis (`contact_candidature`, `contact_inscription`) qui deviennent des liens.
+
+### À vérifier par Alex
+
+- [ ] `php artisan migrate:fresh --seed && php artisan db:seed --class=DemoSeeder`, puis `composer run dev`.
+- [ ] Sur mobile (360 px, outils de développement du navigateur) : le fil s'affiche sans saut, le défilement charge les suites automatiquement, « Vous êtes à jour 🎉 » en fin de fil.
+- [ ] Les onglets et les puces (commune, contrat, « Aujourd'hui ») filtrent le fil ; en desktop, les trois colonnes apparaissent.
+- [ ] « Partager » ouvre WhatsApp avec le titre et le lien court `/p/…`.
+- [ ] Connecté : J'aime change tout de suite, Enregistrer, commenter, répondre, supprimer son commentaire, signaler.
+- [ ] Une offre d'emploi passe le test des résultats enrichis de Google (code source : bloc `application/ld+json`).

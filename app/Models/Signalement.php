@@ -4,11 +4,14 @@ namespace App\Models;
 
 use App\Enums\MotifSignalement;
 use App\Models\Concerns\HorodatageFrancais;
+use App\Observers\SignalementObserver;
 use Database\Factories\SignalementFactory;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+#[ObservedBy(SignalementObserver::class)]
 class Signalement extends Model
 {
     /** @use HasFactory<SignalementFactory> */

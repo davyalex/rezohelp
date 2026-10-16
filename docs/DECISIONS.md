@@ -118,3 +118,34 @@
 
 ### D-024 · 2026-10-16 · Rôle à l'inscription
 - **Choix** : tout nouveau compte reçoit le rôle `membre` ; les rôles `recruteur`, `artisan`, `organisme` viendront de la première publication (§11.1, lot 4).
+
+### D-025 · 2026-10-16 · Colonnes dénormalisées des cartes
+- **Choix** : `publications.faits_cles` (JSON, 4 puces au plus), `type_contrat` (copie de `details_emploi`, indexé pour le filtre « contrat »), `auteur_verifie`, `image_url` / `image_largeur` / `image_hauteur`. Calculés par `App\Services\FaitsCles` à l'enregistrement.
+- **Raison** : `CLAUDE.md` interdit toute jointure sur `details_*` pour les cartes du fil, alors que la carte affiche contrat, salaire, tarif, durée et prix (§5).
+
+### D-026 · 2026-10-16 · Gabarit de carte à jetons
+- **Options** : HTML complet en cache (compteurs et « il y a 2 h » figés 24 h, état « J'aime » impossible) ; pas de cache des cartes ; gabarit partagé + valeurs injectées.
+- **Choix** : `carte:{id}:{modifie_le}` contient un gabarit avec des jetons (compteurs, état J'aime / enregistré, date relative, CSRF, bandeau de prévention) remplacés à chaque requête par `RenduCarte` ; l'état du visiteur est chargé en **une** requête (`UNION` réactions + enregistrements) pour les cartes visibles. Les crochets des jetons sont retirés des textes saisis par les membres.
+- **Raison** : respecte « jamais de données propres à l'utilisateur dans le cache partagé » tout en affichant des compteurs et des dates justes, avec ou sans JavaScript.
+
+### D-027 · 2026-10-16 · Bouton principal de la carte
+- **Choix** : « Postuler », « Contacter », « Je suis disponible » et « S'inscrire » mènent à la section « Répondre » de la page détail, qui présente le bon mode (lien, e-mail, téléphone, WhatsApp, formulaire Resohelph au lot 4).
+- **Raison** : la carte ne lit pas `details_*` (mode de candidature, téléphone affiché ou non) ; la page détail les charge.
+
+### D-028 · 2026-10-16 · Visibilité de la page détail
+- **Choix** : visibles par tous : `publiee`, `cloturee` et `expiree` (avec un bandeau). Les autres statuts renvoient **404**, sauf pour l'auteur et la modération (`PublicationPolicy@view`).
+- **Raison** : §11.7 garde la page d'une publication clôturée visible ; le plan exige 404 pour une publication non publiée.
+
+### D-029 · 2026-10-16 · Signalement
+- **Choix** : réservé aux membres connectés, un signalement par membre et par publication (index unique). Seuls les signalements « arnaque » non traités comptent pour le masquage (`seuil_masquage_signalements`).
+- **Raison** : le §2 ne donne pas l'action de signaler au visiteur ; empêche qu'un seul compte (ou un robot) masque une annonce.
+
+### D-030 · 2026-10-16 · Recherche plein texte
+- **Choix** : `MATCH … AGAINST` en mode booléen, chaque mot de 3 lettres ou plus requis avec recherche par préfixe (`+plomb*`), repli sur `titre LIKE` pour une saisie plus courte ; tri chronologique du fil (curseur). Le journal `recherches` (avec le nombre de résultats) est écrit par un job en file. Les tests de recherche tournent sans transaction (`tests/Recherche`, `DatabaseTruncation`) car InnoDB n'indexe qu'au COMMIT.
+
+### D-031 · 2026-10-16 · Éléments du fil livrés avec leurs lots
+- **Choix** : le bloc « Créer une alerte », la cloche des notifications et les entrées « Publier », « Alertes », « Mon espace » de la navigation basse sont ajoutés avec les lots 4 et 5, quand leurs routes existent ; « À la une » / « Sponsorisé » au lot 6. La colonne de droite affiche en attendant les communes populaires et les formations récentes.
+- **Raison** : pas de lien mort ni de code conditionnel provisoire.
+
+### D-032 · 2026-10-16 · « Charger plus » sans JavaScript et compteurs de consultation
+- **Choix** : sans JavaScript, « Charger plus » ouvre la page avec `?curseur=…` (salve suivante). Les vues et les partages sont comptés après l'envoi de la réponse (`defer`), sans modifier `modifie_le`.
