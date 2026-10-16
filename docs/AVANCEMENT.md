@@ -6,7 +6,7 @@
 |---|---|---|
 | 0 | Socle technique | terminé (tag `lot-0`) |
 | 1 | Base de données, modèles, référentiels | terminé (tag `lot-1`) |
-| 2 | Authentification par téléphone | à faire |
+| 2 | Authentification par téléphone | terminé (tag `lot-2`) |
 | 3 | Fil public et pages de publication | à faire |
 | 4 | Publication par les utilisateurs | à faire |
 | 5 | Mon espace, alertes et notifications | à faire |
@@ -113,3 +113,48 @@
 - [ ] Dans la base : 13 communes d'Abidjan, 9 plans dont 4 « par défaut » (un par cible), l'administrateur avec le rôle `administrateur`.
 - [ ] Les prix et limites de `PlansSeeder` correspondent à la grille §14.4 (les valeurs ajoutées sont listées en D-016).
 - [ ] La liste des mots à risque et les plafonds de salaire (`ParametresSeeder`) vous conviennent.
+
+---
+
+## Lot 2 — Authentification par téléphone
+
+### Plan d'implémentation
+
+- **Migration** : `codes_otp` (téléphone E.164, objet, empreinte du code, essais, expiration, utilisation).
+- **Enums** : `ObjetOtp` (verification, reinitialisation, changement_numero), `ResultatOtp`.
+- **Fortify** : chemins `/connexion`, `/inscription`, `/deconnexion` ; vues Blade maison ; `authenticateUsing` (normalisation via `TelephoneService`, refus des comptes suspendus) ; limiteur `connexion` 5/min (téléphone normalisé + IP) ; action `App\Actions\Auth\CreerCompte`.
+- **OTP** : `App\Actions\Otp\EnvoyerCodeOtp` / `VerifierCodeOtp` (6 chiffres, 10 min, 5 essais, code haché) ; SMS via `App\Actions\Sms\PlanifierSms` + job chiffré `EnvoyerSms` (journal `sms_envoyes`, code masqué) ; limiteur `otp` 5/min.
+- **Écrans** : connexion, inscription, vérification du numéro, mot de passe oublié (OTP), réinitialisation, changement obligatoire.
+- **Middlewares** : `VerifierCompteActif` (déconnecte un compte suspendu), `ExigerChangementMotDePasse`.
+- **Composants** : `x-champ-telephone`, `x-champ`, `x-bouton`, `x-message`.
+- **Tests** : trois formats CI → même compte, SN et FR, doublon, limites de débit, OTP expiré / faux / trop d'essais, compte suspendu, mot de passe compromis, `intended()` conservé, changement obligatoire.
+
+### Fait
+
+- Fortify : inscription (`CreerCompte` : nom, prénoms, pays actif, mobile valide pour le pays, numéro libre une fois normalisé, mot de passe ≥ 8 et non compromis), connexion (`AuthentifierParTelephone` : normalisation E.164 avec le pays choisi, refus des comptes suspendus avec date et motif), déconnexion, « Rester connecté », `redirect()->intended()` conservé (y compris après l'inscription et la vérification).
+- Limiteurs `connexion` et `otp` : 5 tentatives par minute par numéro normalisé + IP (un membre connecté est identifié par son compte).
+- OTP : `EnvoyerCodeOtp` (6 chiffres, 10 min, annule le code précédent, empreinte HMAC) et `VerifierCodeOtp` (5 essais puis blocage, usage unique), via `PlanifierSms` → job chiffré `EnvoyerSms` → `FournisseurSms` (journal `sms_envoyes`, code masqué).
+- Écrans : connexion, inscription, vérification du numéro (renvoi du code, « Vérifier plus tard »), mot de passe oublié (réponse identique que le compte existe ou non), nouveau mot de passe, changement obligatoire.
+- Middlewares web : `VerifierCompteActif` (déconnecte un compte suspendu en cours de session), `ExigerChangementMotDePasse` (`doit_changer_mot_de_passe`).
+- Écouteurs : `EnregistrerDerniereConnexion` (`derniere_connexion_le`), `EnvoyerCodeVerificationTelephone` (après l'inscription).
+- Composants : `x-champ-telephone` (pays actifs avec drapeau et indicatif, CI par défaut), `x-champ`, `x-bouton`, `x-message`, `x-carte-formulaire` ; en-tête avec « Se connecter » / « Se déconnecter ».
+- Vérifié en réel (serveur local + `curl`) : inscription → code lisible dans `storage/logs/sms.log` → déconnexion → connexion avec « +225 05 06 07 08 09 ».
+
+### Tests ajoutés (64 tests, 7 fichiers ; total 208)
+
+- `tests/Feature/Auth/InscriptionTest.php` (15) · `ConnexionTest.php` (16) · `VerificationTelephoneTest.php` (8) · `MotDePasseOublieTest.php` (9) · `ChangementMotDePasseTest.php` (6)
+- `tests/Unit/Actions/CodeOtpTest.php` (6) · `tests/Feature/Composants/ChampTelephoneTest.php` (2) ; `CodeOtp` ajouté au test des factories.
+- Appels à « Have I Been Pwned » simulés dans `tests/TestCase.php` (`declarerCompromis()`), `Http::preventStrayRequests()` actif pour toute la suite ; double `tests/Support/FournisseurSmsEnMemoire.php`.
+
+### Écarts avec le CONTEXTE
+
+- Noms de routes Fortify et champ `password` (D-020) ; vérification du numéro proposée sans être bloquante (D-021) ; OTP hors plage silencieuse (D-022).
+- Fournisseur SMS de production : **à choisir (§18.3)** — les drivers `orange` / `twilio` arrivent au lot 6 ; identifiants à fournir.
+
+### À vérifier par Alex
+
+- [ ] S'inscrire avec un numéro ivoirien (ex. « 05 06 07 08 09 ») : arrivée sur « Vérifiez votre numéro ».
+- [ ] Lancer `php artisan queue:work --stop-when-empty` (ou `composer run dev`) puis lire le code dans `storage/logs/sms.log`, le saisir : numéro vérifié.
+- [ ] Se déconnecter, se reconnecter en tapant « +225 05 06 07 08 09 » (autre format) : connexion réussie.
+- [ ] « Mot de passe oublié ? » : recevoir le code dans `storage/logs/sms.log`, choisir un nouveau mot de passe, se connecter avec.
+- [ ] Six mauvaises tentatives de connexion en moins d'une minute : la sixième est refusée (« Trop de tentatives »).

@@ -85,6 +85,28 @@ class Utilisateur extends Authenticatable implements HasMedia
         return $prenoms === '' ? $this->nom : $prenoms.' '.mb_substr($this->nom, 0, 1).'.';
     }
 
+    /**
+     * Suspendu, définitivement (suspendu_jusqu_au nul) ou jusqu'à une date future.
+     */
+    public function estSuspendu(): bool
+    {
+        return $this->suspendu_le !== null
+            && ($this->suspendu_jusqu_au === null || $this->suspendu_jusqu_au->isFuture());
+    }
+
+    public function messageSuspension(): string
+    {
+        $message = $this->suspendu_jusqu_au !== null
+            ? 'Votre compte est suspendu jusqu’au '.$this->suspendu_jusqu_au->translatedFormat('j F Y à H\hi').'.'
+            : 'Votre compte est suspendu.';
+
+        if ($this->motif_suspension !== null && $this->motif_suspension !== '') {
+            $message .= ' Motif : '.$this->motif_suspension.'.';
+        }
+
+        return $message.' Pour toute question, contactez l’équipe Resohelph.';
+    }
+
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('photo')

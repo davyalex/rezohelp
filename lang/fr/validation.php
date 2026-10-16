@@ -180,6 +180,8 @@ return [
         'pays_code' => 'pays',
         'mot_de_passe' => 'mot de passe',
         'mot_de_passe_confirmation' => 'confirmation du mot de passe',
+        'password' => 'mot de passe',
+        'password_confirmation' => 'confirmation du mot de passe',
         'nom' => 'nom',
         'prenoms' => 'prénoms',
         'email' => 'e-mail',

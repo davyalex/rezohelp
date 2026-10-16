@@ -60,7 +60,7 @@ return [
     |
     */
 
-    'lowercase_usernames' => true,
+    'lowercase_usernames' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -115,7 +115,7 @@ return [
     */
 
     'limiters' => [
-        'login' => 'login',
+        'login' => 'connexion',
         'two-factor' => 'two-factor',
         'passkeys' => 'passkeys',
     ],
@@ -131,7 +131,18 @@ return [
     |
     */
 
-    'views' => false,
+    'views' => true,
+
+    /*
+    | Chemins en français des routes de Fortify (les noms de route restent ceux
+    | du framework : login, register, logout).
+    */
+
+    'paths' => [
+        'login' => 'connexion',
+        'logout' => 'deconnexion',
+        'register' => 'inscription',
+    ],
 
     /*
     |--------------------------------------------------------------------------
@@ -161,7 +172,9 @@ return [
     |
     */
 
-    // Activées au lot 2 (inscription et connexion par téléphone).
-    'features' => [],
+    // Inscription seulement : la réinitialisation du mot de passe passe par un code SMS (contrôleurs maison).
+    'features' => [
+        Features::registration(),
+    ],
 
 ];

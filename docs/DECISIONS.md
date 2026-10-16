@@ -98,3 +98,23 @@
 ### D-019 · 2026-10-16 · Larastan et casts
 - **Choix** : `parseModelCastsMethod: true` dans `phpstan.neon`.
 - **Raison** : sans cette option, Larastan ignore les casts déclarés dans `casts()` (typée `array<string, string>`) et considère les enums et dates comme des chaînes. L'option rend l'analyse plus stricte, le niveau 6 est inchangé.
+
+### D-020 · 2026-10-16 · Routes et champs de Fortify
+- **Choix** : chemins français via `fortify.paths` (`/connexion`, `/inscription`, `/deconnexion`) ; les **noms** de route restent ceux du framework (`login`, `register`, `logout`, `login.store`, `register.store`) et le champ du mot de passe s'appelle `password` (avec `password_confirmation`), libellé « mot de passe ».
+- **Raison** : Fortify et le middleware `auth` de Laravel s'appuient sur ces noms et sur le champ `password` (`LoginRequest`). Les autres routes d'authentification, maison, ont des noms français (`mot-de-passe.oublie`, `telephone.verification`…).
+
+### D-021 · 2026-10-16 · Vérification du numéro
+- **Options** : bloquer le compte tant que le numéro n'est pas vérifié ; proposer la vérification sans bloquer.
+- **Choix** : un code est envoyé à l'inscription et l'écran de vérification s'affiche, avec « Vérifier plus tard ». Le numéro vérifié sera exigé là où le CONTEXTE l'impose (essai gratuit §14.6, canal SMS §14.8). Une réinitialisation de mot de passe réussie vaut vérification (le code a prouvé la possession du numéro).
+- **Raison** : le §1 veut une inscription simple ; le §9 ne rend pas la vérification obligatoire pour consulter, réagir ou publier.
+
+### D-022 · 2026-10-16 · Codes OTP et plage silencieuse
+- **Choix** : la règle « aucun envoi entre 21h00 et 7h00 » (§14.8) ne s'applique pas aux codes OTP.
+- **Raison** : un code est demandé par le membre lui-même, à l'instant ; le retarder au matin empêcherait de s'inscrire ou de récupérer son compte le soir.
+
+### D-023 · 2026-10-16 · Confidentialité des codes OTP
+- **Choix** : seule une empreinte HMAC du code est stockée (`codes_otp.empreinte_code`) ; le journal `sms_envoyes` garde le message avec le code masqué (`******`) ; le texte réel voyage dans un job chiffré (`ShouldBeEncrypted`). Le driver `log` écrit le code en clair dans `storage/logs/sms.log` (local uniquement). Après une réinitialisation par code, les autres sessions du membre sont fermées et le jeton « se souvenir de moi » est renouvelé.
+- **Raison** : une copie de la base ou de la file ne doit pas permettre de détourner un compte.
+
+### D-024 · 2026-10-16 · Rôle à l'inscription
+- **Choix** : tout nouveau compte reçoit le rôle `membre` ; les rôles `recruteur`, `artisan`, `organisme` viendront de la première publication (§11.1, lot 4).

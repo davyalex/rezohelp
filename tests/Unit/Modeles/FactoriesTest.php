@@ -4,6 +4,7 @@ use App\Models\Abonnement;
 use App\Models\Alerte;
 use App\Models\AppelIa;
 use App\Models\Categorie;
+use App\Models\CodeOtp;
 use App\Models\Commande;
 use App\Models\Commentaire;
 use App\Models\Commune;
@@ -43,6 +44,7 @@ it('crée un modèle valide en base avec sa factory', function (string $classe) 
     Alerte::class,
     AppelIa::class,
     Categorie::class,
+    CodeOtp::class,
     Commande::class,
     Commentaire::class,
     Commune::class,
