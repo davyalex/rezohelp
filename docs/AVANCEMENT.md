@@ -98,9 +98,9 @@
 
 ### Tests ajoutés (116 tests, 8 fichiers ; total 144)
 
-- `tests/Unit/Modeles/FactoriesTest.php` (60 : une factory par modèle, `$table` déclaré dans chaque modèle, états)
+- `tests/Unit/Modeles/FactoriesTest.php` (61 : une factory par modèle, `$table` déclaré dans chaque modèle, états)
 - `tests/Unit/Modeles/RelationsTest.php` (7) · `tests/Unit/Modeles/UniciteTest.php` (9) · `tests/Unit/Modeles/ParametreTest.php` (9) · `tests/Unit/Modeles/TelephoneE164Test.php` (3)
-- `tests/Unit/Services/TelephoneServiceTest.php` (20 : CI sous 5 formats, SN, FR, saisies invalides, mobile, affichage, empreinte)
+- `tests/Unit/Services/TelephoneServiceTest.php` (19 : CI sous 5 formats, SN, FR, saisies invalides, mobile, affichage, empreinte)
 - `tests/Feature/SeedersTest.php` (8)
 
 ### Écarts avec le CONTEXTE
@@ -140,7 +140,7 @@
 - Composants : `x-champ-telephone` (pays actifs avec drapeau et indicatif, CI par défaut), `x-champ`, `x-bouton`, `x-message`, `x-carte-formulaire` ; en-tête avec « Se connecter » / « Se déconnecter ».
 - Vérifié en réel (serveur local + `curl`) : inscription → code lisible dans `storage/logs/sms.log` → déconnexion → connexion avec « +225 05 06 07 08 09 ».
 
-### Tests ajoutés (64 tests, 7 fichiers ; total 208)
+### Tests ajoutés (63 tests, 7 fichiers ; total 208)
 
 - `tests/Feature/Auth/InscriptionTest.php` (15) · `ConnexionTest.php` (16) · `VerificationTelephoneTest.php` (8) · `MotDePasseOublieTest.php` (9) · `ChangementMotDePasseTest.php` (6)
 - `tests/Unit/Actions/CodeOtpTest.php` (6) · `tests/Feature/Composants/ChampTelephoneTest.php` (2) ; `CodeOtp` ajouté au test des factories.
