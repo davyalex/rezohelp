@@ -1,0 +1,58 @@
+@import 'tailwindcss';
+@import 'datatables.net-dt/css/dataTables.dataTables.css';
+@import 'select2/dist/css/select2.css';
+@import 'sweetalert2/dist/sweetalert2.css';
+
+@source '../../storage/framework/views/*.php';
+@source '../views/admin/**/*.blade.php';
+@source '../views/components/admin/**/*.blade.php';
+
+@theme {
+    --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+    --color-brand: #0e5e6f;
+    --color-brand-fonce: #0a4754;
+    --color-brand-clair: #e3f0f2;
+    --color-fond: #eef1f4;
+
+    --color-emploi: #1d4ed8;
+    --color-emploi-clair: #dbeafe;
+    --color-service: #c2410c;
+    --color-service-clair: #ffedd5;
+    --color-formation: #15803d;
+    --color-formation-clair: #dcfce7;
+}
+
+@layer base {
+    body {
+        @apply bg-fond text-slate-900 antialiased;
+    }
+
+    :focus-visible {
+        @apply outline-2 outline-offset-2 outline-brand;
+    }
+}
+
+/* DataTables et Select2 aux couleurs de la palette Tailwind */
+@layer components {
+    table.dataTable thead th {
+        @apply text-left text-xs font-semibold uppercase tracking-wide text-slate-600;
+    }
+
+    .dt-container .dt-paging .dt-paging-button.current {
+        @apply rounded-md border-brand! bg-brand! text-white!;
+    }
+
+    .dt-container .dt-input {
+        @apply rounded-md border border-slate-300 px-2 py-1;
+    }
+
+    .select2-container--default .select2-selection--single,
+    .select2-container--default .select2-selection--multiple {
+        @apply min-h-10 rounded-md border-slate-300;
+    }
+
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        @apply bg-brand;
+    }
+}

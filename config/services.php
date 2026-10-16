@@ -1,0 +1,52 @@
+<?php
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Services tiers
+    |--------------------------------------------------------------------------
+    |
+    | Identifiants des services externes. Ils ne sont lus que par les drivers
+    | réels (App\Services\*) ; en local et en test, les drivers fake / log
+    | n'en ont pas besoin. Ne jamais commiter de valeur réelle.
+    |
+    */
+
+    'cinetpay' => [
+        'api_key' => env('CINETPAY_API_KEY'),
+        'site_id' => env('CINETPAY_SITE_ID'),
+        'secret' => env('CINETPAY_SECRET'),
+        'url' => env('CINETPAY_URL', 'https://api-checkout.cinetpay.com/v2'),
+    ],
+
+    'orange_sms' => [
+        'client_id' => env('ORANGE_SMS_CLIENT_ID'),
+        'client_secret' => env('ORANGE_SMS_CLIENT_SECRET'),
+        'expediteur' => env('ORANGE_SMS_EXPEDITEUR'),
+        'nom_expediteur' => env('ORANGE_SMS_NOM_EXPEDITEUR', 'Resohelph'),
+        'url' => env('ORANGE_SMS_URL', 'https://api.orange.com'),
+        'cout_fcfa' => (int) env('ORANGE_SMS_COUT_FCFA', 25),
+    ],
+
+    'twilio' => [
+        'sid' => env('TWILIO_SID'),
+        'token' => env('TWILIO_TOKEN'),
+        'expediteur' => env('TWILIO_EXPEDITEUR'),
+        'url' => env('TWILIO_URL', 'https://api.twilio.com/2010-04-01'),
+        'cout_fcfa' => (int) env('TWILIO_COUT_FCFA', 50),
+    ],
+
+    'google_drive' => [
+        'fichier_identifiants' => env('GOOGLE_DRIVE_FICHIER_IDENTIFIANTS'),
+        'dossier_id' => env('GOOGLE_DRIVE_DOSSIER_ID'),
+    ],
+
+    'claude' => [
+        'api_key' => env('CLAUDE_API_KEY'),
+        'modele' => env('CLAUDE_MODELE', 'claude-haiku-5-5'),
+        'url' => env('CLAUDE_URL', 'https://api.anthropic.com/v1'),
+        'version' => env('CLAUDE_API_VERSION', '2023-06-01'),
+    ],
+
+];
