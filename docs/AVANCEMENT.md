@@ -93,7 +93,7 @@
 - `TelephoneService` (normalisation E.164, mobile, formats national / international, empreinte SHA-256) et cast `TelephoneE164`.
 - `CacheFil::referentiel()` / `oublierReferentiel()` ; invalidation de `ref:pays|communes|categories|parametres` par `ReferentielObserver`.
 - `Parametre::valeur()` + accesseurs typés `entier()`, `booleen()`, `texte()`, `liste()` (clé inconnue = exception).
-- Seeders idempotents : 10 pays, 13 communes, 30 catégories et sous-catégories de service, 22 catégories emploi / formation, 16 permissions et 6 rôles, 28 paramètres, 9 plans + limites, 4 produits, 8 sources (dont « Inconnue »), administrateur depuis `.env`.
+- Seeders idempotents : 10 pays, 13 communes, 37 catégories et sous-catégories de service, 22 catégories emploi / formation, 16 permissions et 6 rôles, 26 paramètres, 9 plans + limites, 4 produits, 8 sources (dont « Inconnue »), administrateur depuis `.env`.
 - `DemoSeeder` : 20 membres, 8 entreprises (3 vérifiées), 60 publications (25 emplois, 15 offres et 5 demandes de service, 15 formations dont 3 issues de la veille, 9 en attente), réactions, commentaires, 10 alertes dont « Électricien · Cocody ».
 
 ### Tests ajoutés (116 tests, 8 fichiers ; total 144)
