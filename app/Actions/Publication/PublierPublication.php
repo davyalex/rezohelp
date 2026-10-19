@@ -65,6 +65,11 @@ class PublierPublication
 
             if (! $enBrouillon) {
                 $this->soumettre($publication, $auteur, $entreprise);
+
+                // Au-delà du quota du plan, la publication consomme un crédit acheté (offre à l'unité).
+                if (($cle = self::cleQuota($parcours)) !== null) {
+                    Droits::pour($entreprise ?? $auteur)->imputer($cle);
+                }
             }
 
             return $publication;

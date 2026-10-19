@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Enums\OrigineAbonnement;
 use App\Enums\StatutAbonnement;
 use App\Models\Concerns\HorodatageFrancais;
+use App\Observers\AbonnementObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Database\Factories\AbonnementFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 /**
  * Souscription d'un titulaire (utilisateur ou entreprise) à un plan, pour une période.
  */
+#[ObservedBy(AbonnementObserver::class)]
 class Abonnement extends Model
 {
     /** @use HasFactory<AbonnementFactory> */
@@ -46,6 +49,7 @@ class Abonnement extends Model
             'origine' => OrigineAbonnement::class,
             'debut_le' => 'datetime',
             'fin_le' => 'datetime',
+            'relances_envoyees' => 'array',
         ];
     }
 

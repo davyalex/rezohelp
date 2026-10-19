@@ -58,6 +58,7 @@ class Publication extends Model implements HasMedia
         'auteur_nom_affiche',
         'auteur_avatar_url',
         'auteur_verifie',
+        'auteur_badge',
         'faits_cles',
         'type_contrat',
         'image_url',

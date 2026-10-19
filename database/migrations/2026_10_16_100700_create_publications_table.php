@@ -30,6 +30,7 @@ return new class extends Migration
             $table->string('auteur_nom_affiche', 150)->nullable();
             $table->string('auteur_avatar_url')->nullable();
             $table->boolean('auteur_verifie')->default(false)->comment('entreprise vérifiée');
+            $table->string('auteur_badge', 20)->nullable()->comment('pro | entreprise (droit profil.badge)');
             $table->json('faits_cles')->nullable()->comment('puces de la carte : contrat, salaire, tarif, durée, prix');
             $table->string('type_contrat', 20)->nullable()->comment('copie de details_emploi pour le filtre du fil');
             $table->string('image_url')->nullable();

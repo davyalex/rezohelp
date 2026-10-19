@@ -2,12 +2,17 @@
 
 namespace App\Jobs;
 
+use App\Enums\CleDroit;
 use App\Enums\FrequenceAlerte;
+use App\Enums\MotifSms;
 use App\Enums\StatutPublication;
 use App\Models\Alerte;
 use App\Models\Publication;
+use App\Models\SmsEnvoye;
+use App\Models\Utilisateur;
 use App\Notifications\AlerteCorrespondante;
 use App\Services\CorrespondanceAlertes;
+use App\Services\Droits;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -60,10 +65,52 @@ class CorrespondreAlertes implements ShouldQueue
 
                 $alerte->forceFill(['derniere_notification_le' => now()])->saveQuietly();
 
-                if (! isset($dejaNotifies[$alerte->utilisateur_id])) {
-                    $dejaNotifies[$alerte->utilisateur_id] = true;
-                    $alerte->utilisateur->notify(new AlerteCorrespondante($publication, $alerte));
+                if (isset($dejaNotifies[$alerte->utilisateur_id])) {
+                    return;
                 }
+
+                $dejaNotifies[$alerte->utilisateur_id] = true;
+                $parSms = $this->canalSms($alerte->utilisateur);
+
+                // Plafond SMS du jour atteint : la correspondance attend le récapitulatif SMS de 19h00.
+                if ($parSms === false && $this->aLeCanalSms($alerte->utilisateur)) {
+                    DB::table('alertes_publications')
+                        ->where('alerte_id', $alerte->id)->where('publication_id', $publication->id)
+                        ->update(['sms_en_attente' => true]);
+                }
+
+                $alerte->utilisateur->notify(new AlerteCorrespondante($publication, $alerte, $parSms));
             });
+    }
+
+    /**
+     * SMS d'alerte : droit alertes.canal_sms, numéro vérifié, plafond alertes.sms_par_jour non atteint.
+     */
+    private function canalSms(Utilisateur $membre): bool
+    {
+        if (! $this->aLeCanalSms($membre)) {
+            return false;
+        }
+
+        $plafond = Droits::pour($membre)->limite(CleDroit::AlertesSmsParJour);
+
+        if ($plafond === CleDroit::ILLIMITE) {
+            return true;
+        }
+
+        $envoyesAujourdhui = SmsEnvoye::query()
+            ->where('utilisateur_id', $membre->id)
+            ->where('motif', MotifSms::Alerte->value)
+            ->where('cree_le', '>=', now()->startOfDay())
+            ->count();
+
+        return $envoyesAujourdhui < $plafond;
+    }
+
+    private function aLeCanalSms(Utilisateur $membre): bool
+    {
+        return $membre->telephone !== null
+            && $membre->telephone_verifie_le !== null
+            && Droits::pour($membre)->peut(CleDroit::AlertesCanalSms);
     }
 }

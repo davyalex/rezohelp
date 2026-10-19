@@ -24,6 +24,9 @@
                 @if ($p->auteur_verifie)
                     <span class="text-brand" title="Entreprise vérifiée"><span aria-hidden="true">✔</span><span class="sr-only">Entreprise vérifiée</span></span>
                 @endif
+                @if ($p->auteur_badge)
+                    <span class="shrink-0 rounded bg-slate-900 px-1.5 text-[11px] font-bold uppercase leading-5 text-white">{{ $p->auteur_badge === 'entreprise' ? 'Entreprise' : 'Pro' }}</span>
+                @endif
             </p>
             <p class="truncate text-sm text-slate-600">
                 {{ JetonsCarte::DEPUIS }}@if ($commune) · {{ $commune }}@endif

@@ -31,6 +31,7 @@ return new class extends Migration
             $table->foreignId('alerte_id')->constrained('alertes')->cascadeOnDelete();
             $table->foreignId('publication_id')->constrained('publications')->cascadeOnDelete();
             $table->timestamp('notifie_le')->nullable();
+            $table->boolean('sms_en_attente')->default(false)->comment('au-delà du plafond SMS du jour : récapitulatif de 19h00');
 
             $table->primary(['alerte_id', 'publication_id']);
         });

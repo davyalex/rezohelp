@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\CleDroit;
+use App\Observers\PlanObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Database\Factories\PlanLimiteFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * Valeur d'une clé de droit dans un plan : entier (-1 = illimité) ou 0/1.
  */
+#[ObservedBy(PlanObserver::class)]
 class PlanLimite extends Model
 {
     /** @use HasFactory<PlanLimiteFactory> */

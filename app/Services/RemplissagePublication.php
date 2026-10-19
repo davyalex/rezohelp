@@ -7,6 +7,7 @@ use App\Enums\ModeInscription;
 use App\Enums\ParcoursPublication;
 use App\Enums\SourcePublication;
 use App\Enums\StatutPublication;
+use App\Jobs\RafraichirBadges;
 use App\Models\Categorie;
 use App\Models\DetailEmploi;
 use App\Models\DetailFormation;
@@ -88,6 +89,7 @@ class RemplissagePublication
             'auteur_nom_affiche' => $entreprise->nom ?? $auteur->nomAffiche(),
             'auteur_avatar_url' => $this->avatar($auteur, $entreprise),
             'auteur_verifie' => (bool) $entreprise?->verifiee,
+            'auteur_badge' => RafraichirBadges::badge($entreprise ?? $auteur),
             'source' => SourcePublication::Utilisateur,
             // Une modification ne repousse jamais l'expiration : seule la prolongation le fait.
             'expire_le' => match (true) {

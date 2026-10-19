@@ -28,7 +28,14 @@ class CacheFil
 
     public const int DUREE_COMPTEURS = 600;
 
+    public const int DUREE_DROITS = 600;
+
+    /** Les compteurs différés survivent largement à l'intervalle de vidage (5 min). */
+    public const int DUREE_DIFFERE = 3600;
+
     private const string CLE_VERSION = 'fil:version';
+
+    private const string CLE_VERSION_DROITS = 'droits:version';
 
     /** Durée maximale du verrou anti-ruée et attente maximale des autres requêtes. */
     private const int DUREE_VERROU = 10;
@@ -111,6 +118,108 @@ class CacheFil
     public function compteurs(string $nom, Closure $calcul): mixed
     {
         return $this->memoriser("compteurs:{$nom}", self::DUREE_COMPTEURS, $calcul);
+    }
+
+    /**
+     * Droits effectifs d'un titulaire (§14.5), 10 min : « droits:v{version}:{type}:{id} ».
+     *
+     * @template T
+     *
+     * @param  Closure(): T  $calcul
+     * @return T
+     */
+    public function droits(string $type, int $id, Closure $calcul): mixed
+    {
+        return $this->cache->remember($this->cleDroits($type, $id), self::DUREE_DROITS, $calcul);
+    }
+
+    public function oublierDroits(string $type, int $id): void
+    {
+        $this->cache->forget($this->cleDroits($type, $id));
+    }
+
+    /**
+     * Un plan ou une limite a changé : tous les droits sont recalculés.
+     */
+    public function invaliderDroits(): void
+    {
+        $this->cache->add(self::CLE_VERSION_DROITS, 1, null);
+        $this->cache->increment(self::CLE_VERSION_DROITS);
+    }
+
+    /**
+     * Exécute $traitement sous un verrou exclusif (activation idempotente d'une commande…).
+     *
+     * @template T
+     *
+     * @param  Closure(): T  $traitement
+     * @return T
+     */
+    public function sousVerrou(string $nom, Closure $traitement): mixed
+    {
+        $magasin = $this->cache->getStore();
+
+        if (! $magasin instanceof LockProvider) {
+            return $traitement();
+        }
+
+        return $magasin->lock("verrou:{$nom}", self::DUREE_VERROU)->block(self::DUREE_VERROU, $traitement);
+    }
+
+    /**
+     * Jeton d'accès à une API externe (OAuth du fournisseur SMS…), conservé $duree secondes.
+     *
+     * @param  Closure(): string  $obtention
+     */
+    public function jeton(string $nom, int $duree, Closure $obtention): string
+    {
+        return (string) $this->cache->remember("jeton:{$nom}", $duree, $obtention);
+    }
+
+    /**
+     * Compteur cumulé en cache (impressions, clics), vidé en base périodiquement.
+     */
+    public function incrementerCompteurDiffere(string $nom, int $id): void
+    {
+        $cle = "differe:{$nom}:{$id}";
+        $this->cache->add($cle, 0, self::DUREE_DIFFERE);
+        $this->cache->increment($cle);
+
+        $index = "differe:{$nom}:index";
+        $ids = $this->cache->get($index, []);
+
+        if (is_array($ids) && ! in_array($id, $ids, true)) {
+            $ids[] = $id;
+            $this->cache->put($index, $ids, self::DUREE_DIFFERE);
+        }
+    }
+
+    /**
+     * Valeurs cumulées depuis le dernier vidage, remises à zéro.
+     *
+     * @return array<int, int> id => valeur
+     */
+    public function viderCompteursDifferes(string $nom): array
+    {
+        $ids = $this->cache->pull("differe:{$nom}:index", []);
+        $valeurs = [];
+
+        foreach (is_array($ids) ? $ids : [] as $id) {
+            $valeur = (int) $this->cache->pull("differe:{$nom}:{$id}", 0);
+
+            if ($valeur > 0) {
+                $valeurs[(int) $id] = $valeur;
+            }
+        }
+
+        return $valeurs;
+    }
+
+    private function cleDroits(string $type, int $id): string
+    {
+        $version = $this->cache->get(self::CLE_VERSION_DROITS, 1);
+
+        return 'droits:v'.(is_numeric($version) ? (int) $version : 1).":{$type}:{$id}";
     }
 
     /**

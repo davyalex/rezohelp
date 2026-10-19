@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\CibleOffre;
 use App\Models\Concerns\HorodatageFrancais;
+use App\Observers\PlanObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Database\Factories\PlanFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * Formule d'abonnement : prix, durée, essai, cible et limites (§14.2).
  * Chaque cible a un plan par défaut gratuit (est_defaut), unique en base.
  */
+#[ObservedBy(PlanObserver::class)]
 class Plan extends Model
 {
     /** @use HasFactory<PlanFactory> */

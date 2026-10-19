@@ -10,7 +10,7 @@
 | 3 | Fil public et pages de publication | terminé (tag `lot-3`) |
 | 4 | Publication par les utilisateurs | terminé (tag `lot-4`) |
 | 5 | Mon espace, alertes et notifications | terminé (tag `lot-5`) |
-| 6 | Abonnements, paiements, SMS, visibilité payante | à faire |
+| 6 | Abonnements, paiements, SMS, visibilité payante | en cours (pause, voir « Point de reprise ») |
 | 7 | Back-office | à faire |
 | 8 | Import de la veille et enrichissement IA | à faire |
 | 9 | PWA, performance, accessibilité, sécurité | à faire |
@@ -301,3 +301,39 @@
 - [ ] Avec un autre compte (membre fiable, ou valider la publication en base en attendant la modération du lot 7), publier une offre d'électricien à Cocody, lancer `php artisan queue:work --stop-when-empty` : la pastille de la cloche apparaît et la notification mène à la publication.
 - [ ] Mettre l'alerte en pause : plus de notification. `php artisan alertes:recap-quotidien` envoie le récapitulatif d'une alerte quotidienne.
 - [ ] Profil : changer de photo et de nom, changer de numéro (code SMS), supprimer un compte de test.
+
+---
+
+## Lot 6 — Abonnements dynamiques, paiements, SMS, visibilité payante
+
+### Plan d'implémentation
+
+- **Données** (avant mise en production, D-009) : `abonnements.relances_envoyees`, `alertes_publications.sms_en_attente`, `publications.auteur_badge`, table `sequences` (numéros de commande et de reçu sans trou).
+- **Droits complet** : plans par défaut + abonnements `essai | actif | grace` en cours + crédits non consommés ; cache `droits:v{version}:{type}:{id}` (10 min) via `CacheFil` ; `AbonnementObserver` (oubli de la clé, badge des cartes), `PlanObserver` / `PlanLimiteObserver` (version) ; consommation d'un crédit quand le quota du plan est épuisé.
+- **Essais** : `DemarrerEssai` (plan avec essai, numéro vérifié, un essai par empreinte SHA-256 et par famille, à vie). **Cycle de vie** : commande `abonnements:traiter` (chaque heure) : relances J-3 / J-1 / J0, passage en grâce (`jours_grace`), expiration, mise en pause des alertes au-delà de `alertes.max`.
+- **Commandes et paiement** : `CreerCommande` (montant figé, TVA, numéro `CMD-AAAA-000001`), `InitierPaiement`, webhook `POST /paiements/notification/{passerelle}` (signature, journal `notifications_paiement`, revérification auprès de la passerelle, verrou, idempotence), `ActiverCommande` (abonnement créé ou prolongé à la suite, essai remplacé, crédit, remontée, mise en avant, reçu `REC-AAAA-000001`, notification), page de retour auto-actualisée, guichet simulé du driver `fake`, driver **`cinetpay`** (initialisation, vérification, jeton `x-token`), reçus HTML et PDF.
+- **SMS** : `SmsChannel` + `MessageSms` (GSM-7 sans accents, 160 caractères), plage silencieuse 21h00 → 7h00, `AlerteCorrespondante` par SMS si `alertes.canal_sms` et numéro vérifié, plafond `alertes.sms_par_jour` puis récapitulatif SMS à 19h00 (`alertes:recap-sms`), drivers **`orange`** et **`twilio`**.
+- **Visibilité** : `RemonterPublication` (une fois par 24 h, remontées incluses `publication.remontees_mois` ou payées), mises en avant `une_commune` (bloc « À la une ») et `sponsorise_fil` (`EmplacementsSponsorises`, `?deja=N`, hors curseur, une fois par salve, rotation par dernière impression), étiquettes « Sponsorisé » / « À la une », impressions et clics cumulés en cache puis vidés toutes les 5 min, suspension et reprise avec la publication, badge « Pro » / « Entreprise ».
+- **Pages** : `/tarifs`, « Mon abonnement » (plans, échéances, compteurs restants, renouveler, commandes et reçus), achats de produits depuis « Mes publications », incitations contextuelles, écran « Quota atteint » avec les options d'achat.
+- **Tests** : droits combinés, `quotas_actifs`, crédits, essai unique même après suppression, webhook rejoué / signature invalide / montant falsifié, renouvellement cumulatif, grâce puis expiration, SMS tronqué sans accents, plage silencieuse, carte sponsorisée sans doublon ni rupture du curseur, publication rejetée jamais mise en avant, drivers réels avec `Http::fake()`.
+
+### Point de reprise (pause demandée par Alex, 19/10/2026)
+
+**Déjà écrit (non validé : Pint, Larastan et tests pas encore lancés sur le lot 6)**
+- Migrations : `abonnements.relances_envoyees`, table `sequences`, `alertes_publications.sms_en_attente`, `publications.auteur_badge`.
+- `CacheFil` : droits versionnés, verrous, jetons, compteurs différés. `NumeroSequentiel` (CMD / REC).
+- `Droits` complet (abonnements en cours, crédits, `imputer()`), imputation dans `PublierPublication`.
+- `AbonnementObserver`, `PlanObserver` (Plan + PlanLimite), job `RafraichirBadges` + badge sur la carte.
+- SMS : `TexteSms`, `SmsChannel` / `MessageSms`, `PlanifierSms` (plage silencieuse 21h–7h), drivers `orange` et `twilio`.
+- `AlerteCorrespondante` par SMS + plafond `alertes.sms_par_jour` dans `CorrespondreAlertes` (marque `sms_en_attente`).
+- Paiement : `CinetPayPasserelle`, `CreerCommande`, `InitierPaiement`, `TraiterNotificationPaiement`, `ActiverCommande`, `RemonterPublication`, `DemarrerEssai`.
+- Notifications `CommandePayee`, `FinAbonnementProche` ; commande `abonnements:traiter` ; planification dans `routes/console.php`.
+
+**Reste à faire, dans l'ordre**
+1. Commandes `alertes:recap-sms` (19h00, lit `sms_en_attente`) et `mises-en-avant:compter` (vide les compteurs différés impressions / clics).
+2. `PaiementController` : webhook `POST /paiements/notification/{passerelle}` (exempté CSRF, journal `notifications_paiement`, 403 si signature invalide), `GET /paiements/retour/{commande}` (actualisation 3 s pendant 60 s), guichet simulé du driver `fake`.
+3. Routes `POST` commandes et essais ; reçus `espace.recu` (HTML + PDF dompdf, mentions légales) ; « Mon abonnement » `espace.abonnement` ; page `/tarifs`.
+4. `EmplacementsSponsorises` (`?deja=N`, position 0 puis toutes les `frequence_sponsorise` cartes, une fois par salve, rotation) ; bloc « À la une » ; étiquettes « Sponsorisé » / « À la une » ; suivi des clics ; `fil.js` envoie `deja` ; suspension et reprise des mises en avant dans `PublicationObserver`.
+5. Incitations : essai SMS après la création d'une alerte, « Il vous reste 1 offre », options d'achat de l'écran « Quota atteint », boutons de remontée dans « Mes publications », `statistiques.avancees`.
+6. Tests Pest du lot (liste du plan ci-dessus, drivers réels avec `Http::fake()`).
+7. Pint, Larastan, `php artisan test --parallel`, `migrate:fresh --seed` ; docs (Fait, tests, écarts, À vérifier, DECISIONS) ; commit « lot 6 » + tag `lot-6`.

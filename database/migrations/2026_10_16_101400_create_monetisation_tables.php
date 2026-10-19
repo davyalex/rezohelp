@@ -93,11 +93,18 @@ return new class extends Migration
             $table->timestamp('fin_le')->nullable();
             $table->foreignId('commande_id')->nullable()->constrained('commandes')->nullOnDelete();
             $table->string('motif')->nullable();
+            $table->json('relances_envoyees')->nullable()->comment('j3, j1, j0 : relances de fin déjà envoyées');
             $table->timestamp('cree_le')->nullable();
             $table->timestamp('modifie_le')->nullable();
 
             $table->index(['titulaire_type', 'titulaire_id', 'statut', 'fin_le'], 'abonnements_titulaire_statut_fin_index');
             $table->index(['statut', 'fin_le']);
+        });
+
+        // Numéros sans trou (commandes, reçus), un compteur par préfixe et par année
+        Schema::create('sequences', function (Blueprint $table) {
+            $table->string('cle', 40)->primary();
+            $table->unsignedBigInteger('valeur')->default(0);
         });
 
         Schema::create('essais_utilises', function (Blueprint $table) {
@@ -177,6 +184,7 @@ return new class extends Migration
         Schema::dropIfExists('notifications_paiement');
         Schema::dropIfExists('credits');
         Schema::dropIfExists('essais_utilises');
+        Schema::dropIfExists('sequences');
         Schema::dropIfExists('abonnements');
         Schema::dropIfExists('commandes');
         Schema::dropIfExists('produits');
