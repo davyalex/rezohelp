@@ -8,7 +8,7 @@
 | 1 | Base de données, modèles, référentiels | terminé (tag `lot-1`) |
 | 2 | Authentification par téléphone | terminé (tag `lot-2`) |
 | 3 | Fil public et pages de publication | terminé (tag `lot-3`) |
-| 4 | Publication par les utilisateurs | en cours |
+| 4 | Publication par les utilisateurs | terminé (tag `lot-4`) |
 | 5 | Mon espace, alertes et notifications | à faire |
 | 6 | Abonnements, paiements, SMS, visibilité payante | à faire |
 | 7 | Back-office | à faire |
@@ -225,8 +225,41 @@
 - **Notifications** (database) : nouvelle réponse, statut de réponse modifié, publication remise en attente.
 - **Tests** : chaque ligne du tableau §11.6, chaque règle du §11.5, quota journalier, doublon sur 7 jours, téléphone d'un demandeur jamais exposé, réponse unique, modification par un auteur `nouveau` puis `fiable`, prolongation limitée à 3, droits minimaux.
 
-### Point de reprise (pause demandée par Alex pour tester — 2026-10-16)
+### Fait
 
-- **Dernier lot terminé** : lot 3 (tag `lot-3`). Commit `wip lot 4` par-dessus.
-- **Déjà écrit pour le lot 4** (non branché aux routes, sans tests) : `Droits` (version minimale) + `QuotaAtteintException`, `SignalRisque`, `ParcoursPublication`, actions `AnalyserRisquePublication`, `DeciderStatutPublication`, `PublierPublication`, `DetecterDoublon`, `AttribuerRoleAuteur`, `MettreAJourConfiance`, `ModifierPublication`, `CloturerPublication`, `ProlongerPublication`, `DupliquerPublication`, `RepondrePublication`, `ChangerStatutReponse` ; services `RemplissagePublication`, `IdentifiantsPublication` ; événement `PublicationPubliee`, job `EnrichirPublicationIA`, notifications `NouvelleReponse`, `StatutReponseModifie`, `PublicationRemiseEnAttente`, écouteur `MettreAJourImagePublication` ; `PublicationObserver` met à jour la confiance de l'auteur. `publication.photos_max` n'est plus une clé de quota (D-015 révisée).
-- **Reste à faire** : FormRequests des 4 parcours (valider les contacts en `email` / `url:http,https` / téléphone), `PublicationPolicy@create|update|delete|cloturer|repondre`, `ReponsePolicy`, limiteur `max_envois_par_heure`, contrôleurs `PublierController`, `Espace\PublicationController`, `Espace\ReponseController`, `ReponseController`, routes §11.9, vues (choix, formulaires, aperçu, confirmation, quota atteint, Mes publications, réponses, formulaire de réponse sur la page détail), JS brouillon `localStorage` + aperçu, entrée « Publier » dans la navigation, tests du lot, puis validation complète et commit `lot 4`.
+- **Parcours** `/publier` → `/publier/{type}` (emploi, service-offre, service-demande, formation) → aperçu → enregistrement → confirmation (« en ligne » + partage WhatsApp, ou « visible après vérification, généralement en moins de 2 h »). Un visiteur est envoyé à la connexion puis ramené au formulaire choisi.
+- **Formulaire unique** des quatre parcours : blocs repliables, compteur de caractères, aide sous les champs, employeur / organisme (une de mes entreprises, création en ligne avec logo, particulier, nom libre), contacts selon le mode (e-mail, lien `http(s)` uniquement, téléphone normalisé en E.164), zones d'intervention, « WhatsApp : même numéro », titre proposé pour une offre de service, photos limitées par `publication.photos_max` et converties en WebP 640 px pour la carte (image dénormalisée avec ses dimensions).
+- **Brouillon** dans le navigateur (`localStorage` toutes les 5 s, restauration, « Recommencer à zéro ») et brouillon serveur. **Aperçu** rendu par `x-carte-publication` via `RenduCarte`, sans rien écrire en base.
+- **Actions** : `PublierPublication` (transaction), `AnalyserRisquePublication` (expressions à risque paramétrables, téléphone ou WhatsApp dans une offre d'emploi, salaire au-dessus du plafond du contrat, majuscules > 50 %, liens raccourcis), `DeciderStatutPublication` (tableau §11.6), `DetecterDoublon` (similarité ≥ 90 % sur 7 jours), `AttribuerRoleAuteur`, `MettreAJourConfiance` (fiable à 3 validations, restreint à 2 rejets pour arnaque ou un signalement retenu), `ModifierPublication`, `CloturerPublication`, `ProlongerPublication`, `DupliquerPublication`, `RepondrePublication`, `ChangerStatutReponse`.
+- **Anti-spam** : policy `create` (suspendu, restreint, `max_publications_par_jour`, avec le message affiché), limiteur `publication` (`max_envois_par_heure`), doublon bloqué avec invitation à prolonger.
+- **Droits (minimal)** et **« Quota atteint »** quand `quotas_actifs` est activé et le quota épuisé.
+- **Mes publications** : badges de statut, motif de rejet, statistiques (vues, j'aime, partages, réponses), modifier / corriger et renvoyer / compléter un brouillon, clôturer, prolonger, dupliquer, supprimer, partager.
+- **Réponses** : candidature et inscription (message, numéro partagé au choix), contact quand l'artisan masque son numéro, « Je suis disponible » (numéro toujours transmis, quota `reponses.demandes_mois`), une seule par personne ; contact externe compté ; réponses reçues avec numéro seulement s'il est partagé ; vue / retenue / refusée.
+- **Notifications** (database, en file) : nouvelle réponse, statut de réponse modifié, publication remise en attente. Événement `PublicationPubliee` (après la transaction) pour les alertes du lot 5.
+- **Job** `EnrichirPublicationIA` (driver `fake`) : score, signaux, journal `appels_ia`, remise en attente sous 40.
+- Navigation : « + Publier » (en-tête desktop, navigation basse) et « Mes publications ».
+- Vérifié en réel : connexion d'un membre de démo, ouverture des 4 formulaires et de « Mes publications », publication d'une demande de service (en attente).
+
+### Tests ajoutés (111 tests, 7 fichiers ; total 391)
+
+- `tests/Feature/Publication/DeciderStatutPublicationTest.php` (9 : chaque ligne du tableau §11.6)
+- `tests/Unit/Actions/AnalyserRisquePublicationTest.php` (20 : chaque règle du §11.5, faux positifs, paramètres)
+- `tests/Feature/Publication/PublierTest.php` (32 : 4 parcours, entreprise en ligne, publication directe, « frais de dossier », brouillon, validations, contacts, quota journalier, limiteur horaire, doublon 7 jours, numéro du demandeur jamais exposé, aperçu, quota atteint, compte restreint, photos)
+- `tests/Feature/Publication/MesPublicationsTest.php` (22 : modification par un auteur nouveau puis fiable, expiration, rejet corrigé, brouillon, clôture, prolongation limitée à 3, duplication, suppression, accès croisé, photos)
+- `tests/Feature/Publication/ReponsesTest.php` (14 : réponse unique, types, quota, numéro partagé ou non, statuts, accès croisé)
+- `tests/Feature/Publication/ConfianceEtIATest.php` (8) · `tests/Unit/Services/DroitsTest.php` (6)
+- Données de test partagées : `tests/Support/donnees-publication.php`.
+
+### Écarts avec le CONTEXTE
+
+- Titulaires des plans par défaut (D-033), demandes de service hors quota (D-034), brouillon serveur validé (D-035), règles de modification (D-036), réponses et prolongations (D-037), score IA des publications natives (D-038).
+- Notifications « publication validée / rejetée » : avec la modération (lot 7) ; « expiration dans 3 jours » : avec `publications:expirer` (lot 7). Options d'achat de l'écran « Quota atteint » : lot 6.
+
+### À vérifier par Alex
+
+- [ ] Depuis un mobile (360 px), publier un exemple de chacun des 4 types ; la première publication part « en attente ».
+- [ ] Une publication contenant « frais de dossier » part en attente ; le signal `expression_a_risque` est enregistré (visible en modération au lot 7).
+- [ ] Couper la connexion pendant la saisie puis revenir : le brouillon est restauré.
+- [ ] « Voir l'aperçu dans le fil » affiche la même carte que le fil.
+- [ ] Dans « Mes publications » : modifier, clôturer, prolonger (3 fois au plus), dupliquer, supprimer.
+- [ ] Avec un second compte : postuler, « Je suis disponible » sur une demande, puis retrouver la réponse et le numéro chez l'auteur.

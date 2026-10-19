@@ -5,7 +5,6 @@ namespace App\Actions\Publication;
 use App\Enums\CleDroit;
 use App\Enums\ParcoursPublication;
 use App\Enums\StatutPublication;
-use App\Enums\TypePublication;
 use App\Events\PublicationPubliee;
 use App\Jobs\EnrichirPublicationIA;
 use App\Models\Entreprise;
@@ -49,7 +48,10 @@ class PublierPublication
             $entreprise = $this->remplissage->entreprise($auteur, $donnees);
 
             if (! $enBrouillon) {
-                Droits::pour($entreprise ?? $auteur)->verifierOuEchouer(self::cleQuota($parcours));
+                $cle = self::cleQuota($parcours);
+                if ($cle !== null) {
+                    Droits::pour($entreprise ?? $auteur)->verifierOuEchouer($cle);
+                }
                 $this->detecterDoublon->verifierOuEchouer($auteur, (string) $donnees['titre'], $brouillonExistant?->id);
             }
 
@@ -81,13 +83,15 @@ class PublierPublication
 
     /**
      * Clé de quota consommée par une nouvelle publication du parcours.
+     * Une demande de service (le client décrit son besoin) n'en consomme aucune.
      */
-    public static function cleQuota(ParcoursPublication $parcours): CleDroit
+    public static function cleQuota(ParcoursPublication $parcours): ?CleDroit
     {
-        return match ($parcours->type()) {
-            TypePublication::Emploi => CleDroit::EmploiOffresMois,
-            TypePublication::Service => CleDroit::ServiceOffresActives,
-            TypePublication::Formation => CleDroit::FormationOffresActives,
+        return match ($parcours) {
+            ParcoursPublication::Emploi => CleDroit::EmploiOffresMois,
+            ParcoursPublication::ServiceOffre => CleDroit::ServiceOffresActives,
+            ParcoursPublication::Formation => CleDroit::FormationOffresActives,
+            ParcoursPublication::ServiceDemande => null,
         };
     }
 

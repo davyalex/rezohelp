@@ -14,9 +14,12 @@ class CompterInteraction
 
     public const string PARTAGES = 'nb_partages';
 
+    /** Clic vers un contact externe (lien, e-mail, téléphone) : compté comme une réponse (§11.8). */
+    public const string REPONSES = 'nb_reponses';
+
     public function executer(int $publicationId, string $compteur): void
     {
-        if (! in_array($compteur, [self::VUES, self::PARTAGES], true)) {
+        if (! in_array($compteur, [self::VUES, self::PARTAGES, self::REPONSES], true)) {
             return;
         }
 

@@ -54,7 +54,7 @@ class ModifierPublication
             $publication->save();
 
             $this->remplissage->details($publication, $parcours, $donnees, $auteur);
-            $this->remplissage->ajouterPhotos($publication, $photos);
+            $this->remplissage->ajouterPhotos($publication, $photos, remplacer: true);
             $sensible = $sensible || $contactsAvant !== $this->contacts($publication);
 
             $detailEmploi = $publication->detailEmploi;

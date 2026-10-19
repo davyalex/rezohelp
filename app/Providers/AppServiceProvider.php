@@ -25,8 +25,11 @@ use App\Models\Utilisateur;
 use App\Services\CacheFil;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -66,6 +69,10 @@ class AppServiceProvider extends ServiceProvider
             'credit' => Credit::class,
             'mise_en_avant' => MiseEnAvant::class,
         ]);
+
+        // Envois de formulaires de publication (CONTEXTE §11.5) : max_envois_par_heure par compte.
+        RateLimiter::for('publication', fn (Request $request): Limit => Limit::perHour(Parametre::entier('max_envois_par_heure'))
+            ->by('publication:'.($request->user()?->getAuthIdentifier() ?? $request->ip())));
 
         Carbon::setLocale($this->app->getLocale());
         CarbonImmutable::setLocale($this->app->getLocale());

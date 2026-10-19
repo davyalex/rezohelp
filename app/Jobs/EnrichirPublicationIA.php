@@ -48,7 +48,7 @@ class EnrichirPublicationIA implements ShouldQueue
             type: $publication->type->value,
             titre: $publication->titre,
             contenu: $publication->contenu,
-            entreprise: $publication->entreprise?->nom ?? $publication->auteur_nom_affiche,
+            entreprise: $publication->entreprise->nom ?? $publication->auteur_nom_affiche,
             lieu: null,
             categoriesPossibles: Categorie::query()->where('type', $publication->type->value)->whereNull('parent_id')->pluck('nom')->all(),
         ));

@@ -3,6 +3,9 @@
 import Alpine from 'alpinejs';
 import { demarrerFil } from './fil';
 import { envoyerFormulaire } from './requetes';
+import { formulairePublication } from './publication';
+
+Alpine.data('formulairePublication', formulairePublication);
 
 // « J'aime » optimiste : l'interface change tout de suite, le serveur confirme.
 Alpine.data('reaction', (aime, nb) => ({

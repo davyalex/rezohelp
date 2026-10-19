@@ -1,8 +1,6 @@
 @extends('layouts.public')
 
 @php
-    use App\Enums\ModeCandidature;
-    use App\Enums\ModeInscription;
     use App\Enums\MotifSignalement;
     use App\Enums\SousTypeService;
     use App\Enums\StatutPublication;
@@ -10,10 +8,8 @@
     use App\Support\Montant;
 
     $p = $publication;
-    $telephones = app(\App\Services\TelephoneService::class);
     $referentiels = app(\App\Services\Referentiels::class);
     $url = route('publications.show', $p->slug);
-    $estVeille = $p->source === \App\Enums\SourcePublication::VeilleIa;
     $emploi = $p->detailEmploi;
     $service = $p->detailService;
     $formation = $p->detailFormation;
@@ -125,37 +121,7 @@
             </dl>
 
             {{-- Répondre / contacter --}}
-            <section id="repondre" class="mt-6 space-y-3 border-t border-slate-100 pt-4" aria-label="Répondre">
-                @if ($estVeille && $p->source_url)
-                    <p class="text-sm text-slate-600">Annonce repérée par notre veille{{ $p->source_nom ? ' sur '.$p->source_nom : '' }}. Ce résumé ne remplace pas l’annonce d’origine.</p>
-                    <x-bouton :href="$p->source_url" target="_blank" rel="noopener nofollow" class="w-full sm:w-auto">Voir l’annonce</x-bouton>
-                @elseif ($emploi && $emploi->contact_candidature)
-                    @switch($emploi->mode_candidature)
-                        @case(ModeCandidature::Email)
-                            <x-bouton :href="'mailto:'.$emploi->contact_candidature.'?subject='.rawurlencode('Candidature : '.$p->titre)" class="w-full bg-emploi sm:w-auto">Postuler par e-mail</x-bouton>
-                            @break
-                        @case(ModeCandidature::Lien)
-                            <x-bouton :href="$emploi->contact_candidature" target="_blank" rel="noopener nofollow" class="w-full bg-emploi sm:w-auto">Postuler sur le site du recruteur</x-bouton>
-                            @break
-                        @case(ModeCandidature::Telephone)
-                            <x-bouton :href="'tel:'.$emploi->contact_candidature" class="w-full bg-emploi sm:w-auto">Appeler pour postuler</x-bouton>
-                            @break
-                    @endswitch
-                @elseif ($service && $p->sous_type === SousTypeService::Offre && $service->afficher_telephone && $service->telephone_contact)
-                    <div class="flex flex-wrap gap-2">
-                        <x-bouton :href="'tel:'.$service->telephone_contact" class="bg-service">Appeler le {{ $telephones->afficher($service->telephone_contact, auth()->user()?->pays_code) }}</x-bouton>
-                        @if ($service->whatsapp)
-                            <x-bouton :href="'https://wa.me/'.ltrim($service->whatsapp, '+')" target="_blank" rel="noopener" variante="secondaire">WhatsApp</x-bouton>
-                        @endif
-                    </div>
-                @elseif ($formation && $formation->contact_inscription && $formation->mode_inscription !== ModeInscription::Resohelph)
-                    @if ($formation->mode_inscription === ModeInscription::Lien)
-                        <x-bouton :href="$formation->contact_inscription" target="_blank" rel="noopener nofollow" class="w-full bg-formation sm:w-auto">S’inscrire sur le site de l’organisme</x-bouton>
-                    @else
-                        <x-bouton :href="'tel:'.$formation->contact_inscription" class="w-full bg-formation sm:w-auto">Appeler pour s’inscrire</x-bouton>
-                    @endif
-                @endif
-            </section>
+            @include('publications._repondre')
 
             {{-- Actions --}}
             <div class="mt-6 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4" x-data="reaction({{ $aime ? 'true' : 'false' }}, {{ $p->nb_jaime }})">

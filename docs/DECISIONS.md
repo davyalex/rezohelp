@@ -149,3 +149,25 @@
 
 ### D-032 · 2026-10-16 · « Charger plus » sans JavaScript et compteurs de consultation
 - **Choix** : sans JavaScript, « Charger plus » ouvre la page avec `?curseur=…` (salve suivante). Les vues et les partages sont comptés après l'envoi de la réponse (`defer`), sans modifier `modifie_le`.
+
+### D-033 · 2026-10-19 · Titulaires des plans par défaut (`Droits`, version minimale)
+- **Choix** : un **utilisateur** cumule les plans par défaut `membre` et `artisan` ; une **entreprise** cumule `recruteur` et `organisme` (maximum des entiers, -1 l'emporte, OU des booléens). Abonnements, crédits et cache des droits arrivent au lot 6.
+- **Raison** : un membre doit pouvoir publier sa première offre de service avant d'avoir le rôle `artisan` (attribué à cette publication, §11.1) ; une entreprise peut recruter et former. Conséquence : `reponses.demandes_mois` vaut 5 (artisan) pour tout membre.
+
+### D-034 · 2026-10-19 · Quotas et demande de service
+- **Choix** : une demande de service (« Je cherche un prestataire ») ne consomme aucun quota d'annonces ; `service.offres_actives` ne compte que les offres. Avant le formulaire, le quota est vérifié pour le membre et ses entreprises existantes ; il est revérifié à l'envoi pour le titulaire choisi.
+- **Raison** : le §14.3 décrit `service.offres_actives` comme les annonces de l'artisan ; un client qui cherche un plombier ne doit pas être bloqué. Limite connue : créer une nouvelle entreprise dans le formulaire repart du plan par défaut ; la fusion des doublons d'entreprises (lot 7) et la modération encadrent cet usage.
+
+### D-035 · 2026-10-19 · Brouillon serveur
+- **Choix** : « Enregistrer en brouillon » applique les mêmes validations que la publication, sans analyse de risque, sans décision ni quota. Le brouillon navigateur (Alpine + `localStorage`, toutes les 5 s) garde, lui, une saisie incomplète. Publier un brouillon passe par `PublierPublication` et la policy `create`.
+- **Raison** : le schéma impose titre, contenu et identifiants ; une saisie partielle est déjà protégée par le navigateur.
+
+### D-036 · 2026-10-19 · Modification d'une publication
+- **Choix** : (1) une modification ne repousse jamais l'expiration (seule « Prolonger » le fait) ; (2) de nouvelles photos **remplacent** les anciennes, pour rester sous `publication.photos_max` ; (3) pour un auteur `fiable`, la relance de l'analyse de risque qui trouve un signal renvoie la publication en attente ; (4) `ModifierPublication` ne fait que repasser en attente, jamais en ligne (mise en ligne : `DeciderStatutPublication` ou modération) ; (5) une publication clôturée ou expirée ne se modifie plus : on la duplique.
+- **Raison** : éviter les prolongations ou les photos illimitées détournées, et garder une seule porte d'entrée vers le statut `publiee`.
+
+### D-037 · 2026-10-19 · Prolongation, clôture, réponses
+- **Choix** : seule une publication en ligne se prolonge (`jours_prolongation`, `max_prolongations`) ; la clôture accepte une publication en ligne ou en attente, avec un motif (« Poste pourvu », « Plus disponible », « Complet », « Autre »). Pour un contact ou une proposition (« Je suis disponible »), le numéro du répondant est toujours transmis à l'auteur (seul moyen de le joindre avant la messagerie V2) ; pour une candidature ou une inscription, c'est une case à cocher. Un clic vers un contact externe (lien, e-mail, téléphone) est compté dans `nb_reponses`.
+
+### D-038 · 2026-10-19 · Score IA d'une publication native
+- **Choix** : pour une publication d'un membre, `EnrichirPublicationIA` ne réécrit pas le texte (réservé à la veille, lot 8) : il enregistre `score_fiabilite`, complète `signaux_risque`, journalise l'appel dans `appels_ia` (coût estimé d'après `CLAUDE_COUT_ENTREE_FCFA` / `CLAUDE_COUT_SORTIE_FCFA`) et remet en attente une publication en ligne sous `seuil_remise_en_attente`.

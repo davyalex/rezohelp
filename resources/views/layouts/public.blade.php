@@ -25,8 +25,9 @@
             </form>
 
             <nav aria-label="Compte" class="flex shrink-0 items-center gap-2">
+                <x-bouton :href="route('publier.choix')" class="hidden min-h-10 px-3 text-sm lg:inline-flex">+ Publier</x-bouton>
                 @auth
-                    <span class="hidden text-sm text-slate-700 md:inline">{{ auth()->user()->nomAffiche() }}</span>
+                    <a href="{{ route('espace.publications.index') }}" class="hidden min-h-10 items-center text-sm font-semibold text-slate-700 hover:text-brand md:inline-flex">Mes publications</a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <x-bouton variante="secondaire" class="min-h-10 px-3 text-sm">Se déconnecter</x-bouton>
@@ -59,6 +60,12 @@
                 <a href="{{ route('fil.recherche') }}" @if (request()->routeIs('fil.recherche')) aria-current="page" @endif
                    class="flex min-h-14 min-w-16 flex-col items-center justify-center text-xs text-slate-600 aria-[current=page]:font-semibold aria-[current=page]:text-brand">
                     <span aria-hidden="true" class="text-lg">🔍</span>Recherche
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('publier.choix') }}" @if (request()->routeIs('publier.*')) aria-current="page" @endif
+                   class="flex min-h-14 min-w-16 flex-col items-center justify-center text-xs text-slate-600 aria-[current=page]:font-semibold aria-[current=page]:text-brand">
+                    <span aria-hidden="true" class="text-lg">➕</span>Publier
                 </a>
             </li>
         </ul>

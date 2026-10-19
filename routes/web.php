@@ -3,10 +3,14 @@
 use App\Http\Controllers\Auth\ChangementMotDePasseController;
 use App\Http\Controllers\Auth\MotDePasseOublieController;
 use App\Http\Controllers\Auth\VerificationTelephoneController;
+use App\Http\Controllers\Espace\PublicationController as EspacePublicationController;
+use App\Http\Controllers\Espace\ReponseController as EspaceReponseController;
 use App\Http\Controllers\FilController;
 use App\Http\Controllers\InteractionController;
 use App\Http\Controllers\PublicationController;
+use App\Http\Controllers\PublierController;
 use App\Http\Controllers\ReferencementController;
+use App\Http\Controllers\ReponseController;
 use Illuminate\Support\Facades\Route;
 
 // Fil public (CONTEXTE §5, §8)
@@ -29,6 +33,36 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {
     Route::post('/publication/{publication}/commentaires', [InteractionController::class, 'commenter'])->name('publications.commenter');
     Route::delete('/commentaires/{commentaire}', [InteractionController::class, 'supprimerCommentaire'])->name('commentaires.destroy');
     Route::post('/publication/{publication}/signaler', [InteractionController::class, 'signaler'])->name('publications.signaler');
+});
+
+Route::get('/publication/{slug}/contact', [PublicationController::class, 'contactExterne'])->middleware('throttle:30,1')->name('publications.contact');
+Route::post('/publication/{publication:slug}/repondre', [ReponseController::class, 'store'])
+    ->middleware(['auth', 'throttle:20,1'])->name('publications.repondre');
+
+// Publication par les membres (CONTEXTE §11.3, §11.9)
+Route::middleware('auth')->group(function () {
+    $parcours = ['emploi', 'service-offre', 'service-demande', 'formation'];
+
+    Route::get('/publier', [PublierController::class, 'choix'])->name('publier.choix');
+    Route::get('/publier/confirmation/{publication}', [PublierController::class, 'confirmation'])->name('publier.confirmation');
+    Route::get('/publier/{type}', [PublierController::class, 'formulaire'])->whereIn('type', $parcours)->name('publier.formulaire');
+    Route::post('/publier/{type}/apercu', [PublierController::class, 'apercu'])
+        ->whereIn('type', $parcours)->middleware('throttle:30,1')->name('publier.apercu');
+    Route::post('/publier/{type}', [PublierController::class, 'store'])
+        ->whereIn('type', $parcours)->middleware('throttle:publication')->name('publier.store');
+
+    Route::prefix('mon-espace')->name('espace.')->group(function () {
+        Route::get('/publications', [EspacePublicationController::class, 'index'])->name('publications.index');
+        Route::get('/publications/{publication}/modifier', [EspacePublicationController::class, 'edit'])->name('publications.edit');
+        Route::put('/publications/{publication}/modifier', [EspacePublicationController::class, 'update'])
+            ->middleware('throttle:publication')->name('publications.update');
+        Route::post('/publications/{publication}/cloturer', [EspacePublicationController::class, 'cloturer'])->name('publications.cloturer');
+        Route::post('/publications/{publication}/prolonger', [EspacePublicationController::class, 'prolonger'])->name('publications.prolonger');
+        Route::post('/publications/{publication}/dupliquer', [EspacePublicationController::class, 'dupliquer'])->name('publications.dupliquer');
+        Route::delete('/publications/{publication}', [EspacePublicationController::class, 'destroy'])->name('publications.destroy');
+        Route::get('/publications/{publication}/reponses', [EspaceReponseController::class, 'index'])->name('reponses.index');
+        Route::patch('/reponses/{reponse}', [EspaceReponseController::class, 'update'])->name('reponses.update');
+    });
 });
 
 // Référencement
