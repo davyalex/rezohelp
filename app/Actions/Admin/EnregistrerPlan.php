@@ -30,12 +30,16 @@ class EnregistrerPlan
         return DB::transaction(function () use ($plan, $attributs, $limites, $admin, $creation): Plan {
             $plan->fill($attributs);
             $differences = $this->differences($plan);
-            $plan->save();
 
+            // Un seul plan par défaut par cible (colonne unique cible_par_defaut) : l'ancien cède sa place d'abord.
             if ($plan->est_defaut) {
-                Plan::query()->where('cible', $plan->cible->value)->where('est_defaut', true)->whereKeyNot($plan->id)->get()
+                Plan::query()->where('cible', $plan->cible->value)->where('est_defaut', true)
+                    ->when($plan->exists, fn ($requete) => $requete->whereKeyNot($plan->id))
+                    ->get()
                     ->each(fn (Plan $autre) => $autre->forceFill(['est_defaut' => false])->save());
             }
+
+            $plan->save();
 
             $limitesAvant = $plan->limites()->pluck('valeur', 'cle')->map(fn ($v): string => (string) $v)->all();
             $this->synchroniserLimites($plan, $limites);

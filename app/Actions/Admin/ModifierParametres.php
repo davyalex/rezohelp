@@ -37,7 +37,8 @@ class ModifierParametres
                 $parametre->modifie_par = $admin->id;
                 $parametre->save();
 
-                $this->journaliser($admin, 'parametre.modifie', $parametre, ['cle' => $parametre->cle, 'avant' => $avant, 'apres' => $nouvelle]);
+                // Clé primaire textuelle : le paramètre est identifié dans les données, pas en sujet (sujet_id entier).
+                $this->journaliser($admin, 'parametre.modifie', null, ['cle' => $parametre->cle, 'avant' => $avant, 'apres' => $nouvelle]);
                 $modifies++;
             }
 
