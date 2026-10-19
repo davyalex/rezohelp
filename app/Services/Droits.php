@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\CibleOffre;
 use App\Enums\CleDroit;
+use App\Enums\MotifSms;
 use App\Enums\SousTypeService;
 use App\Enums\StatutAbonnement;
 use App\Enums\StatutPublication;
@@ -20,6 +21,7 @@ use App\Models\Parametre;
 use App\Models\PlanLimite;
 use App\Models\Publication;
 use App\Models\Reponse;
+use App\Models\SmsEnvoye;
 use App\Models\Utilisateur;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -166,6 +168,13 @@ final class Droits
                 : 0,
             CleDroit::AlertesMax => $this->titulaire instanceof Utilisateur
                 ? Alerte::query()->where('utilisateur_id', $this->titulaire->id)->where('active', true)->count()
+                : 0,
+            CleDroit::AlertesSmsParJour => $this->titulaire instanceof Utilisateur
+                ? SmsEnvoye::query()
+                    ->where('utilisateur_id', $this->titulaire->id)
+                    ->where('motif', MotifSms::Alerte->value)
+                    ->where('cree_le', '>=', Carbon::now()->startOfDay())
+                    ->count()
                 : 0,
             CleDroit::PublicationRemonteesMois => MiseEnAvant::query()
                 ->where('type', TypeMiseEnAvant::Remontee->value)

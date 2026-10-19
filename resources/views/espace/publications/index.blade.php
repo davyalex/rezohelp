@@ -71,6 +71,59 @@
                             <li>✉ {{ $publication->nb_reponses }} réponses</li>
                         </ul>
 
+                        @php
+                            $titulaire = $publication->entreprise_id ? 'entreprise:'.$publication->entreprise_id : 'utilisateur:'.$publication->auteur_id;
+                            $droitsTitulaire = $droits[$titulaire] ?? ['remontees' => 0, 'statistiques' => false];
+                        @endphp
+
+                        @if ($droitsTitulaire['statistiques'])
+                            <ul class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-700" aria-label="Statistiques détaillées">
+                                <li>💬 {{ $publication->nb_commentaires }} commentaires</li>
+                                <li>Taux de réponse : {{ $publication->nb_vues > 0 ? round($publication->nb_reponses * 100 / $publication->nb_vues, 1) : 0 }} %</li>
+                                <li>J’aime pour 100 vues : {{ $publication->nb_vues > 0 ? round($publication->nb_jaime * 100 / $publication->nb_vues, 1) : 0 }}</li>
+                            </ul>
+                        @endif
+
+                        @foreach ($publication->misesEnAvant as $miseEnAvant)
+                            <p class="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                                <strong>{{ $miseEnAvant->type === \App\Enums\TypeMiseEnAvant::UneCommune ? 'À la une' : 'Sponsorisé' }}</strong>
+                                @if ($miseEnAvant->suspendue_le)
+                                    · en pause tant que la publication n’est pas en ligne
+                                @elseif ($miseEnAvant->fin_le?->isFuture())
+                                    · jusqu’au {{ $miseEnAvant->fin_le->translatedFormat('j F à H\hi') }}
+                                @else
+                                    · terminé le {{ $miseEnAvant->fin_le?->translatedFormat('j F') }}
+                                @endif
+                                · {{ $miseEnAvant->nb_impressions }} affichages · {{ $miseEnAvant->nb_clics }} clics
+                            </p>
+                        @endforeach
+
+                        @if ($publication->statut === StatutPublication::Publiee)
+                            @can('mettreEnAvant', $publication)
+                                <div class="mt-3 flex flex-wrap gap-2" aria-label="Visibilité">
+                                    @if ($droitsTitulaire['remontees'] !== 0)
+                                        <form method="POST" action="{{ route('espace.publications.remonter', $publication->id) }}">
+                                            @csrf
+                                            <x-bouton variante="secondaire" class="min-h-11 text-sm">
+                                                ⬆ Remonter en tête du fil{{ $droitsTitulaire['remontees'] > 0 ? ' (incluse, '.$droitsTitulaire['remontees'].' restante(s))' : '' }}
+                                            </x-bouton>
+                                        </form>
+                                    @elseif ($produits->has('remontee'))
+                                        <x-formulaire-achat type="produit" :code="$produits['remontee']->code" :publication="$publication->id" :entreprise="$publication->entreprise_id" variante="secondaire">
+                                            ⬆ Remonter en tête du fil · {{ \App\Support\Montant::fcfa($produits['remontee']->prix_fcfa) }}
+                                        </x-formulaire-achat>
+                                    @endif
+                                    @foreach (['une_commune' => '⭐ À la une', 'sponsorise_fil' => '📣 Sponsoriser'] as $type => $libelle)
+                                        @if ($produits->has($type))
+                                            <x-formulaire-achat type="produit" :code="$produits[$type]->code" :publication="$publication->id" :entreprise="$publication->entreprise_id" variante="secondaire">
+                                                {{ $libelle }} {{ $produits[$type]->duree_jours }} j · {{ \App\Support\Montant::fcfa($produits[$type]->prix_fcfa) }}
+                                            </x-formulaire-achat>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            @endcan
+                        @endif
+
                         <div class="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
                             @can('update', $publication)
                                 <x-bouton :href="route('espace.publications.edit', $publication->id)" variante="secondaire" class="min-h-11 text-sm">

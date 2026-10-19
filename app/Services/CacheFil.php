@@ -15,8 +15,12 @@ use Illuminate\Contracts\Cache\Repository;
  *  - carte:{id}:{modifie_le_ts}        gabarit HTML d'une carte, 24 h ;
  *  - ref:{nom}                         référentiels, 24 h ;
  *  - compteurs:{nom}                   agrégats non sensibles, 10 min (expiration seule) ;
+ *  - droits:v{version}:{type}:{id}     droits effectifs d'un titulaire, 10 min (CONTEXTE §14.5) ;
+ *  - differe:{nom}:{id}                impressions / clics des mises en avant, vidés toutes les 5 min ;
+ *  - jeton:{nom}                       jetons d'accès des API externes ;
  *  - verrou:{clé}                      verrous Cache::lock contre l'effet ruée.
- * Aucune donnée propre à un utilisateur n'est stockée ici.
+ * Aucune donnée affichée propre à un utilisateur (j'aime, enregistré, notifications) n'est stockée ici :
+ * les droits ne servent qu'aux contrôles côté serveur.
  */
 class CacheFil
 {
@@ -32,6 +36,10 @@ class CacheFil
 
     /** Les compteurs différés survivent largement à l'intervalle de vidage (5 min). */
     public const int DUREE_DIFFERE = 3600;
+
+    public const string COMPTEUR_IMPRESSIONS = 'impressions';
+
+    public const string COMPTEUR_CLICS = 'clics';
 
     private const string CLE_VERSION = 'fil:version';
 
@@ -188,10 +196,20 @@ class CacheFil
         $index = "differe:{$nom}:index";
         $ids = $this->cache->get($index, []);
 
-        if (is_array($ids) && ! in_array($id, $ids, true)) {
-            $ids[] = $id;
-            $this->cache->put($index, $ids, self::DUREE_DIFFERE);
+        if (is_array($ids) && in_array($id, $ids, true)) {
+            return;
         }
+
+        // L'index est une lecture-écriture : sous verrou pour ne perdre aucun id.
+        $this->sousVerrou($index, function () use ($index, $id): void {
+            $ids = $this->cache->get($index, []);
+            $ids = is_array($ids) ? $ids : [];
+
+            if (! in_array($id, $ids, true)) {
+                $ids[] = $id;
+                $this->cache->put($index, $ids, self::DUREE_DIFFERE);
+            }
+        });
     }
 
     /**
@@ -201,11 +219,12 @@ class CacheFil
      */
     public function viderCompteursDifferes(string $nom): array
     {
-        $ids = $this->cache->pull("differe:{$nom}:index", []);
+        $ids = $this->cache->pull("differe:{$nom}:index");
         $valeurs = [];
 
         foreach (is_array($ids) ? $ids : [] as $id) {
-            $valeur = (int) $this->cache->pull("differe:{$nom}:{$id}", 0);
+            $valeur = $this->cache->pull("differe:{$nom}:{$id}");
+            $valeur = is_numeric($valeur) ? (int) $valeur : 0;
 
             if ($valeur > 0) {
                 $valeurs[(int) $id] = $valeur;

@@ -19,7 +19,9 @@ final class TexteSms
 
     public static function preparer(string $texte): string
     {
-        $texte = str_replace(['’', '‘', '«', '»', '“', '”', '–', '—', '…', "\u{00A0}", "\u{202F}"], ["'", "'", '"', '"', '"', '"', '-', '-', '...', ' ', ' '], $texte);
+        // Guillemets français : « dispo » → "dispo" (les espaces intérieures disparaissent).
+        $texte = (string) preg_replace(['/«\s*/u', '/\s*»/u'], '"', $texte);
+        $texte = str_replace(['’', '‘', '“', '”', '–', '—', '…', "\u{00A0}", "\u{202F}"], ["'", "'", '"', '"', '-', '-', '...', ' ', ' '], $texte);
         $texte = Str::ascii($texte);
 
         $propre = '';
@@ -46,7 +48,7 @@ final class TexteSms
             $coupe = substr($coupe, 0, $dernierEspace);
         }
 
-        return rtrim($coupe, " ,.;:-").self::SUITE;
+        return rtrim($coupe, ' ,.;:-').self::SUITE;
     }
 
     /**

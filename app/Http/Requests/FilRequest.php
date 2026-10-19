@@ -34,7 +34,16 @@ class FilRequest extends FormRequest
             'q' => ['nullable', 'string', 'max:100'],
             'curseur' => ['nullable', 'string', 'max:500'],
             'depuis' => ['nullable', 'date'],
+            'deja' => ['nullable', 'integer', 'min:0', 'max:100000'],
         ];
+    }
+
+    /**
+     * Nombre de cartes déjà affichées par le client (emplacements sponsorisés, §14.9).
+     */
+    public function deja(): int
+    {
+        return max(0, min(100000, $this->integer('deja')));
     }
 
     public function filtres(?TypePublication $type = null): FiltresFil

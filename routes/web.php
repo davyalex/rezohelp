@@ -4,17 +4,22 @@ use App\Http\Controllers\AlerteController;
 use App\Http\Controllers\Auth\ChangementMotDePasseController;
 use App\Http\Controllers\Auth\MotDePasseOublieController;
 use App\Http\Controllers\Auth\VerificationTelephoneController;
+use App\Http\Controllers\CommandeController;
+use App\Http\Controllers\Espace\AbonnementController;
 use App\Http\Controllers\Espace\EspaceController;
 use App\Http\Controllers\Espace\NotificationController;
 use App\Http\Controllers\Espace\ProfilController;
 use App\Http\Controllers\Espace\PublicationController as EspacePublicationController;
+use App\Http\Controllers\Espace\RecuController;
 use App\Http\Controllers\Espace\ReponseController as EspaceReponseController;
 use App\Http\Controllers\FilController;
 use App\Http\Controllers\InteractionController;
+use App\Http\Controllers\PaiementController;
 use App\Http\Controllers\PublicationController;
 use App\Http\Controllers\PublierController;
 use App\Http\Controllers\ReferencementController;
 use App\Http\Controllers\ReponseController;
+use App\Http\Controllers\TarifController;
 use Illuminate\Support\Facades\Route;
 
 // Fil public (CONTEXTE §5, §8)
@@ -25,6 +30,7 @@ Route::get('/formations', [FilController::class, 'index'])->defaults('type', 'fo
 Route::get('/recherche', [FilController::class, 'index'])->name('fil.recherche');
 Route::get('/fil/suite', [FilController::class, 'suite'])->name('fil.suite');
 Route::get('/fil/nouvelles', [FilController::class, 'nouvelles'])->middleware('throttle:30,1')->name('fil.nouvelles');
+Route::post('/mises-en-avant/{miseEnAvant}/clic', [FilController::class, 'clic'])->middleware('throttle:30,1')->name('mises-en-avant.clic');
 
 // Publications
 Route::get('/publication/{slug}', [PublicationController::class, 'show'])->name('publications.show');
@@ -92,10 +98,30 @@ Route::middleware('auth')->group(function () {
         Route::post('/publications/{publication}/prolonger', [EspacePublicationController::class, 'prolonger'])->name('publications.prolonger');
         Route::post('/publications/{publication}/dupliquer', [EspacePublicationController::class, 'dupliquer'])->name('publications.dupliquer');
         Route::delete('/publications/{publication}', [EspacePublicationController::class, 'destroy'])->name('publications.destroy');
+        Route::post('/publications/{publication}/remonter', [EspacePublicationController::class, 'remonter'])
+            ->middleware('throttle:10,1')->name('publications.remonter');
         Route::get('/publications/{publication}/reponses', [EspaceReponseController::class, 'index'])->name('reponses.index');
         Route::patch('/reponses/{reponse}', [EspaceReponseController::class, 'update'])->name('reponses.update');
+
+        // Abonnements et reçus (CONTEXTE §14.7, §14.11)
+        Route::get('/abonnement', [AbonnementController::class, 'index'])->name('abonnement');
+        Route::get('/recus/{commande}', [RecuController::class, 'show'])->name('recu');
+        Route::get('/recus/{commande}/pdf', [RecuController::class, 'pdf'])->name('recu.pdf');
     });
+
+    // Achats et essais (CONTEXTE §14.6, §14.7)
+    Route::post('/commandes', [CommandeController::class, 'store'])->middleware('throttle:10,1')->name('commandes.store');
+    Route::post('/essais', [CommandeController::class, 'essai'])->middleware('throttle:10,1')->name('essais.store');
+    Route::get('/paiements/retour/{commande}', [PaiementController::class, 'retour'])->name('paiements.retour');
+    Route::post('/paiements/simuler/{commande}', [PaiementController::class, 'simuler'])->middleware('throttle:10,1')->name('paiements.simuler');
 });
+
+// Tarifs (CONTEXTE §14.11)
+Route::get('/tarifs', [TarifController::class, 'index'])->name('tarifs');
+
+// Notification de la passerelle (webhook) : sans session ni CSRF, signature vérifiée (bootstrap/app.php).
+Route::match(['get', 'post'], '/paiements/notification/{passerelle}', [PaiementController::class, 'notification'])
+    ->where('passerelle', '[a-z]+')->middleware('throttle:120,1')->name('paiements.notification');
 
 // Référencement
 Route::get('/sitemap.xml', [ReferencementController::class, 'sitemap'])->name('referencement.sitemap');

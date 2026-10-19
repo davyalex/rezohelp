@@ -15,11 +15,14 @@ export function demarrerFil() {
     const fin = document.querySelector('[data-fin]');
     const squelette = document.getElementById('squelette-carte');
     let curseur = fil.dataset.curseur || '';
+    // Cartes du fil déjà affichées : le serveur place les cartes sponsorisées en conséquence.
+    let deja = Number(fil.dataset.deja || 0);
     let enCours = false;
 
     const urlSuite = () => {
         const url = new URL(fil.dataset.suite, window.location.origin);
         url.searchParams.set('curseur', curseur);
+        url.searchParams.set('deja', String(deja));
         return url;
     };
 
@@ -42,13 +45,16 @@ export function demarrerFil() {
             if (!reponse.ok) {
                 throw new Error(String(reponse.status));
             }
-            const html = await reponse.text();
+            const fragment = document.createElement('template');
+            fragment.innerHTML = await reponse.text();
             curseur = reponse.headers.get('X-Curseur-Suivant') || '';
+            deja += fragment.content.querySelectorAll('[data-carte]').length;
             squelettes.forEach((element) => element.remove());
-            fil.insertAdjacentHTML('beforeend', html);
+            fil.append(fragment.content);
             if (lienPlus && curseur) {
                 const url = new URL(lienPlus.href);
                 url.searchParams.set('curseur', curseur);
+                url.searchParams.set('deja', String(deja));
                 lienPlus.href = url;
             }
             if (!curseur) {
@@ -74,6 +80,28 @@ export function demarrerFil() {
     });
 
     surveillerNouvelles(fil);
+}
+
+/**
+ * Clics sur les cartes « Sponsorisé » / « À la une » : comptés sans retarder la navigation.
+ */
+export function suivreMisesEnAvant() {
+    const jeton = document.querySelector('meta[name="csrf-token"]')?.content;
+    if (!jeton || !('sendBeacon' in navigator)) {
+        return;
+    }
+
+    document.addEventListener('click', (evenement) => {
+        const lien = evenement.target.closest('a[href]');
+        const carte = lien?.closest('[data-mise-en-avant]');
+        if (!carte || carte.dataset.clicCompte) {
+            return;
+        }
+        carte.dataset.clicCompte = '1';
+        const donnees = new FormData();
+        donnees.append('_token', jeton);
+        navigator.sendBeacon(carte.dataset.miseEnAvant, donnees);
+    });
 }
 
 /**

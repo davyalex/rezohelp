@@ -19,6 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
             ExigerChangementMotDePasse::class,
         ]);
 
+        // Webhook des passerelles de paiement : authentifié par sa signature, pas par un jeton CSRF.
+        $middleware->validateCsrfTokens(except: ['paiements/notification/*']);
+
         $middleware->redirectUsersTo('/');
     })
     ->withExceptions(function (Exceptions $exceptions): void {

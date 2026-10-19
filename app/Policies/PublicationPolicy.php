@@ -84,6 +84,14 @@ class PublicationPolicy
     }
 
     /**
+     * Remontée et mises en avant (§14.9) : l'auteur, compte actif ; le statut est contrôlé par l'action.
+     */
+    public function mettreEnAvant(Utilisateur $utilisateur, Publication $publication): bool
+    {
+        return $utilisateur->id === $publication->auteur_id && ! $utilisateur->estSuspendu();
+    }
+
+    /**
      * Voir et traiter les réponses reçues.
      */
     public function voirReponses(Utilisateur $utilisateur, Publication $publication): bool

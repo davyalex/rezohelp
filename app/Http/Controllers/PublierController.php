@@ -17,12 +17,14 @@ use App\Models\Entreprise;
 use App\Models\Publication;
 use App\Models\Utilisateur;
 use App\Services\Droits;
+use App\Services\Offres;
 use App\Services\RemplissagePublication;
 use App\Services\RenduCarte;
 use App\Services\TelephoneService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
@@ -50,18 +52,23 @@ class PublierController extends Controller
             return view('publier.refus', ['message' => $autorisation->message()]);
         }
 
-        if (! $this->quotaDisponible($membre, $parcours)) {
-            return view('publier.quota-atteint', ['parcours' => $parcours]);
+        $restant = $this->quotaRestant($membre, $parcours);
+
+        if ($restant === 0) {
+            return self::quotaAtteint($membre, $parcours);
         }
 
-        return view('publier.formulaire', $this->donneesFormulaire($membre, $parcours, null, [
+        $donnees = $this->donneesFormulaire($membre, $parcours, null, [
             'telephone_contact' => $membre->telephone !== null ? app(TelephoneService::class)->formatNational($membre->telephone) : null,
             'afficher_telephone' => true,
             'whatsapp_meme_numero' => true,
             'nb_postes' => 1,
             'prix' => 0,
             'commune_id' => $membre->commune_id,
-        ]));
+        ]);
+
+        // « Il vous reste 1 offre gratuite ce mois-ci » (§14.11).
+        return view('publier.formulaire', [...$donnees, 'dernierQuota' => $restant === 1]);
     }
 
     /**
@@ -87,8 +94,8 @@ class PublierController extends Controller
                 $requete->photos(),
                 $requete->enBrouillon(),
             );
-        } catch (QuotaAtteintException $exception) {
-            return view('publier.quota-atteint', ['parcours' => $requete->parcours(), 'limite' => $exception->limite]);
+        } catch (QuotaAtteintException) {
+            return $this->quotaAtteint($requete->membre(), $requete->parcours());
         } catch (PublicationImpossibleException $exception) {
             return back()->withInput()->withErrors(['titre' => $exception->getMessage()]);
         }
@@ -123,24 +130,46 @@ class PublierController extends Controller
     }
 
     /**
-     * Le formulaire s'affiche si au moins un titulaire possible (le membre ou une de ses
-     * entreprises) a encore du quota pour ce type (§11.4).
+     * Écran « Quota atteint » avec les options d'achat et d'essai pertinentes (§14.11).
      */
-    private function quotaDisponible(Utilisateur $membre, ParcoursPublication $parcours): bool
+    public static function quotaAtteint(Utilisateur $membre, ParcoursPublication $parcours): View
+    {
+        $cle = PublierPublication::cleQuota($parcours);
+
+        return view('publier.quota-atteint', [
+            'parcours' => $parcours,
+            'options' => $cle !== null ? app(Offres::class)->pourQuotaAtteint($membre, self::titulairesPossibles($membre, $parcours), $cle) : [],
+        ]);
+    }
+
+    /**
+     * Le formulaire s'affiche si au moins un titulaire possible (le membre ou une de ses
+     * entreprises) a encore du quota pour ce type (§11.4) : plus grand reste, -1 = illimité.
+     */
+    private function quotaRestant(Utilisateur $membre, ParcoursPublication $parcours): int
     {
         $cle = PublierPublication::cleQuota($parcours);
 
         if ($cle === null) {
-            return true;
+            return CleDroit::ILLIMITE;
         }
 
+        $restants = self::titulairesPossibles($membre, $parcours)
+            ->map(fn (Utilisateur|Entreprise $titulaire): int => Droits::pour($titulaire)->restant($cle));
+
+        return $restants->contains(CleDroit::ILLIMITE) ? CleDroit::ILLIMITE : (int) $restants->max();
+    }
+
+    /**
+     * @return Collection<int, Utilisateur|Entreprise>
+     */
+    private static function titulairesPossibles(Utilisateur $membre, ParcoursPublication $parcours): Collection
+    {
         $titulaires = collect([$membre]);
 
-        if ($parcours !== ParcoursPublication::ServiceOffre) {
-            $titulaires = $titulaires->merge($membre->entreprises()->get());
-        }
-
-        return $titulaires->contains(fn (Utilisateur|Entreprise $titulaire): bool => Droits::pour($titulaire)->restant($cle) !== 0);
+        return $parcours === ParcoursPublication::ServiceOffre
+            ? $titulaires
+            : $titulaires->merge($membre->entreprises()->orderBy('nom')->get());
     }
 
     private function requete(ParcoursPublication $parcours): PublierPublicationRequest

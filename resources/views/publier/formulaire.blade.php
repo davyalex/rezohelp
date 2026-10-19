@@ -41,6 +41,15 @@
             <x-message type="erreur" class="mt-4">Merci de corriger les champs signalés ci-dessous.</x-message>
         @endif
 
+        @if ($dernierQuota ?? false)
+            <x-message type="info" class="mt-4">
+                {{ $parcours === \App\Enums\ParcoursPublication::Emploi
+                    ? 'Il vous reste 1 offre d’emploi gratuite ce mois-ci.'
+                    : 'Votre formule permet encore 1 publication de ce type en ligne.' }}
+                <a href="{{ route('espace.abonnement') }}" class="font-semibold underline">Voir les formules</a>
+            </x-message>
+        @endif
+
         <form method="POST" action="{{ $action }}" enctype="multipart/form-data" class="mt-4 space-y-4" novalidate
               x-data="formulairePublication(@js($publication ? null : 'resohelph-brouillon-'.$parcours->value), @js(route('publier.apercu', $parcours->value)), @js($parcours === ParcoursPublication::ServiceOffre && $publication === null))"
               @submit="oublier()" @change="proposerTitre($event)">

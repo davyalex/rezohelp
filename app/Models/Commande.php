@@ -94,6 +94,14 @@ class Commande extends Model
     }
 
     /**
+     * Plan ou produit acheté (relations plan / produit à précharger).
+     */
+    public function article(): Plan|Produit|null
+    {
+        return $this->article_type === TypeArticle::Plan ? $this->plan : $this->produit;
+    }
+
+    /**
      * @return BelongsTo<Publication, $this>
      */
     public function publication(): BelongsTo

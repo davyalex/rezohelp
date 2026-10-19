@@ -52,6 +52,32 @@ class RemonterPublication
     {
         $this->verifierPossible($publication);
 
+        return $this->appliquer($publication, $commande);
+    }
+
+    /**
+     * Remontée payée, à l'activation de la commande : le délai a été contrôlé à la commande.
+     * Si la publication est sortie du fil entre-temps, la remontée attend (suspendue) son retour.
+     */
+    public function payee(Publication $publication, Commande $commande): MiseEnAvant
+    {
+        if ($publication->statut === StatutPublication::Publiee) {
+            return $this->appliquer($publication, $commande);
+        }
+
+        $miseEnAvant = new MiseEnAvant([
+            'publication_id' => $publication->id,
+            'commande_id' => $commande->id,
+            'type' => TypeMiseEnAvant::Remontee,
+        ]);
+        $miseEnAvant->suspendue_le = now();
+        $miseEnAvant->save();
+
+        return $miseEnAvant;
+    }
+
+    private function appliquer(Publication $publication, ?Commande $commande): MiseEnAvant
+    {
         $publication->tri_le = now();
         $publication->save();
 

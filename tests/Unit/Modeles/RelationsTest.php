@@ -17,6 +17,7 @@ use App\Models\Produit;
 use App\Models\Publication;
 use App\Models\Utilisateur;
 use Database\Factories\PaysFactory;
+use Database\Seeders\ParametresSeeder;
 
 it('relie une publication à son auteur, son entreprise, sa catégorie, sa commune et ses détails', function () {
     $entreprise = Entreprise::factory()->create();
@@ -77,6 +78,8 @@ it('organise les catégories en arbre et les communes par pays', function () {
 });
 
 it('stocke les titulaires polymorphes sous leur alias français', function () {
+    // Un abonnement rafraîchit le badge des cartes, qui lit les paramètres (droits).
+    $this->seed(ParametresSeeder::class);
     $membre = Utilisateur::factory()->create();
     $entreprise = Entreprise::factory()->create();
     $plan = Plan::factory()->create();

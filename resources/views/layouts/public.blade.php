@@ -51,6 +51,9 @@
         @if (session('statut'))
             <x-message class="mb-4">{{ session('statut') }}</x-message>
         @endif
+        @if (session('erreur'))
+            <x-message type="erreur" class="mb-4">{{ session('erreur') }}</x-message>
+        @endif
 
         @yield('contenu')
     </main>

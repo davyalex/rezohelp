@@ -1,3 +1,6 @@
 @foreach ($salve->publications as $publication)
-    <li>{!! $rendu->rendre($publication) !!}</li>
+    @isset($sponsorisees[$loop->index])
+        {!! $rendu->rendreMiseEnAvant($sponsorisees[$loop->index]) !!}
+    @endisset
+    <li data-carte>{!! $rendu->rendre($publication) !!}</li>
 @endforeach

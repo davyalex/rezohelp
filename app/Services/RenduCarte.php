@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Enums\TypeMiseEnAvant;
 use App\Enums\TypePublication;
+use App\Models\MiseEnAvant;
 use App\Models\Parametre;
 use App\Models\Publication;
 use App\Models\Utilisateur;
@@ -64,7 +66,10 @@ class RenduCarte
         return isset($this->etat['enregistrees'][$publication->id]);
     }
 
-    public function rendre(Publication $publication): string
+    /**
+     * @param  ?string  $etiquette  « Sponsorisé » ou « À la une » pour une carte payée (§14.9)
+     */
+    public function rendre(Publication $publication, ?string $etiquette = null): string
     {
         $gabarit = $publication->exists && $publication->modifie_le !== null
             ? $this->cache->carte($publication->id, $publication->modifie_le->getTimestamp(), fn (): string => $this->gabarit($publication))
@@ -78,7 +83,22 @@ class RenduCarte
             JetonsCarte::DEPUIS => e(($publication->tri_le ?? $publication->publiee_le ?? now())->diffForHumans(['short' => true])),
             JetonsCarte::CSRF => csrf_token(),
             JetonsCarte::PREVENTION => $publication->type === TypePublication::Emploi ? $this->bandeauPrevention() : '',
+            JetonsCarte::ETIQUETTE => $etiquette !== null
+                ? '<span class="rounded bg-amber-100 px-1.5 font-semibold text-amber-900">'.e($etiquette).'</span> · '
+                : '',
         ]);
+    }
+
+    /**
+     * Carte mise en avant, dans son élément de liste : étiquette visible et suivi des clics (fil.js).
+     */
+    public function rendreMiseEnAvant(MiseEnAvant $mise): string
+    {
+        $etiquette = $mise->type === TypeMiseEnAvant::UneCommune ? 'À la une' : 'Sponsorisé';
+
+        return '<li data-mise-en-avant="'.route('mises-en-avant.clic', $mise->id).'">'
+            .$this->rendre($mise->publication, $etiquette)
+            .'</li>';
     }
 
     private function gabarit(Publication $publication): string

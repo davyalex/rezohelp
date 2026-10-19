@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Alerte\BasculerAlerte;
 use App\Actions\Alerte\EnregistrerAlerte;
+use App\Enums\CleDroit;
 use App\Enums\TypeContrat;
 use App\Enums\TypePublication;
 use App\Exceptions\QuotaAtteintException;
@@ -11,6 +12,7 @@ use App\Http\Requests\AlerteRequest;
 use App\Models\Alerte;
 use App\Models\Utilisateur;
 use App\Services\CorrespondanceAlertes;
+use App\Services\Offres;
 use App\Services\Referentiels;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,14 +24,19 @@ use Illuminate\View\View;
  */
 class AlerteController extends Controller
 {
-    public function index(Request $request, CorrespondanceAlertes $correspondance): View
+    public function index(Request $request, CorrespondanceAlertes $correspondance, Offres $offres): View
     {
-        $alertes = $this->membre($request)->alertes()->latest('cree_le')->latest('id')->get();
+        $membre = $this->membre($request);
+        $alertes = $membre->alertes()->latest('cree_le')->latest('id')->get();
 
         return view('alertes.index', [
             'alertes' => $alertes,
             'correspondance' => $correspondance,
             'autorisation' => Gate::inspect('create', Alerte::class),
+            // Juste après la création d'une alerte : « Recevez-la aussi par SMS » (§14.11).
+            'essaiSms' => $request->session()->has('alerte_creee')
+                ? $offres->essaiPour($membre, $membre, CleDroit::AlertesCanalSms)
+                : null,
         ]);
     }
 
@@ -64,7 +71,9 @@ class AlerteController extends Controller
     {
         $alerte = $enregistrer->executer($this->membre($request), $request->validated());
 
-        return redirect()->route('alertes.index')->with('statut', 'Alerte « '.$alerte->nom.' » créée. Vous serez prévenu des nouvelles publications.');
+        return redirect()->route('alertes.index')
+            ->with('statut', 'Alerte « '.$alerte->nom.' » créée. Vous serez prévenu des nouvelles publications.')
+            ->with('alerte_creee', true);
     }
 
     public function edit(Alerte $alerte): View

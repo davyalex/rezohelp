@@ -29,7 +29,7 @@
                 @endif
             </p>
             <p class="truncate text-sm text-slate-600">
-                {{ JetonsCarte::DEPUIS }}@if ($commune) · {{ $commune }}@endif
+                {{ JetonsCarte::ETIQUETTE }}{{ JetonsCarte::DEPUIS }}@if ($commune) · {{ $commune }}@endif
             </p>
         </div>
 

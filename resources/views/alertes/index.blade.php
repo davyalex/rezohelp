@@ -18,6 +18,15 @@
         @endif
         @error('alerte')<x-message type="erreur" class="mt-4">{{ $message }}</x-message>@enderror
 
+        @if ($essaiSms)
+            <x-incitation cle="essai-sms" titre="Recevez-la aussi par SMS — {{ $essaiSms->duree_essai_jours }} jours gratuits" class="mt-4">
+                <p>Soyez prévenu même sans connexion Internet. Sans engagement, rien n’est débité à la fin de l’essai.</p>
+                <div class="mt-3">
+                    <x-formulaire-essai :plan="$essaiSms->code">Essayer gratuitement</x-formulaire-essai>
+                </div>
+            </x-incitation>
+        @endif
+
         @if ($alertes->isEmpty())
             <div class="mt-6 rounded-2xl bg-white p-6 text-center shadow-sm ring-1 ring-slate-200/70">
                 <p class="font-semibold">Vous n’avez pas encore d’alerte.</p>

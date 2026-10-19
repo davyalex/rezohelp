@@ -23,6 +23,9 @@ final class JetonsCarte
 
     public const string PREVENTION = '⟦prevention⟧';
 
+    /** Étiquette « Sponsorisé » / « À la une » d'une carte mise en avant (vide sinon). */
+    public const string ETIQUETTE = '⟦etiquette⟧';
+
     /**
      * Retire les crochets des jetons d'un texte saisi par un membre,
      * pour qu'il ne puisse jamais être confondu avec un jeton.

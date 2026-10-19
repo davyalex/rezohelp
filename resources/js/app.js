@@ -1,7 +1,7 @@
 // Site public : Alpine.js pour les interactions légères, JS vanilla pour le fil (budget < 50 Ko).
 // jQuery et les plugins du back-office ne sont JAMAIS importés ici.
 import Alpine from 'alpinejs';
-import { demarrerFil } from './fil';
+import { demarrerFil, suivreMisesEnAvant } from './fil';
 import { envoyerFormulaire } from './requetes';
 import { formulairePublication } from './publication';
 
@@ -36,7 +36,28 @@ Alpine.data('bascule', (actif) => ({
     },
 }));
 
+// Incitation fermable : le choix est retenu dans ce navigateur (confort seulement).
+Alpine.data('incitation', (cle) => ({
+    visible: true,
+    init() {
+        try {
+            this.visible = window.localStorage.getItem(`incitation:${cle}`) === null;
+        } catch {
+            this.visible = true;
+        }
+    },
+    fermer() {
+        this.visible = false;
+        try {
+            window.localStorage.setItem(`incitation:${cle}`, '1');
+        } catch {
+            // Stockage indisponible : l'incitation reviendra à la prochaine visite.
+        }
+    },
+}));
+
 window.Alpine = Alpine;
 Alpine.start();
 
 demarrerFil();
+suivreMisesEnAvant();

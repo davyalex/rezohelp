@@ -185,3 +185,37 @@
 
 ### D-042 · 2026-10-19 · Suppression du compte par le membre
 - **Choix** : confirmation par le mot de passe. Sont effacés : nom, prénoms, téléphone, e-mail, commune, photo, rôles, alertes, notifications, enregistrements, codes OTP, sessions ; le compte est supprimé (soft delete) et ne peut plus se connecter. Sont conservés sous « Utilisateur supprimé » : publications, commentaires, réactions, réponses (sans numéro) ; les entreprises restent ; l'empreinte des essais gratuits reste (§14.6). Le numéro libéré peut servir à un nouveau compte.
+
+### D-043 · 2026-10-19 · Titulaire d'un achat
+- **Choix** : on achète pour soi ou pour une de ses entreprises (champ `entreprise_id`). Un plan doit viser une cible du titulaire (utilisateur : membre / artisan ; entreprise : recruteur / organisme, D-033). Un produit ne vérifie pas la cible : l'offre d'emploi à l'unité vaut aussi pour un particulier qui recrute, et une remontée ou une mise en avant exige une publication **en ligne** du titulaire.
+- **Raison** : la colonne `produits.cible` sert au classement ; un particulier bloqué à 1 offre doit pouvoir en acheter une.
+
+### D-044 · 2026-10-19 · Webhook de paiement
+- **Choix** : `GET` répond 200 sans rien traiter (contrôle de disponibilité de l'URL par la passerelle) ; chaque `POST` est journalisé dans `notifications_paiement` ; signature invalide → 403 ; référence absente → 422 ; une exception → 500, pour que la passerelle renvoie la notification (rien n'est activé à moitié : `ActiverCommande` est transactionnel). La commande est cherchée par `reference_passerelle` ; le statut revérifié et le montant comparé décident seuls. La page de retour ne déclenche jamais d'activation. Le guichet simulé n'existe qu'avec le driver `fake`, hors production.
+
+### D-045 · 2026-10-19 · Renouvellement et essai
+- **Choix** : un nouvel achat du même plan pendant une période **payée** commence à sa fin ; s'il n'y a qu'un essai ou une période en grâce, celle-ci est close (`expire`) et le plan payé démarre tout de suite. Les relances ne partent pas quand une période suivante est déjà payée.
+
+### D-046 · 2026-10-19 · Remontée payée
+- **Choix** : le délai de 24 h (`heures_entre_remontees`) est contrôlé **à la commande** ; à l'activation, la remontée payée est appliquée sans nouveau contrôle (le membre a payé). Si la publication est sortie du fil entre-temps, la remontée est gardée en pause (`suspendue_le`) et appliquée à son retour en ligne. Les remontées incluses (`publication.remontees_mois`) se déclenchent depuis « Mes publications » sans paiement.
+
+### D-047 · 2026-10-19 · Emplacements « Sponsorisé »
+- **Choix** : « fil général » = sans commune, catégorie, contrat, « Aujourd'hui » ni recherche ; l'onglet de type est permis et ne montre que des cartes sponsorisées du même type. Les rangs se comptent sur les cartes du fil seules : une carte sponsorisée avant la carte n° k quand `(deja + rang) % frequence_sponsorise = 0`. Une carte déjà présente dans la salve n'est pas injectée. Rotation : la mise en avant affichée le moins récemment passe en premier (`derniere_impression_le`, mise à jour à l'affichage). Un fragment contenant une carte sponsorisée est servi en `private, no-store`. Sans JavaScript, « Charger plus » transmet aussi `deja`.
+
+### D-048 · 2026-10-19 · Bloc « À la une »
+- **Choix** : uniquement sur la première salve d'un fil filtré sur une commune (la commune de la mise en avant) et / ou une catégorie (celle de la publication), hors recherche ; au plus `max_cartes_une` cartes, même rotation ; ces cartes ne sont pas répétées dans la salve affichée (le curseur, lui, ne change pas).
+
+### D-049 · 2026-10-19 · Affichages et clics
+- **Choix** : un affichage est compté quand le serveur insère la carte ; un clic est envoyé par `navigator.sendBeacon` (avec le jeton CSRF) vers `POST /mises-en-avant/{id}/clic`, une fois par carte et par page, sans retarder la navigation (sans JavaScript, le clic n'est pas compté). Seule une mise en avant en cours compte. Report en base toutes les 5 minutes ; l'index des compteurs en cache est mis à jour sous verrou.
+
+### D-050 · 2026-10-19 · Plafond SMS et récapitulatif de 19h00
+- **Choix** : `alertes.sms_par_jour` compte les SMS de motif `alerte` du jour ; au-delà, la correspondance est notée `sms_en_attente` et la notification reste dans « Mon espace ». À 19h00, un seul SMS par membre (« N autre(s) publication(s) correspondent à vos alertes aujourd'hui », lien vers les notifications), qui ne compte pas dans le plafond ; les correspondances sont soldées même si le canal SMS a été perdu entre-temps. `AlerteCorrespondante` est envoyée directement par le job `CorrespondreAlertes` (déjà en file) pour que la ligne `sms_envoyes` existe aussitôt et que le plafond reste exact ; l'envoi réel du SMS reste en file.
+
+### D-051 · 2026-10-19 · Statistiques avancées
+- **Choix** : tout auteur voit vues, j'aime, partages et réponses (§11.7) ainsi que les affichages et clics de ses mises en avant (§14.9). `statistiques.avancees` ajoute les commentaires, le taux de réponse (réponses / vues) et les j'aime pour 100 vues.
+
+### D-052 · 2026-10-19 · Incitations
+- **Choix** : l'encart SMS ne s'affiche que juste après la création d'une alerte, si un essai qui ouvre `alertes.canal_sms` est encore disponible pour ce numéro ; l'écran « Quota atteint » propose, pour chaque titulaire possible, l'offre à l'unité (emploi) et l'essai d'une formule qui relève la limite ; « Il vous reste 1 offre » s'affiche quand le meilleur reste parmi les titulaires possibles vaut 1. Une incitation fermée reste fermée dans ce navigateur (`localStorage`, simple confort).
+
+### D-053 · 2026-10-19 · Reçus et CinetPay
+- **Choix** : les mentions légales du reçu acceptent des balises simples sans attribut (`p`, `br`, `strong`, `em`, `ul`, `li`) ; PDF A5 par dompdf ; reçu visible pour une commande payée ou remboursée. Le jeton `x-token` de CinetPay est calculé sur les champs `cpm_*` dans l'ordre de la documentation CinetPay : **à confirmer en bac à sable** avant la mise en production.

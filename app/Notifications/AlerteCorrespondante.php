@@ -9,19 +9,18 @@ use App\Notifications\Canaux\MessageSms;
 use App\Notifications\Canaux\SmsChannel;
 use App\Services\Referentiels;
 use App\Support\TexteSms;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
 /**
  * Une nouvelle publication correspond à une alerte instantanée.
  * Toujours dans « Mon espace » ; aussi par SMS quand le membre y a droit
  * (alertes.canal_sms, numéro vérifié, plafond du jour non atteint — décidé par CorrespondreAlertes).
+ *
+ * Envoyée directement depuis le job CorrespondreAlertes (déjà en file) : le SMS est journalisé
+ * tout de suite dans sms_envoyes, ce qui rend le plafond quotidien exact ; l'envoi réel reste en file.
  */
-class AlerteCorrespondante extends Notification implements ShouldQueue
+class AlerteCorrespondante extends Notification
 {
-    use Queueable;
-
     public function __construct(
         public readonly Publication $publication,
         public readonly Alerte $alerte,

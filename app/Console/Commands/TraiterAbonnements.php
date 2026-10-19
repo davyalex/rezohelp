@@ -148,10 +148,11 @@ class TraiterAbonnements extends Command
             return;
         }
 
-        $membre->alertes()->where('active', true)
+        $gardees = $membre->alertes()->where('active', true)
             ->orderBy('cree_le')->orderBy('id')
-            ->get()
-            ->slice($limite)
-            ->each(fn ($alerte) => $alerte->forceFill(['active' => false])->save());
+            ->limit($limite)
+            ->pluck('id');
+
+        $membre->alertes()->where('active', true)->whereNotIn('id', $gardees)->update(['active' => false]);
     }
 }

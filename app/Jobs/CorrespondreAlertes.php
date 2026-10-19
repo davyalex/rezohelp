@@ -4,11 +4,9 @@ namespace App\Jobs;
 
 use App\Enums\CleDroit;
 use App\Enums\FrequenceAlerte;
-use App\Enums\MotifSms;
 use App\Enums\StatutPublication;
 use App\Models\Alerte;
 use App\Models\Publication;
-use App\Models\SmsEnvoye;
 use App\Models\Utilisateur;
 use App\Notifications\AlerteCorrespondante;
 use App\Services\CorrespondanceAlertes;
@@ -88,23 +86,7 @@ class CorrespondreAlertes implements ShouldQueue
      */
     private function canalSms(Utilisateur $membre): bool
     {
-        if (! $this->aLeCanalSms($membre)) {
-            return false;
-        }
-
-        $plafond = Droits::pour($membre)->limite(CleDroit::AlertesSmsParJour);
-
-        if ($plafond === CleDroit::ILLIMITE) {
-            return true;
-        }
-
-        $envoyesAujourdhui = SmsEnvoye::query()
-            ->where('utilisateur_id', $membre->id)
-            ->where('motif', MotifSms::Alerte->value)
-            ->where('cree_le', '>=', now()->startOfDay())
-            ->count();
-
-        return $envoyesAujourdhui < $plafond;
+        return $this->aLeCanalSms($membre) && Droits::pour($membre)->restant(CleDroit::AlertesSmsParJour) !== 0;
     }
 
     private function aLeCanalSms(Utilisateur $membre): bool

@@ -114,7 +114,7 @@ class ActiverCommande
         $publication = Publication::query()->findOrFail($commande->publication_id);
 
         if ($produit->type === TypeProduit::Remontee) {
-            $this->remonter->executer($publication, $commande);
+            $this->remonter->payee($publication, $commande);
 
             return;
         }

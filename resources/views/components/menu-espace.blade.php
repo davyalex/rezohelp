@@ -5,6 +5,7 @@
         ['route' => 'alertes.index', 'libelle' => 'Alertes', 'icone' => '🔔', 'actif' => request()->routeIs('alertes.*')],
         ['route' => 'espace.notifications', 'libelle' => 'Notifications', 'icone' => '📬', 'actif' => request()->routeIs('espace.notifications*')],
         ['route' => 'espace.enregistres', 'libelle' => 'Enregistrés', 'icone' => '🔖', 'actif' => request()->routeIs('espace.enregistres')],
+        ['route' => 'espace.abonnement', 'libelle' => 'Abonnement', 'icone' => '⭐', 'actif' => request()->routeIs('espace.abonnement', 'espace.recu*')],
         ['route' => 'espace.profil', 'libelle' => 'Profil', 'icone' => '👤', 'actif' => request()->routeIs('espace.profil', 'espace.numero')],
     ];
 @endphp

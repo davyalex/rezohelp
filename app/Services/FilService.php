@@ -28,7 +28,7 @@ class FilService
      */
     public const array COLONNES_CARTE = [
         'id', 'type', 'sous_type', 'statut', 'titre', 'slug', 'extrait', 'categorie_id', 'commune_id',
-        'auteur_id', 'entreprise_id', 'auteur_nom_affiche', 'auteur_avatar_url', 'auteur_verifie',
+        'auteur_id', 'entreprise_id', 'auteur_nom_affiche', 'auteur_avatar_url', 'auteur_verifie', 'auteur_badge',
         'faits_cles', 'image_url', 'image_largeur', 'image_hauteur', 'source', 'source_nom',
         'nb_jaime', 'nb_commentaires', 'publiee_le', 'tri_le', 'code_court', 'modifie_le',
     ];

@@ -111,6 +111,16 @@
                 </button>
             </div>
 
+            @if ($aLaUne->isNotEmpty())
+                <section aria-label="À la une" class="mb-4">
+                    <ul class="space-y-4">
+                        @foreach ($aLaUne as $miseEnAvant)
+                            {!! $rendu->rendreMiseEnAvant($miseEnAvant) !!}
+                        @endforeach
+                    </ul>
+                </section>
+            @endif
+
             @if ($salve->publications->isEmpty())
                 <div class="rounded-2xl bg-white p-6 text-center shadow-sm ring-1 ring-slate-200/70">
                     <p class="text-lg font-semibold">Aucune publication ne correspond pour le moment.</p>
@@ -124,9 +134,13 @@
                     data-suite="{{ route('fil.suite', array_merge($filtres->parametres(), ['type' => $filtres->type?->value])) }}"
                     data-nouvelles="{{ route('fil.nouvelles', array_merge($filtres->parametres(), ['type' => $filtres->type?->value])) }}"
                     data-depuis="{{ $premiere?->tri_le?->toIso8601String() }}"
-                    data-curseur="{{ $salve->curseurSuivant }}">
+                    data-curseur="{{ $salve->curseurSuivant }}"
+                    data-deja="{{ $deja + $salve->publications->count() }}">
                     @foreach ($salve->publications as $publication)
-                        <li>{!! $rendu->rendre($publication) !!}</li>
+                        @isset($sponsorisees[$loop->index])
+                            {!! $rendu->rendreMiseEnAvant($sponsorisees[$loop->index]) !!}
+                        @endisset
+                        <li data-carte>{!! $rendu->rendre($publication) !!}</li>
                         @if ($loop->iteration === min(5, $loop->count))
                             <li>@include('fil._bloc-alerte')</li>
                         @endif
@@ -144,7 +158,7 @@
 
                 <div id="fin-fil" class="py-6 text-center">
                     @if ($salve->curseurSuivant)
-                        <a href="{{ $filtres->url(['curseur' => $salve->curseurSuivant]) }}" data-charger-plus
+                        <a href="{{ $filtres->url(['curseur' => $salve->curseurSuivant, 'deja' => (string) ($deja + $salve->publications->count())]) }}" data-charger-plus
                            class="inline-flex min-h-11 items-center rounded-full bg-white px-5 font-semibold text-brand ring-1 ring-slate-300 hover:bg-slate-50">
                             Charger plus
                         </a>

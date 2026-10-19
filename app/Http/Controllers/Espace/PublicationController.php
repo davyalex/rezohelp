@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers\Espace;
 
+use App\Actions\Commande\RemonterPublication;
 use App\Actions\Publication\CloturerPublication;
 use App\Actions\Publication\DupliquerPublication;
 use App\Actions\Publication\ModifierPublication;
 use App\Actions\Publication\ProlongerPublication;
+use App\Enums\CleDroit;
 use App\Enums\ParcoursPublication;
 use App\Enums\StatutPublication;
+use App\Enums\TypeMiseEnAvant;
+use App\Enums\TypeProduit;
+use App\Exceptions\OperationImpossibleException;
 use App\Exceptions\PublicationImpossibleException;
 use App\Exceptions\QuotaAtteintException;
 use App\Http\Controllers\Controller;
@@ -18,8 +23,11 @@ use App\Http\Requests\Publication\PublierFormationRequest;
 use App\Http\Requests\Publication\PublierPublicationRequest;
 use App\Http\Requests\Publication\PublierServiceDemandeRequest;
 use App\Http\Requests\Publication\PublierServiceOffreRequest;
+use App\Models\Entreprise;
 use App\Models\Publication;
 use App\Models\Utilisateur;
+use App\Services\Droits;
+use App\Services\Offres;
 use App\Services\RemplissagePublication;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,16 +40,40 @@ class PublicationController extends Controller
 {
     public const int PAR_PAGE = 15;
 
-    public function index(Request $request): View
+    public function index(Request $request, Offres $offres): View
     {
+        $membre = $this->membre($request);
         $publications = Publication::query()
-            ->where('auteur_id', $this->membre($request)->id)
-            ->select(['id', 'auteur_id', 'type', 'sous_type', 'statut', 'titre', 'slug', 'motif_rejet', 'motif_rejet_detail', 'motif_cloture',
-                'nb_vues', 'nb_jaime', 'nb_partages', 'nb_reponses', 'nb_prolongations', 'publiee_le', 'expire_le', 'cree_le'])
+            ->where('auteur_id', $membre->id)
+            ->select(['id', 'auteur_id', 'entreprise_id', 'type', 'sous_type', 'statut', 'titre', 'slug', 'motif_rejet', 'motif_rejet_detail', 'motif_cloture',
+                'nb_vues', 'nb_jaime', 'nb_commentaires', 'nb_partages', 'nb_reponses', 'nb_prolongations', 'publiee_le', 'expire_le', 'cree_le'])
+            ->with(['misesEnAvant' => fn ($requete) => $requete
+                ->where('type', '!=', TypeMiseEnAvant::Remontee->value)
+                ->where(fn ($r) => $r->whereNull('fin_le')->orWhere('fin_le', '>', now()->subDays(30)))
+                ->latest('cree_le')])
             ->latest('cree_le')->latest('id')
             ->paginate(self::PAR_PAGE);
 
-        return view('espace.publications.index', ['publications' => $publications]);
+        // Droits de chaque titulaire présent sur la page : remontées incluses, statistiques avancées (§14.3).
+        $titulaires = collect([$membre])->concat(
+            Entreprise::query()->whereIn('id', $publications->pluck('entreprise_id')->filter()->unique())->get(['id', 'nom', 'proprietaire_id']),
+        );
+        $droits = $titulaires->mapWithKeys(function (Utilisateur|Entreprise $titulaire): array {
+            $droits = Droits::pour($titulaire);
+
+            return [$titulaire->getMorphClass().':'.$titulaire->getKey() => [
+                'remontees' => $droits->restant(CleDroit::PublicationRemonteesMois),
+                'statistiques' => $droits->peut(CleDroit::StatistiquesAvancees),
+            ]];
+        });
+
+        return view('espace.publications.index', [
+            'publications' => $publications,
+            'droits' => $droits,
+            'produits' => collect([TypeProduit::Remontee, TypeProduit::UneCommune, TypeProduit::SponsoriseFil])
+                ->mapWithKeys(fn (TypeProduit $type): array => [$type->value => $offres->produit($type)])
+                ->filter(),
+        ]);
     }
 
     public function edit(Request $request, Publication $publication, RemplissagePublication $remplissage): View
@@ -63,8 +95,8 @@ class PublicationController extends Controller
 
         try {
             $publication = $modifier->executer($publication, $requete->membre(), $requete->validated(), $requete->photos(), $requete->enBrouillon());
-        } catch (QuotaAtteintException $exception) {
-            return view('publier.quota-atteint', ['parcours' => $requete->parcours(), 'limite' => $exception->limite]);
+        } catch (QuotaAtteintException) {
+            return PublierController::quotaAtteint($requete->membre(), $requete->parcours());
         } catch (PublicationImpossibleException $exception) {
             return back()->withInput()->withErrors(['titre' => $exception->getMessage()]);
         }
@@ -106,6 +138,24 @@ class PublicationController extends Controller
 
         return redirect()->route('espace.publications.edit', $copie->id)
             ->with('statut', 'Copie créée en brouillon : modifiez-la puis publiez-la.');
+    }
+
+    /**
+     * Remontée incluse dans la formule (publication.remontees_mois) ; au-delà, elle s'achète.
+     */
+    public function remonter(Request $request, Publication $publication, RemonterPublication $remonter): RedirectResponse
+    {
+        $this->authorize('mettreEnAvant', $publication);
+
+        try {
+            $remonter->incluse($publication, $publication->entreprise ?? $this->membre($request));
+        } catch (QuotaAtteintException) {
+            return back()->with('erreur', 'Vous avez utilisé toutes les remontées incluses dans votre formule ce mois-ci.');
+        } catch (OperationImpossibleException $exception) {
+            return back()->with('erreur', $exception->getMessage());
+        }
+
+        return back()->with('statut', 'Votre publication est remontée en tête du fil.');
     }
 
     public function destroy(Publication $publication): RedirectResponse

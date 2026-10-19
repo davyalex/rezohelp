@@ -20,6 +20,7 @@
                 ['route' => 'alertes.index', 'titre' => 'Mes alertes', 'detail' => $nbAlertes.' alerte(s) active(s)', 'icone' => '🔔'],
                 ['route' => 'espace.notifications', 'titre' => 'Notifications', 'detail' => $nbNonLues.' non lue(s)', 'icone' => '📬'],
                 ['route' => 'espace.enregistres', 'titre' => 'Enregistrés', 'detail' => $nbEnregistres.' publication(s)', 'icone' => '🔖'],
+                ['route' => 'espace.abonnement', 'titre' => 'Mon abonnement', 'detail' => 'Formules, compteurs et reçus', 'icone' => '⭐'],
             ] as $carte)
                 <li>
                     <a href="{{ route($carte['route']) }}" class="flex min-h-24 items-center gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70 hover:ring-brand">
