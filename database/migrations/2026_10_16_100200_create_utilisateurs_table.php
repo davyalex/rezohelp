@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('mot_de_passe');
             $table->foreignId('commune_id')->nullable()->constrained('communes')->nullOnDelete();
             $table->string('confiance', 20)->default('nouveau');
+            $table->timestamp('restriction_levee_le')->nullable()->comment('rejets et signalements antérieurs ignorés par le calcul de confiance');
             $table->timestamp('derniere_connexion_le')->nullable();
             $table->timestamp('suspendu_le')->nullable();
             $table->timestamp('suspendu_jusqu_au')->nullable();

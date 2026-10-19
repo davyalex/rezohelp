@@ -62,6 +62,7 @@ class Utilisateur extends Authenticatable implements HasMedia
             'telephone' => TelephoneE164::class.':pays_code',
             'mot_de_passe' => 'hashed',
             'confiance' => ConfianceUtilisateur::class,
+            'restriction_levee_le' => 'datetime',
             'telephone_verifie_le' => 'datetime',
             'derniere_connexion_le' => 'datetime',
             'suspendu_le' => 'datetime',

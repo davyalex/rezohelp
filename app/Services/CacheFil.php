@@ -18,6 +18,7 @@ use Illuminate\Contracts\Cache\Repository;
  *  - droits:v{version}:{type}:{id}     droits effectifs d'un titulaire, 10 min (CONTEXTE §14.5) ;
  *  - differe:{nom}:{id}                impressions / clics des mises en avant, vidés toutes les 5 min ;
  *  - jeton:{nom}                       jetons d'accès des API externes ;
+ *  - admin:{nom}                       agrégats non sensibles du tableau de bord, 5 min ;
  *  - verrou:{clé}                      verrous Cache::lock contre l'effet ruée.
  * Aucune donnée affichée propre à un utilisateur (j'aime, enregistré, notifications) n'est stockée ici :
  * les droits ne servent qu'aux contrôles côté serveur.
@@ -36,6 +37,9 @@ class CacheFil
 
     /** Les compteurs différés survivent largement à l'intervalle de vidage (5 min). */
     public const int DUREE_DIFFERE = 3600;
+
+    /** Agrégats du tableau de bord admin (seule exception à « pas de cache admin », §13.3.A). */
+    public const int DUREE_ADMIN = 300;
 
     public const string COMPTEUR_IMPRESSIONS = 'impressions';
 
@@ -182,6 +186,31 @@ class CacheFil
     public function jeton(string $nom, int $duree, Closure $obtention): string
     {
         return (string) $this->cache->remember("jeton:{$nom}", $duree, $obtention);
+    }
+
+    /**
+     * Agrégat du tableau de bord admin sous la clé « admin:{nom} », 5 min.
+     *
+     * @template T
+     *
+     * @param  Closure(): T  $calcul
+     * @return T
+     */
+    public function admin(string $nom, Closure $calcul): mixed
+    {
+        return $this->memoriser("admin:{$nom}", self::DUREE_ADMIN, $calcul);
+    }
+
+    /**
+     * Les référentiels mis en cache (bouton « Vider les référentiels » du back-office).
+     *
+     * @param  list<string>  $noms
+     */
+    public function oublierReferentiels(array $noms): void
+    {
+        foreach ($noms as $nom) {
+            $this->oublierReferentiel($nom);
+        }
     }
 
     /**

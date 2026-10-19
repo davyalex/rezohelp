@@ -11,7 +11,7 @@
 | 4 | Publication par les utilisateurs | terminé (tag `lot-4`) |
 | 5 | Mon espace, alertes et notifications | terminé (tag `lot-5`) |
 | 6 | Abonnements, paiements, SMS, visibilité payante | terminé (tag `lot-6`) |
-| 7 | Back-office | à faire |
+| 7 | Back-office | en cours (pause, voir « Point de reprise ») |
 | 8 | Import de la veille et enrichissement IA | à faire |
 | 9 | PWA, performance, accessibilité, sécurité | à faire |
 | 10 | Recette finale et mise en production | à faire |
@@ -359,3 +359,33 @@
 - [ ] Recette CinetPay en bac à sable : vérifier la liste des champs signés du jeton `x-token` (D-053) et la notification réelle.
 
 ---
+
+## Lot 7 — Back-office
+
+### Plan d'implémentation
+
+- **Socle** : `routes/admin.php` (préfixe `/admin`, noms `admin.*`, `auth` + `role:administrateur|moderateur`, puis `can:<permission>` par module, en-tête `Cache-Control: no-store`) ; alias de middleware Spatie ; layout `admin/layout.blade.php` (barre latérale repliable selon `@can`, compteurs « en attente » et « signalements » dans l'en-tête) ; composants `x-admin.*` (`table`, `flash`, `badge-statut`, `carte-stat`, `filtres`) ; `admin.js` : listes DataTables **côté serveur** déclarées par attributs `data-*` (pas de script en ligne), filtres transmis à l'Ajax, Select2 (Ajax pour utilisateurs, entreprises, publications), SweetAlert2 pour les confirmations et les messages.
+- **Listes** : une classe par liste dans `App\DataTables\*` (base `TableAdmin` sur Yajra `DataTables::eloquent`), colonnes d'actions en vues partielles `admin/*/_actions.blade.php`.
+- **Journal** : trait `JournaliseActivite` sur toutes les actions `app/Actions/Admin/*` → `journal_activites` (auteur, action, sujet, avant / après, motif, IP).
+- **A — Tableau de bord** : `StatistiquesService` (publiées aujourd'hui par type, en attente, signalements ouverts, inscrits jour / 7 j, alertes actives, notifications du jour), cache `admin:compteurs` 5 min via `CacheFil` ; dernier import et bandeau rouge après 9 h sans import réussi ; graphique 30 jours en SVG ; raccourcis.
+- **B — Modération** : liste des `en_attente` (score croissant, cases à cocher, lot valider / rejeter), détail (carte identique au fil, signaux surlignés, source, historique de l'auteur, publications similaires), raccourcis clavier V / R / D / →, passage automatique à la suivante ; actions `ValiderPublication` (publiée, `publiee_le` et `tri_le`, `PublicationPubliee`, notification à l'auteur avec incitation de remontée), `RejeterPublication` (motif `MotifRejet` + texte), `MarquerDoublon`, `ModererLot`.
+- **C — Publications** : liste filtrable (type, statut, source, commune, catégorie, auteur, période, texte), modification, dépublication, prolongation, suppression ; commandes `publications:expirer` (02h00, avec la notification « expire dans 3 jours ») et `publications:purger` (hebdomadaire, supprimées depuis 90 j) ; `fil:vider-cache`.
+- **D — Signalements** : liste groupée par publication, décision `retablir | supprimer | supprimer_et_suspendre` (signalements traités, retenus ou non).
+- **E — Veille** : historique des imports et détail, sources (CRUD, publications importées et taux de rejet sur 30 j, source « Inconnue »), coût IA par mois ; boutons d'import au lot 8.
+- **F — Utilisateurs et entreprises** : recherche par téléphone normalisé ou par nom, fiche (rôles, publications, alertes, signalements reçus, sanctions), modification, suspension (motif, date de fin, publications dépubliées ; jamais soi-même), réactivation, mot de passe temporaire affiché une fois, rôles (jamais retirer son propre rôle d'administrateur), levée de la restriction de confiance, anonymisation ARTCI ; entreprises : vérification, fusion de deux fiches.
+- **G — Référentiels et paramètres** : catégories (arbre, icône, ordre par flèches, activation), communes, pays ; paramètres typés (`modifie_par`) ; vider le cache du fil et des référentiels.
+- **K — Plans et paiements** : plans (formulaire + éditeur de limites de toutes les clés `CleDroit` ; suppression interdite si souscrit), produits, abonnements (offrir avec motif, prolonger, résilier), commandes (détail, payload, revérifier, rembourser, reçu, export CSV), revenus (CA du mois par source, abonnements actifs par plan, essais et conversion, échéances à 7 j, coût SMS et IA).
+- **Tests** : accès modérateur / administrateur par module ; valider et rejeter (événement, notifications, confiance) ; actions groupées ; auto-suspension interdite ; anonymisation ; plan souscrit non supprimable ; limite modifiée → droits recalculés ; une ligne de journal par action ; listes DataTables (JSON serveur, filtres) ; expiration et purge.
+
+### Point de reprise (pause demandée par Alex pour tester, 19/10/2026)
+
+**Écrit et vérifié** (Pint, Larastan niveau 6 : 0 erreur ; `AccesAdminTest` : 51 tests verts ; `migrate:fresh --seed` + `DemoSeeder` ; build Vite) :
+- Socle : `routes/admin.php` (auth + `role:administrateur|moderateur` + `no-store`, `can:` par module), alias Spatie, layout et composants `x-admin.*`, `admin.js` (DataTables serveur par attributs, Select2 Ajax, SweetAlert2, raccourcis de modération), base `TableAdmin`, trait `JournaliseActivite`, `StatistiquesService` (cache `admin:*` 5 min).
+- Modules A, B, C, D, E (écrans), F, G, K complets : contrôleurs `Admin\*`, actions `Actions\Admin\*`, 13 listes `App\DataTables\*`, vues `admin/*`.
+- Commandes `publications:expirer` (02h00, avec le préavis de 3 jours), `publications:purger` (hebdomadaire, `jours_purge_publications`), `fil:vider-cache`.
+- Notifications `PublicationValidee` (avec incitation de remontée), `PublicationRejetee`, `PublicationExpireBientot`.
+- `utilisateurs.restriction_levee_le` (levée durable de la restriction) ; `DemoSeeder` : 20 annonces à modérer + 4 signalements.
+
+**Reste à faire pour le lot 7**
+1. Tests Pest des règles : valider / rejeter (événement, notifications, confiance), doublon, lot, auto-suspension interdite, rôle d'administrateur conservé, anonymisation, signalements (3 décisions), plan souscrit non supprimable, limite modifiée → droits recalculés, offrir / prolonger / résilier, remboursement, revérification, fusion d'entreprises, paramètres typés, déplacement des référentiels, une ligne de journal par action, `publications:expirer` et `publications:purger`, recherche par téléphone normalisé.
+2. `php artisan test --parallel`, docs (Fait, tests, écarts, À vérifier ; DECISIONS D-054 à D-057 : validation humaine hors `DeciderStatutPublication`, dépublication → en attente, suspension → publications en attente, arbre des catégories rendu par le serveur), commit « lot 7 » et tag `lot-7`.

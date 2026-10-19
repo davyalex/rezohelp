@@ -6,6 +6,7 @@ use App\Enums\FrequenceAlerte;
 use App\Enums\Modalite;
 use App\Enums\ModeCandidature;
 use App\Enums\ModeInscription;
+use App\Enums\MotifSignalement;
 use App\Enums\SourcePublication;
 use App\Enums\SousTypeService;
 use App\Enums\StatutPublication;
@@ -19,6 +20,7 @@ use App\Models\Commune;
 use App\Models\Entreprise;
 use App\Models\Publication;
 use App\Models\Reaction;
+use App\Models\Signalement;
 use App\Models\SourceVeille;
 use App\Models\Utilisateur;
 use App\Services\FaitsCles;
@@ -30,7 +32,8 @@ use RuntimeException;
 
 /**
  * Données de démonstration (local uniquement) : 20 membres, des entreprises,
- * 60 publications réparties sur les 3 types et les communes, des alertes et des réactions.
+ * 60 publications réparties sur les 3 types et les communes, des alertes et des réactions,
+ * une file de 20 annonces à modérer et quelques signalements pour le back-office.
  *
  * php artisan db:seed --class=DemoSeeder
  */
@@ -218,9 +221,64 @@ class DemoSeeder extends Seeder
             $publications->push($publication);
         }
 
+        $publications = $publications->concat($this->fileDeModeration($membres));
+
         $this->denormaliser($publications);
         $this->interagir($publications, $membres);
         $this->creerAlertes($membres);
+        $this->signaler($publications, $membres);
+    }
+
+    /**
+     * 20 annonces de services en attente, avec des scores et des signaux variés, pour modérer
+     * au clavier dans le back-office (critère d'acceptation du lot 7).
+     *
+     * @param  Collection<int, Utilisateur>  $membres
+     * @return \Illuminate\Support\Collection<int, Publication>
+     */
+    private function fileDeModeration(Collection $membres): \Illuminate\Support\Collection
+    {
+        $signaux = [[], [], ['expression_a_risque'], ['telephone_dans_texte'], ['majuscules', 'lien_raccourci'], ['salaire_hors_norme']];
+
+        return collect(range(0, 19))->map(function (int $i) use ($membres, $signaux): Publication {
+            [$metier, $categorie, $tarif, $unite] = self::SERVICES[$i % count(self::SERVICES)];
+            $commune = $this->communes[($i * 3) % $this->communes->count()];
+            $auteur = $membres[$i % $membres->count()];
+
+            $publication = $this->publier(TypePublication::Service, SousTypeService::Offre, "{$metier} à {$commune->nom} (n° ".($i + 1).')', $categorie, $auteur->id, null, 6, $commune);
+            $publication->detailService()->create([
+                'metier' => $metier,
+                'tarif_indicatif' => $tarif ?: null,
+                'unite_tarif' => $unite,
+                'zones_intervention' => [$commune->id],
+                'telephone_contact' => $auteur->telephone,
+                'afficher_telephone' => true,
+            ]);
+            $publication->forceFill([
+                'statut' => StatutPublication::EnAttente,
+                'score_fiabilite' => $i % 5 === 0 ? null : fake()->numberBetween(15, 95),
+                'signaux_risque' => $signaux[$i % count($signaux)],
+            ])->save();
+
+            return $publication;
+        });
+    }
+
+    /**
+     * Trois signalements « arnaque » sur une publication en ligne, un autre sur une deuxième.
+     *
+     * @param  \Illuminate\Support\Collection<int, Publication>  $publications
+     * @param  Collection<int, Utilisateur>  $membres
+     */
+    private function signaler(\Illuminate\Support\Collection $publications, Collection $membres): void
+    {
+        $enLigne = $publications->where('statut', StatutPublication::Publiee)->values();
+
+        foreach ($membres->take(3) as $membre) {
+            Signalement::query()->create(['publication_id' => $enLigne[0]->id, 'utilisateur_id' => $membre->id, 'motif' => MotifSignalement::Arnaque, 'commentaire' => 'On me demande des frais avant l’entretien.']);
+        }
+
+        Signalement::query()->create(['publication_id' => $enLigne[1]->id, 'utilisateur_id' => $membres[3]->id, 'motif' => MotifSignalement::Expiree, 'commentaire' => null]);
     }
 
     private function publier(

@@ -100,6 +100,28 @@ class Referentiels
     }
 
     /**
+     * Catégories actives d'un type pour une liste déroulante, sous-catégories en retrait.
+     *
+     * @return array<int, string>
+     */
+    public function optionsCategories(?TypePublication $type): array
+    {
+        $options = [];
+
+        foreach ($this->categoriesPrincipales($type) as $principale) {
+            $options[$principale['id']] = $principale['nom'];
+
+            foreach ($this->categories() as $categorie) {
+                if ($categorie['parent_id'] === $principale['id']) {
+                    $options[$categorie['id']] = '— '.$categorie['nom'];
+                }
+            }
+        }
+
+        return $options;
+    }
+
+    /**
      * Catégories principales d'un type (sans les sous-catégories).
      *
      * @return list<array{id: int, type: string, nom: string, slug: string, icone: ?string, parent_id: ?int}>

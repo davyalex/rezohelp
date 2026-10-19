@@ -15,7 +15,8 @@ use App\Models\Utilisateur;
  *  - restreint : rejets_arnaque_pour_restreint rejets pour arnaque, ou un signalement retenu ;
  *  - fiable : publications_pour_fiable publications validées et aucun signalement retenu ;
  *  - sinon nouveau.
- * Un compte restreint ne redevient jamais fiable tout seul : seul l'admin lève la restriction.
+ * Un compte restreint ne redevient jamais fiable tout seul : seul l'admin lève la restriction
+ * (restriction_levee_le : les rejets et signalements antérieurs ne comptent plus).
  */
 class MettreAJourConfiance
 {
@@ -26,14 +27,18 @@ class MettreAJourConfiance
         }
 
         $publications = Publication::withTrashed()->where('auteur_id', $utilisateur->id);
+        // Après une levée de restriction par l'admin, seuls les faits postérieurs comptent.
+        $depuis = $utilisateur->restriction_levee_le;
 
         $rejetsArnaque = (clone $publications)
             ->where('statut', StatutPublication::Rejetee->value)
             ->where('motif_rejet', MotifRejet::ArnaqueSuspectee->value)
+            ->when($depuis !== null, fn ($requete) => $requete->where('modifie_le', '>', $depuis))
             ->count();
 
         $signalementRetenu = Signalement::query()
             ->where('retenu', true)
+            ->when($depuis !== null, fn ($requete) => $requete->where('traite_le', '>', $depuis))
             ->whereIn('publication_id', (clone $publications)->select('id'))
             ->exists();
 

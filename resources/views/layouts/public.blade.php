@@ -35,6 +35,9 @@
                             <span aria-hidden="true" class="absolute right-0.5 top-0.5 min-w-5 rounded-full bg-red-600 px-1 text-center text-xs font-bold leading-5 text-white">{{ $nbNonLues > 9 ? '9+' : $nbNonLues }}</span>
                         @endif
                     </a>
+                    @can('tableau_de_bord.voir')
+                        <a href="{{ route('admin.tableau-de-bord') }}" class="hidden min-h-10 items-center text-sm font-semibold text-slate-700 hover:text-brand md:inline-flex">Administration</a>
+                    @endcan
                     <a href="{{ route('espace.index') }}" class="hidden min-h-10 items-center text-sm font-semibold text-slate-700 hover:text-brand md:inline-flex">Mon espace</a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf

@@ -9,6 +9,7 @@ use App\Models\Pays;
 use App\Models\Plan;
 use App\Models\Produit;
 use App\Models\Publication;
+use App\Models\Signalement;
 use App\Models\SourceVeille;
 use App\Models\Utilisateur;
 use Database\Seeders\DatabaseSeeder;
@@ -126,7 +127,10 @@ it('génère des données de démonstration cohérentes', function () {
 
     $publications = Publication::query()->get();
 
-    expect($publications)->toHaveCount(60)
+    // 60 publications réparties + une file de 20 annonces à modérer.
+    expect($publications)->toHaveCount(80)
+        ->and(Publication::query()->where('statut', 'en_attente')->count())->toBeGreaterThanOrEqual(20)
+        ->and(Signalement::query()->count())->toBe(4)
         ->and($publications->pluck('type')->unique())->toHaveCount(3)
         ->and($publications->pluck('commune_id')->filter()->unique()->count())->toBeGreaterThan(5)
         ->and(Utilisateur::query()->count())->toBe(21)

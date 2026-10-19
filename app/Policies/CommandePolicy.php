@@ -7,7 +7,7 @@ use App\Models\Commande;
 use App\Models\Utilisateur;
 
 /**
- * Une commande et son reçu ne sont visibles que par l'acheteur.
+ * Une commande et son reçu sont visibles par l'acheteur, et par l'équipe qui suit les paiements.
  */
 class CommandePolicy
 {
@@ -18,7 +18,7 @@ class CommandePolicy
 
     public function voirRecu(Utilisateur $membre, Commande $commande): bool
     {
-        return $this->view($membre, $commande)
+        return ($this->view($membre, $commande) || $membre->can('paiements.voir'))
             && $commande->numero_recu !== null
             && in_array($commande->statut, [StatutCommande::Payee, StatutCommande::Remboursee], true);
     }
