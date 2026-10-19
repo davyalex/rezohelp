@@ -171,3 +171,17 @@
 
 ### D-038 · 2026-10-19 · Score IA d'une publication native
 - **Choix** : pour une publication d'un membre, `EnrichirPublicationIA` ne réécrit pas le texte (réservé à la veille, lot 8) : il enregistre `score_fiabilite`, complète `signaux_risque`, journalise l'appel dans `appels_ia` (coût estimé d'après `CLAUDE_COUT_ENTREE_FCFA` / `CLAUDE_COUT_SORTIE_FCFA`) et remet en attente une publication en ligne sous `seuil_remise_en_attente`.
+
+### D-039 · 2026-10-19 · Correspondance des alertes
+- **Choix** : un critère vide accepte tout ; une alerte sur une catégorie principale couvre ses sous-catégories (métiers) ; **tous** les mots-clés doivent apparaître en début de mot dans le titre ou le contenu (sans accents ni casse) ; l'auteur de la publication et les comptes suspendus sont exclus ; un membre n'est notifié qu'une fois par publication même si plusieurs de ses alertes correspondent ; une alerte doit avoir au moins un critère.
+- **Raison** : le §10 laisse le choix FULLTEXT / LIKE ; les critères structurés restent en SQL (index), les mots-clés sont vérifiés sur les seules alertes candidates. Une alerte sans critère équivaudrait à recevoir tout le fil.
+
+### D-040 · 2026-10-19 · Récapitulatif quotidien
+- **Choix** : une notification par alerte quotidienne (nombre, 5 premiers titres, lien vers le fil filtré) ; les publications retirées du fil entre-temps sont écartées mais leurs paires sont soldées ; aucune notification immédiate pour une alerte quotidienne.
+
+### D-041 · 2026-10-19 · « Créer une alerte » sans compte
+- **Choix** : `/alertes/nouvelle` mémorise le formulaire pré-rempli comme page visée (`url.intended`) puis envoie vers `/inscription` ; après l'inscription et la vérification du numéro (ou « Vérifier plus tard »), le membre arrive sur le formulaire pré-rempli et confirme.
+- **Raison** : parcours §4.2 ; l'alerte n'est pas créée sans confirmation, pour que le membre voie et ajuste ses critères.
+
+### D-042 · 2026-10-19 · Suppression du compte par le membre
+- **Choix** : confirmation par le mot de passe. Sont effacés : nom, prénoms, téléphone, e-mail, commune, photo, rôles, alertes, notifications, enregistrements, codes OTP, sessions ; le compte est supprimé (soft delete) et ne peut plus se connecter. Sont conservés sous « Utilisateur supprimé » : publications, commentaires, réactions, réponses (sans numéro) ; les entreprises restent ; l'empreinte des essais gratuits reste (§14.6). Le numéro libéré peut servir à un nouveau compte.

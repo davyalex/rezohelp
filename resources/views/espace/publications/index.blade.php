@@ -11,6 +11,7 @@
 
 @section('contenu')
     <div class="mx-auto max-w-3xl">
+        <x-menu-espace />
         <div class="flex flex-wrap items-center justify-between gap-3">
             <h1 class="text-2xl font-bold">Mes publications</h1>
             <x-bouton :href="route('publier.choix')">+ Publier</x-bouton>

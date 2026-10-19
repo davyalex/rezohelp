@@ -125,7 +125,12 @@
                     data-nouvelles="{{ route('fil.nouvelles', array_merge($filtres->parametres(), ['type' => $filtres->type?->value])) }}"
                     data-depuis="{{ $premiere?->tri_le?->toIso8601String() }}"
                     data-curseur="{{ $salve->curseurSuivant }}">
-                    @include('fil._cartes')
+                    @foreach ($salve->publications as $publication)
+                        <li>{!! $rendu->rendre($publication) !!}</li>
+                        @if ($loop->iteration === min(5, $loop->count))
+                            <li>@include('fil._bloc-alerte')</li>
+                        @endif
+                    @endforeach
                 </ol>
 
                 <template id="squelette-carte">
@@ -151,6 +156,7 @@
 
         {{-- Colonne droite (desktop) --}}
         <aside class="hidden space-y-4 lg:block" aria-label="À découvrir">
+            @include('fil._bloc-alerte')
             @if ($communesPopulaires !== [])
                 <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70">
                     <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-600">Communes populaires</h2>

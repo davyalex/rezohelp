@@ -1,8 +1,12 @@
 <?php
 
+use App\Http\Controllers\AlerteController;
 use App\Http\Controllers\Auth\ChangementMotDePasseController;
 use App\Http\Controllers\Auth\MotDePasseOublieController;
 use App\Http\Controllers\Auth\VerificationTelephoneController;
+use App\Http\Controllers\Espace\EspaceController;
+use App\Http\Controllers\Espace\NotificationController;
+use App\Http\Controllers\Espace\ProfilController;
 use App\Http\Controllers\Espace\PublicationController as EspacePublicationController;
 use App\Http\Controllers\Espace\ReponseController as EspaceReponseController;
 use App\Http\Controllers\FilController;
@@ -35,6 +39,9 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {
     Route::post('/publication/{publication}/signaler', [InteractionController::class, 'signaler'])->name('publications.signaler');
 });
 
+// « Créer une alerte » depuis le fil : un visiteur passe d'abord par l'inscription.
+Route::get('/alertes/nouvelle', [AlerteController::class, 'depuisFil'])->name('alertes.depuis-fil');
+
 Route::get('/publication/{slug}/contact', [PublicationController::class, 'contactExterne'])->middleware('throttle:30,1')->name('publications.contact');
 Route::post('/publication/{publication:slug}/repondre', [ReponseController::class, 'store'])
     ->middleware(['auth', 'throttle:20,1'])->name('publications.repondre');
@@ -51,7 +58,32 @@ Route::middleware('auth')->group(function () {
     Route::post('/publier/{type}', [PublierController::class, 'store'])
         ->whereIn('type', $parcours)->middleware('throttle:publication')->name('publier.store');
 
+    // Alertes (CONTEXTE §10)
+    Route::prefix('mon-espace/alertes')->name('alertes.')->group(function () {
+        Route::get('/', [AlerteController::class, 'index'])->name('index');
+        Route::get('/creer', [AlerteController::class, 'create'])->name('create');
+        Route::post('/', [AlerteController::class, 'store'])->middleware('throttle:20,1')->name('store');
+        Route::get('/{alerte}/modifier', [AlerteController::class, 'edit'])->name('edit');
+        Route::put('/{alerte}', [AlerteController::class, 'update'])->name('update');
+        Route::post('/{alerte}/basculer', [AlerteController::class, 'basculer'])->name('basculer');
+        Route::delete('/{alerte}', [AlerteController::class, 'destroy'])->name('destroy');
+    });
+
     Route::prefix('mon-espace')->name('espace.')->group(function () {
+        Route::get('/', [EspaceController::class, 'index'])->name('index');
+        Route::get('/enregistres', [EspaceController::class, 'enregistres'])->name('enregistres');
+
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications');
+        Route::post('/notifications/tout-lu', [NotificationController::class, 'toutLu'])->name('notifications.tout-lu');
+        Route::get('/notifications/{notification}', [NotificationController::class, 'ouvrir'])->whereUuid('notification')->name('notifications.ouvrir');
+
+        Route::get('/profil', [ProfilController::class, 'edit'])->name('profil');
+        Route::put('/profil', [ProfilController::class, 'update'])->name('profil.update');
+        Route::delete('/profil', [ProfilController::class, 'supprimer'])->name('profil.supprimer');
+        Route::get('/profil/numero', [ProfilController::class, 'numero'])->name('numero');
+        Route::post('/profil/numero', [ProfilController::class, 'envoyerCode'])->middleware('throttle:otp')->name('numero.envoyer');
+        Route::post('/profil/numero/confirmer', [ProfilController::class, 'confirmerNumero'])->middleware('throttle:otp')->name('numero.confirmer');
+
         Route::get('/publications', [EspacePublicationController::class, 'index'])->name('publications.index');
         Route::get('/publications/{publication}/modifier', [EspacePublicationController::class, 'edit'])->name('publications.edit');
         Route::put('/publications/{publication}/modifier', [EspacePublicationController::class, 'update'])

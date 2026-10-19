@@ -27,7 +27,15 @@
             <nav aria-label="Compte" class="flex shrink-0 items-center gap-2">
                 <x-bouton :href="route('publier.choix')" class="hidden min-h-10 px-3 text-sm lg:inline-flex">+ Publier</x-bouton>
                 @auth
-                    <a href="{{ route('espace.publications.index') }}" class="hidden min-h-10 items-center text-sm font-semibold text-slate-700 hover:text-brand md:inline-flex">Mes publications</a>
+                    @php($nbNonLues = auth()->user()->unreadNotifications()->count())
+                    <a href="{{ route('espace.notifications') }}" class="relative inline-flex size-10 items-center justify-center rounded-full text-xl hover:bg-slate-100">
+                        <span aria-hidden="true">🔔</span>
+                        <span class="sr-only">Notifications{{ $nbNonLues > 0 ? ' : '.$nbNonLues.' non lue(s)' : '' }}</span>
+                        @if ($nbNonLues > 0)
+                            <span aria-hidden="true" class="absolute right-0.5 top-0.5 min-w-5 rounded-full bg-red-600 px-1 text-center text-xs font-bold leading-5 text-white">{{ $nbNonLues > 9 ? '9+' : $nbNonLues }}</span>
+                        @endif
+                    </a>
+                    <a href="{{ route('espace.index') }}" class="hidden min-h-10 items-center text-sm font-semibold text-slate-700 hover:text-brand md:inline-flex">Mon espace</a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <x-bouton variante="secondaire" class="min-h-10 px-3 text-sm">Se déconnecter</x-bouton>
@@ -66,6 +74,18 @@
                 <a href="{{ route('publier.choix') }}" @if (request()->routeIs('publier.*')) aria-current="page" @endif
                    class="flex min-h-14 min-w-16 flex-col items-center justify-center text-xs text-slate-600 aria-[current=page]:font-semibold aria-[current=page]:text-brand">
                     <span aria-hidden="true" class="text-lg">➕</span>Publier
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('alertes.index') }}" @if (request()->routeIs('alertes.*')) aria-current="page" @endif
+                   class="flex min-h-14 min-w-16 flex-col items-center justify-center text-xs text-slate-600 aria-[current=page]:font-semibold aria-[current=page]:text-brand">
+                    <span aria-hidden="true" class="text-lg">🔔</span>Alertes
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('espace.index') }}" @if (request()->routeIs('espace.*')) aria-current="page" @endif
+                   class="flex min-h-14 min-w-16 flex-col items-center justify-center text-xs text-slate-600 aria-[current=page]:font-semibold aria-[current=page]:text-brand">
+                    <span aria-hidden="true" class="text-lg">👤</span>Mon espace
                 </a>
             </li>
         </ul>

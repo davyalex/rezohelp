@@ -9,7 +9,7 @@
 | 2 | Authentification par téléphone | terminé (tag `lot-2`) |
 | 3 | Fil public et pages de publication | terminé (tag `lot-3`) |
 | 4 | Publication par les utilisateurs | terminé (tag `lot-4`) |
-| 5 | Mon espace, alertes et notifications | à faire |
+| 5 | Mon espace, alertes et notifications | terminé (tag `lot-5`) |
 | 6 | Abonnements, paiements, SMS, visibilité payante | à faire |
 | 7 | Back-office | à faire |
 | 8 | Import de la veille et enrichissement IA | à faire |
@@ -263,3 +263,41 @@
 - [ ] « Voir l'aperçu dans le fil » affiche la même carte que le fil.
 - [ ] Dans « Mes publications » : modifier, clôturer, prolonger (3 fois au plus), dupliquer, supprimer.
 - [ ] Avec un second compte : postuler, « Je suis disponible » sur une demande, puis retrouver la réponse et le numéro chez l'auteur.
+
+---
+
+## Lot 5 — Mon espace, alertes et notifications
+
+### Plan d'implémentation
+
+- **Mon espace** (`/mon-espace`) : accueil et menu (`x-menu-espace`), profil (nom, prénoms, commune, e-mail, photo ; nom et avatar dénormalisés rafraîchis sur les publications), changement de numéro par code SMS (`ObjetOtp::ChangementNumero`), suppression du compte avec anonymisation (`AnonymiserUtilisateur`, réutilisée par l'admin au lot 7), notifications (cloche + pastille, liste, lu / non lu, tout marquer), publications enregistrées.
+- **Alertes** (`/mon-espace/alertes`, routes `alertes.*`) : `AlerteRequest`, `AlertePolicy` (`create` → `Droits` / `alertes.max`, `update`, `delete`), actions `CreerAlerte`, `ModifierAlerte`, `BasculerAlerte` (pause / reprise, limite revérifiée) ; création pré-remplie depuis les filtres du fil, y compris après une inscription (`/alertes/nouvelle` mémorise la page visée puis envoie vers `/inscription`).
+- **Correspondance** : écouteur de `PublicationPubliee` → job `CorrespondreAlertes` (critères en SQL, mots-clés tous présents, auteur exclu, anti-doublon `alertes_publications`) ; notification `AlerteCorrespondante` (instantanée) ; commande `alertes:recap-quotidien` planifiée à 7h00 → `RecapitulatifAlertes`. Canal SMS préparé au lot 6.
+- **Fil** : bloc « Créer une alerte » après la 5e carte de la première salve et dans la colonne de droite ; navigation basse complète (Fil · Recherche · Publier · Alertes · Mon espace) ; cloche dans l'en-tête.
+- **Tests** : correspondance par type, catégorie (et sous-catégories), commune, contrat, mots-clés ; pas de double notification ; alertes en pause ignorées ; récapitulatif quotidien ; limite d'alertes ; pré-remplissage après inscription ; notifications ; profil, changement de numéro, anonymisation ; accès croisé.
+
+### Fait
+
+- **Mon espace** (`/mon-espace`) : accueil avec compteurs, menu commun (`x-menu-espace`), profil (prénoms, nom, commune, e-mail, photo ; nom et avatar recopiés sur les publications en son nom par le job `RafraichirAuteurPublications`), changement de numéro par code SMS envoyé au nouveau numéro (`ChangerNumero`), changement de mot de passe, suppression du compte avec mot de passe (`AnonymiserUtilisateur`), notifications (liste paginée, ouverture qui marque lue et ne suit que les liens internes, « Tout marquer comme lu »), publications enregistrées (cartes du fil).
+- **Alertes** (`/mon-espace/alertes`) : création, modification, pause / reprise, suppression ; nom généré d'après les critères (« Électricité · Cocody ») ; au moins un critère ; limite `alertes.max` via `Droits` (`AlertePolicy@create`, revérifiée à la reprise) ; « Voir les résultats » ouvre le fil filtré ; création pré-remplie depuis les filtres du fil, y compris pour un visiteur (`/alertes/nouvelle` → inscription → vérification du numéro → formulaire pré-rempli).
+- **Correspondance** : `PublicationPubliee` → `DeclencherCorrespondanceAlertes` → job `CorrespondreAlertes` (`CorrespondanceAlertes` : type, catégorie avec sous-catégories, commune, contrat en SQL ; mots-clés tous présents ; auteur et comptes suspendus exclus ; anti-doublon `alertes_publications`) ; notification `AlerteCorrespondante` (une par membre et par publication) ; alertes quotidiennes regroupées par `alertes:recap-quotidien`, planifiée à 7h00 (`RecapitulatifAlertes`).
+- **Fil** : bloc « Créer une alerte » après la 5e carte de la première salve et dans la colonne de droite ; cloche avec pastille dans l'en-tête ; navigation basse complète (Fil · Recherche · Publier · Alertes · Mon espace).
+
+### Tests ajoutés (40 tests, 4 fichiers ; total 431)
+
+- `tests/Feature/Alertes/CorrespondanceAlertesTest.php` (12 : critères combinés, sous-catégories, contrat, mots-clés, pause, auteur, suspension, pas de double notification, plusieurs alertes d'un même membre, quotidienne, publication retirée, déclenchement par l'événement et par une vraie publication)
+- `tests/Feature/Alertes/RecapitulatifQuotidienTest.php` (5) · `tests/Feature/Alertes/GestionAlertesTest.php` (13 : critères, pré-remplissage, parcours visiteur → inscription → alerte, limite `alertes.max`, pause, accès croisé)
+- `tests/Feature/Espace/EspaceTest.php` (10 : accueil, cloche et notifications, lien externe refusé, enregistrés, profil, changement de numéro, anonymisation, bloc d'alerte dans le fil)
+
+### Écarts avec le CONTEXTE
+
+- Règles de correspondance (D-039), récapitulatif (D-040), parcours « Créer une alerte » d'un visiteur (D-041), suppression du compte (D-042).
+- Canal SMS des alertes : préparé, activé au lot 6 (`alertes.canal_sms`). Incitation « Recevez-la aussi par SMS » : lot 6.
+
+### À vérifier par Alex
+
+- [ ] Sans compte, filtrer le fil sur « Home service » et « Cocody », cliquer « Créer une alerte » : arrivée sur l'inscription.
+- [ ] S'inscrire (code dans `storage/logs/sms.log`) : le formulaire d'alerte est pré-rempli, créer « Électricien · Cocody ».
+- [ ] Avec un autre compte (membre fiable, ou valider la publication en base en attendant la modération du lot 7), publier une offre d'électricien à Cocody, lancer `php artisan queue:work --stop-when-empty` : la pastille de la cloche apparaît et la notification mène à la publication.
+- [ ] Mettre l'alerte en pause : plus de notification. `php artisan alertes:recap-quotidien` envoie le récapitulatif d'une alerte quotidienne.
+- [ ] Profil : changer de photo et de nom, changer de numéro (code SMS), supprimer un compte de test.

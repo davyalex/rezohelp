@@ -7,7 +7,6 @@ use App\Models\Parametre;
 use App\Models\Publication;
 use App\Models\Utilisateur;
 use App\Support\JetonsCarte;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
 
@@ -29,12 +28,12 @@ class RenduCarte
     /**
      * Charge en une seule requête l'état du visiteur pour les publications visibles.
      *
-     * @param  Collection<int, Publication>  $publications
+     * @param  iterable<Publication>  $publications
      */
-    public function chargerEtat(?Utilisateur $visiteur, Collection $publications): static
+    public function chargerEtat(?Utilisateur $visiteur, iterable $publications): static
     {
         $this->etat = ['aimees' => [], 'enregistrees' => []];
-        $ids = $publications->pluck('id')->filter()->all();
+        $ids = collect($publications)->pluck('id')->filter()->all();
 
         if ($visiteur === null || $ids === []) {
             return $this;
