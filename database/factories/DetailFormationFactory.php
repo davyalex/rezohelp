@@ -29,7 +29,7 @@ class DetailFormationFactory extends Factory
             'prix' => fake()->randomElement([0, 25000, 50000, 150000, 300000]),
             'certifiante' => fake()->boolean(),
             'places' => fake()->optional()->numberBetween(10, 40),
-            'mode_inscription' => ModeInscription::Resohelph,
+            'mode_inscription' => ModeInscription::Rezohelp,
             'contact_inscription' => null,
         ];
     }

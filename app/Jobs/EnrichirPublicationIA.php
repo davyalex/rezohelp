@@ -76,7 +76,7 @@ class EnrichirPublicationIA implements ShouldQueue
     {
         AppelIa::query()->create([
             'publication_id' => $this->publicationId,
-            'modele' => (string) config('resohelph.ia.driver'),
+            'modele' => (string) config('rezohelp.ia.driver'),
             'statut' => StatutAppelIa::Echec,
         ]);
     }

@@ -56,7 +56,7 @@ it('envoie l’alerte par SMS (GSM-7, lien court) quand le membre y a droit', fu
 
     expect($this->sms->envoyes)->toHaveCount(1)
         ->and($this->sms->envoyes[0]['telephone'])->toBe($this->membre->telephone)
-        ->and($this->sms->envoyes[0]['message'])->toBe('Resohelph: Electricien disponible a Cocody, Cocody. Voir: '
+        ->and($this->sms->envoyes[0]['message'])->toBe('Rezohelp: Electricien disponible a Cocody, Cocody. Voir: '
             .preg_replace('#^https?://#', '', route('publications.court', $publication->code_court)))
         ->and(SmsEnvoye::query()->sole()->motif)->toBe(MotifSms::Alerte);
 });
@@ -85,7 +85,7 @@ it('au-delà du plafond quotidien, garde les correspondances pour un seul récap
     $this->artisan('alertes:recap-sms')->assertSuccessful();
 
     expect($this->sms->envoyes)->toHaveCount(6)
-        ->and($this->sms->envoyes[5]['message'])->toStartWith('Resohelph: 2 autre(s) publication(s)')
+        ->and($this->sms->envoyes[5]['message'])->toStartWith('Rezohelp: 2 autre(s) publication(s)')
         ->and(strlen($this->sms->envoyes[5]['message']))->toBeLessThanOrEqual(160)
         ->and(DB::table('alertes_publications')->where('sms_en_attente', true)->count())->toBe(0);
 

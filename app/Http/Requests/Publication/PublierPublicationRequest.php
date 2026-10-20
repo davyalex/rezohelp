@@ -176,7 +176,7 @@ abstract class PublierPublicationRequest extends FormRequest
         $pays = $this->membre()->pays_code;
 
         return [
-            "required_unless:{$champMode},resohelph",
+            "required_unless:{$champMode},rezohelp",
             'nullable',
             'string',
             'max:255',

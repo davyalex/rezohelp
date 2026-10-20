@@ -18,8 +18,8 @@ function demandePaiement(string $reference = 'CMD-2026-000001'): DemandePaiement
         reference: $reference,
         montantFcfa: 1000,
         description: 'Alertes SMS 30 jours',
-        urlRetour: 'https://resohelph.test/paiements/retour/1',
-        urlNotification: 'https://resohelph.test/paiements/notification/fake',
+        urlRetour: 'https://rezohelp.test/paiements/retour/1',
+        urlNotification: 'https://rezohelp.test/paiements/notification/fake',
         telephoneClient: '+2250708091011',
         nomClient: 'Awa Koné',
     );
@@ -29,7 +29,7 @@ it('initialise un paiement en attente', function () {
     $initialisation = $this->passerelle->initialiser(demandePaiement());
 
     expect($initialisation->reference)->toBe('CMD-2026-000001')
-        ->and($initialisation->urlPaiement)->toBe('https://resohelph.test/paiements/retour/1');
+        ->and($initialisation->urlPaiement)->toBe('https://rezohelp.test/paiements/retour/1');
 
     $verification = $this->passerelle->verifier('CMD-2026-000001');
 

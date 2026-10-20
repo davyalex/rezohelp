@@ -23,7 +23,7 @@ beforeEach(function () {
     $this->candidat = Utilisateur::factory()->create(['telephone' => '+2250102030405']);
 });
 
-function offreEmploi(Utilisateur $auteur, ModeCandidature $mode = ModeCandidature::Resohelph, ?string $contact = null): Publication
+function offreEmploi(Utilisateur $auteur, ModeCandidature $mode = ModeCandidature::Rezohelp, ?string $contact = null): Publication
 {
     $publication = Publication::factory()->emploi()->publiee()->create(['auteur_id' => $auteur->id, 'nb_reponses' => 0]);
     DetailEmploi::factory()->create(['publication_id' => $publication->id, 'mode_candidature' => $mode, 'contact_candidature' => $contact]);
@@ -73,7 +73,7 @@ it('refuse une réponse à une publication non publiée', function () {
     $this->actingAs($this->candidat)->post('/publication/'.$offre->slug.'/repondre')->assertForbidden();
 });
 
-it('n’accepte pas de réponse Resohelph quand l’offre se contacte autrement, mais compte le clic', function () {
+it('n’accepte pas de réponse Rezohelp quand l’offre se contacte autrement, mais compte le clic', function () {
     $offre = offreEmploi($this->auteur, ModeCandidature::Lien, 'https://carrieres.exemple.ci/offre/12');
 
     $this->actingAs($this->candidat)->post('/publication/'.$offre->slug.'/repondre')->assertSessionHasErrors('message');
@@ -141,7 +141,7 @@ it('appelle directement l’artisan qui affiche son numéro, sans formulaire', f
 
 it('enregistre une inscription à une formation', function () {
     $formation = Publication::factory()->formation()->publiee()->create(['auteur_id' => $this->auteur->id]);
-    DetailFormation::factory()->create(['publication_id' => $formation->id, 'mode_inscription' => ModeInscription::Resohelph]);
+    DetailFormation::factory()->create(['publication_id' => $formation->id, 'mode_inscription' => ModeInscription::Rezohelp]);
 
     $this->actingAs($this->candidat)->post('/publication/'.$formation->slug.'/repondre', ['partager_telephone' => '0']);
 

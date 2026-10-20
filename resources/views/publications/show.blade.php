@@ -43,7 +43,7 @@
             <header class="flex items-start gap-3">
                 <div class="min-w-0 flex-1">
                     <p class="flex items-center gap-1 font-semibold text-slate-900">
-                        {{ $p->auteur_nom_affiche ?? 'Membre Resohelph' }}
+                        {{ $p->auteur_nom_affiche ?? 'Membre Rezohelp' }}
                         @if ($p->auteur_verifie)
                             <span class="text-sm font-normal text-brand">✔ Entreprise vérifiée</span>
                         @endif

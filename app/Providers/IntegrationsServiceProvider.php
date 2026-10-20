@@ -30,20 +30,20 @@ class IntegrationsServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(PasserellePaiement::class, fn (Application $app): PasserellePaiement => match ($this->driver('paiement')) {
-            'fake' => new FakePasserelle(Storage::disk('local'), (string) config('resohelph.paiement.fake.secret')),
+            'fake' => new FakePasserelle(Storage::disk('local'), (string) config('rezohelp.paiement.fake.secret')),
             'cinetpay' => new CinetPayPasserelle($app->make(Factory::class), (array) config('services.cinetpay')),
             default => $this->driverInconnu('paiement'),
         });
 
         $this->app->singleton(FournisseurSms::class, fn (Application $app): FournisseurSms => match ($this->driver('sms')) {
-            'log' => new LogFournisseurSms(Log::channel((string) config('resohelph.sms.canal_log'))),
+            'log' => new LogFournisseurSms(Log::channel((string) config('rezohelp.sms.canal_log'))),
             'orange' => new OrangeFournisseurSms($app->make(Factory::class), $app->make(CacheFil::class), (array) config('services.orange_sms')),
             'twilio' => new TwilioFournisseurSms($app->make(Factory::class), (array) config('services.twilio')),
             default => $this->driverInconnu('sms'),
         });
 
         $this->app->singleton(SourceVeille::class, fn (Application $app): SourceVeille => match ($this->driver('veille')) {
-            'fake' => new FakeSourceVeille((string) config('resohelph.veille.fake.dossier')),
+            'fake' => new FakeSourceVeille((string) config('rezohelp.veille.fake.dossier')),
             default => $this->driverInconnu('veille'),
         });
 
@@ -55,7 +55,7 @@ class IntegrationsServiceProvider extends ServiceProvider
 
     private function driver(string $service): string
     {
-        return (string) config("resohelph.{$service}.driver");
+        return (string) config("rezohelp.{$service}.driver");
     }
 
     private function driverInconnu(string $service): never

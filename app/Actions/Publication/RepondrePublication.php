@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Réponse à une publication sur Resohelph (CONTEXTE §11.8) : candidature, inscription,
+ * Réponse à une publication sur Rezohelp (CONTEXTE §11.8) : candidature, inscription,
  * proposition (« Je suis disponible ») ou demande de contact. Une seule par personne.
  */
 class RepondrePublication
@@ -30,9 +30,9 @@ class RepondrePublication
     public static function typeAccepte(Publication $publication): ?TypeReponse
     {
         return match (true) {
-            $publication->type === TypePublication::Emploi => $publication->detailEmploi?->mode_candidature === ModeCandidature::Resohelph
+            $publication->type === TypePublication::Emploi => $publication->detailEmploi?->mode_candidature === ModeCandidature::Rezohelp
                 ? TypeReponse::Candidature : null,
-            $publication->type === TypePublication::Formation => $publication->detailFormation?->mode_inscription === ModeInscription::Resohelph
+            $publication->type === TypePublication::Formation => $publication->detailFormation?->mode_inscription === ModeInscription::Rezohelp
                 ? TypeReponse::Inscription : null,
             $publication->sous_type === SousTypeService::Demande => TypeReponse::Proposition,
             default => $publication->detailService?->afficher_telephone ? null : TypeReponse::Contact,
@@ -54,7 +54,7 @@ class RepondrePublication
         $type = self::typeAccepte($publication);
 
         if ($type === null) {
-            throw ValidationException::withMessages(['message' => 'Cette publication se contacte directement, sans passer par Resohelph.']);
+            throw ValidationException::withMessages(['message' => 'Cette publication se contacte directement, sans passer par Rezohelp.']);
         }
 
         if ($type === TypeReponse::Proposition) {

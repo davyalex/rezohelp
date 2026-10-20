@@ -17,7 +17,7 @@ it('lie chaque interface au driver fake ou log en test', function () {
 });
 
 it('refuse un driver inconnu', function (string $service, string $interface) {
-    config(["resohelph.{$service}.driver" => 'inexistant']);
+    config(["rezohelp.{$service}.driver" => 'inexistant']);
     app()->forgetInstance($interface);
 
     app($interface);

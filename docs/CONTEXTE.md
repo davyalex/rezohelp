@@ -1,4 +1,4 @@
-# Resohelph — Document de contexte
+# Rezohelp — Document de contexte
 
 > Plateforme d'emploi, de home service / petits métiers et de formation, présentée comme un fil d'actualité (façon Facebook).
 > Cible : Abidjan, puis Côte d'Ivoire et Afrique de l'Ouest francophone.
@@ -186,14 +186,14 @@ resources/views/
 **Index** : `(statut, tri_le, id)`, `(type, statut, tri_le, id)`, `(commune_id, statut, tri_le, id)`, FULLTEXT `(titre, contenu)`, unique `source_empreinte`, unique `slug`, unique `code_court`.
 
 ### details_emploi (1–1 avec publications)
-`publication_id`, `employeur_particulier` (bool), `type_contrat` (cdi | cdd | stage | interim | freelance | autre), `nb_postes` (défaut 1), `salaire_min`, `salaire_max`, `salaire_a_negocier` (bool), `devise` (XOF), `experience_requise`, `niveau_etude`, `date_limite`, `mode_candidature` (resohelph | email | lien | telephone), `contact_candidature` (nullable)
+`publication_id`, `employeur_particulier` (bool), `type_contrat` (cdi | cdd | stage | interim | freelance | autre), `nb_postes` (défaut 1), `salaire_min`, `salaire_max`, `salaire_a_negocier` (bool), `devise` (XOF), `experience_requise`, `niveau_etude`, `date_limite`, `mode_candidature` (rezohelp | email | lien | telephone), `contact_candidature` (nullable)
 
 ### details_service
 `publication_id`, `metier`, `tarif_indicatif`, `unite_tarif` (heure | jour | prestation | devis), `zones_intervention` (JSON d'ids de communes), `disponibilite`, `telephone_contact` (E.164), `afficher_telephone` (bool), `whatsapp` (E.164, nullable),
 *pour une demande :* `date_souhaitee` (nullable), `budget` (nullable)
 
 ### details_formation
-`publication_id`, `organisme` (texte de secours si pas d'entreprise liée), `modalite` (presentiel | en_ligne | hybride), `duree`, `date_debut`, `prix` (XOF, 0 = gratuit), `certifiante` (bool), `places` (nullable), `mode_inscription` (resohelph | lien | telephone), `contact_inscription` (nullable)
+`publication_id`, `organisme` (texte de secours si pas d'entreprise liée), `modalite` (presentiel | en_ligne | hybride), `duree`, `date_debut`, `prix` (XOF, 0 = gratuit), `certifiante` (bool), `places` (nullable), `mode_inscription` (rezohelp | lien | telephone), `contact_inscription` (nullable)
 
 ### alertes
 `id`, `utilisateur_id`, `nom`, `type` (nullable = toutes catégories), `categorie_id` (nullable), `commune_id` (nullable), `type_contrat` (nullable), `mots_cles` (nullable), `frequence` (instantanee | quotidienne), `active` (bool), `derniere_notification_le`, `cree_le`, `modifie_le`
@@ -389,7 +389,7 @@ La **demande de service** est essentielle pour le home service : c'est souvent l
   - ou cocher « Particulier » (`employeur_particulier`), par exemple pour un chauffeur ou une nounou à domicile.
 - `type_contrat`, `nb_postes` (défaut 1), salaire (`salaire_min`, `salaire_max` ou case « à négocier »), `experience_requise`, `niveau_etude`, `date_limite`.
 - **Mode de candidature** (`mode_candidature`) :
-  - `resohelph` : le candidat postule sur le site (§11.8) ;
+  - `rezohelp` : le candidat postule sur le site (§11.8) ;
   - `email` ;
   - `lien` (site carrière) ;
   - `telephone`.
@@ -409,7 +409,7 @@ La **demande de service** est essentielle pour le home service : c'est souvent l
 **Je propose une formation**
 - Organisme : une de mes entreprises (type organisme) ou création en ligne.
 - `modalite` (présentiel / en ligne / hybride ; commune obligatoire sauf en ligne), `date_debut`, `duree`, `prix` (0 = gratuit), `certifiante`, `places` (facultatif).
-- **Mode d'inscription** (`mode_inscription`) : `resohelph`, `lien` ou `telephone`, avec `contact_inscription`.
+- **Mode d'inscription** (`mode_inscription`) : `rezohelp`, `lien` ou `telephone`, avec `contact_inscription`.
 
 Validation par une FormRequest par type :
 - `PublierEmploiRequest`
@@ -477,11 +477,11 @@ Le bouton principal de la carte change selon le type et le mode choisi par l'aut
 
 | Publication | Bouton | Effet |
 |---|---|---|
-| Emploi, `mode_candidature = resohelph` | **Postuler** | formulaire court : message (facultatif) + case « partager mon numéro » → `reponses` (type `candidature`) |
+| Emploi, `mode_candidature = rezohelp` | **Postuler** | formulaire court : message (facultatif) + case « partager mon numéro » → `reponses` (type `candidature`) |
 | Emploi, autre mode | **Postuler** | ouvre le lien, l'email ou le numéro (le clic est compté) |
 | Service / offre | **Contacter** | appel ou WhatsApp direct si `afficher_telephone`, sinon formulaire → `reponses` (type `contact`) |
 | Service / demande | **Je suis disponible** | réservé aux comptes connectés : message + numéro partagé → `reponses` (type `proposition`) ; le demandeur est notifié |
-| Formation, `mode_inscription = resohelph` | **S'inscrire** | → `reponses` (type `inscription`) |
+| Formation, `mode_inscription = rezohelp` | **S'inscrire** | → `reponses` (type `inscription`) |
 
 - L'auteur voit les réponses dans « Mes publications → Réponses » et peut les marquer **vue**, **retenue** ou **refusée** ; le répondant est notifié.
 - Une seule réponse par personne et par publication.
@@ -847,7 +847,7 @@ Variables : `PAIEMENT_DRIVER`, `CINETPAY_API_KEY`, `CINETPAY_SITE_ID`, `CINETPAY
   - **un seul SMS** (≤ 160 caractères) par alerte ;
   - **lien court** interne `/p/{code}` (`publications.code_court`, 6 caractères).
   
-  Exemple : `Resohelph: Electricien dispo Cocody, 5000F. Voir: resohelph.ci/p/ab12cd`.
+  Exemple : `Rezohelp: Electricien dispo Cocody, 5000F. Voir: rezohelp.ci/p/ab12cd`.
 - Journal `sms_envoyes` : statut, coût unitaire et référence du fournisseur. Coût mensuel visible dans l'admin.
 - Pas d'envoi entre 21h00 et 7h00 : ces SMS sont mis en file jusqu'à 7h00.
 
@@ -950,7 +950,7 @@ Variables : `PAIEMENT_DRIVER`, `CINETPAY_API_KEY`, `CINETPAY_SITE_ID`, `CINETPAY
 
 ## 18. Décisions à confirmer
 
-1. **Nom définitif et domaine** (nom de travail : *Resohelph*).
+1. **Nom définitif et domaine** (nom de travail : *Rezohelp*).
 2. **Hébergement** : un VPS (Memcached, Supervisor, HTTP/2) est fortement recommandé. Sur cPanel mutualisé, il faut vérifier la disponibilité de Memcached, sinon basculer temporairement sur le cache `file` ou `database`.
 3. **Fournisseur SMS pour l'OTP** (Orange SMS API, Twilio, ou WhatsApp Business API) et budget associé.
 4. **Activer l'enrichissement IA** dès la V1 (coût API faible mais non nul) ou publier les lignes brutes au départ.

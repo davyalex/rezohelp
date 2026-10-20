@@ -22,7 +22,7 @@ class SmsEnvoyeFactory extends Factory
         return [
             'utilisateur_id' => null,
             'telephone' => '+22507'.fake()->numerify('########'),
-            'message' => 'Resohelph: Electricien dispo Cocody, 5000F. Voir: resohelph.ci/p/ab12cd',
+            'message' => 'Rezohelp: Electricien dispo Cocody, 5000F. Voir: rezohelp.ci/p/ab12cd',
             'motif' => MotifSms::Alerte,
             'fournisseur' => 'log',
             'statut' => StatutSms::Envoye,

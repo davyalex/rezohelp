@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('experience_requise', 100)->nullable();
             $table->string('niveau_etude', 100)->nullable();
             $table->date('date_limite')->nullable();
-            $table->string('mode_candidature', 20)->default('resohelph');
+            $table->string('mode_candidature', 20)->default('rezohelp');
             $table->string('contact_candidature')->nullable();
 
             $table->index('type_contrat');

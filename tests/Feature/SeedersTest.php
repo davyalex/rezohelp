@@ -20,9 +20,9 @@ use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
     config([
-        'resohelph.admin.telephone' => '07 08 09 10 11',
-        'resohelph.admin.pays_code' => 'CI',
-        'resohelph.admin.mot_de_passe' => 'Admin-Resohelph-2026',
+        'rezohelp.admin.telephone' => '07 08 09 10 11',
+        'rezohelp.admin.pays_code' => 'CI',
+        'rezohelp.admin.mot_de_passe' => 'Admin-Rezohelp-2026',
     ]);
 });
 
@@ -96,11 +96,11 @@ it('crée le compte administrateur avec un téléphone normalisé', function () 
 
     expect($admin->hasRole('administrateur'))->toBeTrue()
         ->and($admin->telephone_verifie_le)->not->toBeNull()
-        ->and(Hash::check('Admin-Resohelph-2026', $admin->mot_de_passe))->toBeTrue();
+        ->and(Hash::check('Admin-Rezohelp-2026', $admin->mot_de_passe))->toBeTrue();
 });
 
 it('ne crée pas d’administrateur sans identifiants dans .env', function () {
-    config(['resohelph.admin.telephone' => null]);
+    config(['rezohelp.admin.telephone' => null]);
 
     $this->seed(DatabaseSeeder::class);
 

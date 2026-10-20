@@ -154,7 +154,7 @@ class DemoSeeder extends Seeder
                 'experience_requise' => fake()->randomElement(['Débutant accepté', '1 à 2 ans', '3 à 5 ans']),
                 'niveau_etude' => fake()->randomElement(['BEPC', 'BAC', 'BTS', 'Licence', 'Master']),
                 'date_limite' => now()->addDays(fake()->numberBetween(7, 30)),
-                'mode_candidature' => $i % 3 === 0 ? ModeCandidature::Email : ModeCandidature::Resohelph,
+                'mode_candidature' => $i % 3 === 0 ? ModeCandidature::Email : ModeCandidature::Rezohelp,
                 'contact_candidature' => $i % 3 === 0 ? 'recrutement@'.Str::slug($entreprise->nom).'.ci' : null,
             ]);
             $publications->push($publication);
@@ -212,7 +212,7 @@ class DemoSeeder extends Seeder
                 'prix' => $prix,
                 'certifiante' => $i % 2 === 0,
                 'places' => fake()->randomElement([null, 15, 20, 30]),
-                'mode_inscription' => $issueDeLaVeille ? ModeInscription::Lien : ModeInscription::Resohelph,
+                'mode_inscription' => $issueDeLaVeille ? ModeInscription::Lien : ModeInscription::Rezohelp,
                 'contact_inscription' => $issueDeLaVeille ? $publication->source_url : null,
             ]);
             if ($modalite === Modalite::EnLigne) {

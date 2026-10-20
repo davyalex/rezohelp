@@ -45,7 +45,7 @@ class FinAbonnementProche extends Notification implements ShouldQueue
 
     public function toSms(object $notifiable): MessageSms
     {
-        return new MessageSms('Resohelph: '.$this->titre().' '.$this->incitation(), MotifSms::Relance);
+        return new MessageSms('Rezohelp: '.$this->titre().' '.$this->incitation(), MotifSms::Relance);
     }
 
     private function titre(): string

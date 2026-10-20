@@ -51,7 +51,7 @@
         @endif
 
         <form method="POST" action="{{ $action }}" enctype="multipart/form-data" class="mt-4 space-y-4" novalidate
-              x-data="formulairePublication(@js($publication ? null : 'resohelph-brouillon-'.$parcours->value), @js(route('publier.apercu', $parcours->value)), @js($parcours === ParcoursPublication::ServiceOffre && $publication === null))"
+              x-data="formulairePublication(@js($publication ? null : 'rezohelp-brouillon-'.$parcours->value), @js(route('publier.apercu', $parcours->value)), @js($parcours === ParcoursPublication::ServiceOffre && $publication === null))"
               @submit="oublier()" @change="proposerTitre($event)">
             @csrf
             @if ($publication)
@@ -187,7 +187,7 @@
                                      :options="['aujourdhui' => 'Aujourd’hui', 'semaine' => 'Cette semaine', 'date' => 'À une date précise', 'flexible' => 'Dès que possible']" />
                             <x-champ name="date_souhaitee" type="date" label="Date précise (si besoin)" :valeur="$v('date_souhaitee')" />
                             <x-champ name="budget" type="number" label="Budget (FCFA, facultatif)" :valeur="$v('budget')" min="0" inputmode="numeric" />
-                            <x-message type="info">Votre numéro ne sera jamais affiché. Les prestataires vous répondent sur Resohelph et vous recevez leurs coordonnées.</x-message>
+                            <x-message type="info">Votre numéro ne sera jamais affiché. Les prestataires vous répondent sur Rezohelp et vous recevez leurs coordonnées.</x-message>
                             @break
 
                         @case(ParcoursPublication::Formation)
@@ -210,12 +210,12 @@
                 @php($champMode = $parcours === ParcoursPublication::Emploi ? 'mode_candidature' : 'mode_inscription')
                 @php($champContact = $parcours === ParcoursPublication::Emploi ? 'contact_candidature' : 'contact_inscription')
                 <details open class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70 sm:p-6"
-                         x-data="{ mode: @js(old($champMode, $v($champMode, 'resohelph'))) }">
+                         x-data="{ mode: @js(old($champMode, $v($champMode, 'rezohelp'))) }">
                     <summary class="cursor-pointer text-lg font-bold">{{ $parcours === ParcoursPublication::Emploi ? 'Comment postuler ?' : 'Comment s’inscrire ?' }}</summary>
                     <div class="mt-4 space-y-5">
-                        <x-liste :name="$champMode" label="Mode" x-model="mode" :valeur="$v($champMode, 'resohelph')"
+                        <x-liste :name="$champMode" label="Mode" x-model="mode" :valeur="$v($champMode, 'rezohelp')"
                                  :options="$parcours === ParcoursPublication::Emploi ? ModeCandidature::options() : ModeInscription::options()" />
-                        <div x-show="mode !== 'resohelph'" x-cloak>
+                        <div x-show="mode !== 'rezohelp'" x-cloak>
                             <x-champ :name="$champContact" label="E-mail, lien ou numéro de téléphone" :valeur="$v($champContact)" maxlength="255"
                                      aide="Selon le mode choisi : adresse e-mail, lien commençant par https:// ou numéro de téléphone." />
                         </div>

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->unsignedInteger('prix')->default(0)->comment('XOF, 0 = gratuit');
             $table->boolean('certifiante')->default(false);
             $table->unsignedSmallInteger('places')->nullable();
-            $table->string('mode_inscription', 20)->default('resohelph');
+            $table->string('mode_inscription', 20)->default('rezohelp');
             $table->string('contact_inscription')->nullable();
         });
     }

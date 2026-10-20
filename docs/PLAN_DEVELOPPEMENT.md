@@ -1,4 +1,4 @@
-# Resohelph — Plan de développement par lots
+# Rezohelp — Plan de développement par lots
 
 > Référence fonctionnelle : `docs/CONTEXTE.md` (les numéros § renvoient à ce document). Règles de code : `CLAUDE.md`.
 > Chaque lot se termine par sa **Définition de terminé** commune + ses **critères d'acceptation** propres, puis un commit et un tag `lot-N`.

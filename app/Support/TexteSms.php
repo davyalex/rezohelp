@@ -52,15 +52,15 @@ final class TexteSms
     }
 
     /**
-     * Message d'alerte : « Resohelph: {titre}, {commune}. Voir: resohelph.ci/p/ab12cd ».
+     * Message d'alerte : « Rezohelp: {titre}, {commune}. Voir: rezohelp.ci/p/ab12cd ».
      * Le titre est raccourci pour que le lien tienne toujours dans le SMS.
      */
     public static function alerte(string $titre, ?string $commune, string $lienCourt): string
     {
         $lien = ' Voir: '.preg_replace('#^https?://#', '', $lienCourt);
         $suffixe = ($commune !== null ? ', '.self::preparer($commune) : '').'.'.$lien;
-        $place = self::LONGUEUR_MAX - strlen('Resohelph: ') - strlen($suffixe);
+        $place = self::LONGUEUR_MAX - strlen('Rezohelp: ') - strlen($suffixe);
 
-        return 'Resohelph: '.self::tronquer(rtrim(self::preparer($titre), '.'), max(10, $place)).$suffixe;
+        return 'Rezohelp: '.self::tronquer(rtrim(self::preparer($titre), '.'), max(10, $place)).$suffixe;
     }
 }

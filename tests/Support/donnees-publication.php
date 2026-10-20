@@ -10,7 +10,7 @@ use App\Models\Commune;
 
 function contenuValide(string $debut = 'Nous recherchons une personne sérieuse et ponctuelle.'): string
 {
-    return $debut.' Travail dans une ambiance agréable, avec une équipe accueillante, à Abidjan. Merci de répondre via Resohelph.';
+    return $debut.' Travail dans une ambiance agréable, avec une équipe accueillante, à Abidjan. Merci de répondre via Rezohelp.';
 }
 
 function donneesEmploi(array $surcharge = []): array
@@ -25,7 +25,7 @@ function donneesEmploi(array $surcharge = []): array
         'nb_postes' => 2,
         'salaire_min' => 350000,
         'salaire_max' => 400000,
-        'mode_candidature' => 'resohelph',
+        'mode_candidature' => 'rezohelp',
     ], $surcharge);
 }
 
@@ -70,6 +70,6 @@ function donneesFormation(array $surcharge = []): array
         'duree' => '3 mois',
         'prix' => 0,
         'certifiante' => '1',
-        'mode_inscription' => 'resohelph',
+        'mode_inscription' => 'rezohelp',
     ], $surcharge);
 }

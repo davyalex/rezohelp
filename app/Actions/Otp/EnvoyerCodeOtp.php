@@ -57,6 +57,6 @@ class EnvoyerCodeOtp
      */
     private function message(string $code): string
     {
-        return 'Resohelph: votre code est '.$code.'. Il expire dans '.self::VALIDITE_MINUTES.' min. Ne le partagez avec personne.';
+        return 'Rezohelp: votre code est '.$code.'. Il expire dans '.self::VALIDITE_MINUTES.' min. Ne le partagez avec personne.';
     }
 }

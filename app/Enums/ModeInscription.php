@@ -11,14 +11,14 @@ enum ModeInscription: string
 {
     use AvecLibelles;
 
-    case Resohelph = 'resohelph';
+    case Rezohelp = 'rezohelp';
     case Lien = 'lien';
     case Telephone = 'telephone';
 
     public function libelle(): string
     {
         return match ($this) {
-            self::Resohelph => 'Sur Resohelph',
+            self::Rezohelp => 'Sur Rezohelp',
             self::Lien => 'Sur le site de l’organisme',
             self::Telephone => 'Par téléphone',
         };

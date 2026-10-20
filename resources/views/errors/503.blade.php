@@ -1,4 +1,4 @@
 @extends('errors.layout')
 
 @section('titre', 'Maintenance en cours')
-@section('message', 'Resohelph revient très vite. Merci de votre patience.')
+@section('message', 'Rezohelp revient très vite. Merci de votre patience.')

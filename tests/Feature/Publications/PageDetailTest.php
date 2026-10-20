@@ -67,7 +67,7 @@ it('publie un JSON-LD JobPosting valide pour une offre d’emploi', function () 
         'salaire_max' => 400000,
         'salaire_a_negocier' => false,
         'date_limite' => now()->addDays(20),
-        'mode_candidature' => ModeCandidature::Resohelph,
+        'mode_candidature' => ModeCandidature::Rezohelp,
     ]);
 
     $html = (string) $this->get('/publication/'.$publication->slug)->assertOk()->getContent();

@@ -204,7 +204,7 @@ it('réserve la page de retour et le reçu à l’acheteur', function () {
 });
 
 it('affiche le reçu avec les mentions légales et le fournit en PDF', function () {
-    parametre('mentions_legales_recu', '<p onclick="alert(1)">Resohelph SARL — RCCM CI-ABJ-2026-B-1</p><script>alert(1)</script>');
+    parametre('mentions_legales_recu', '<p onclick="alert(1)">Rezohelp SARL — RCCM CI-ABJ-2026-B-1</p><script>alert(1)</script>');
     $commande = commander($this->membre, 'alertes_sms_30j');
     notifierPaiement($commande);
     $commande->refresh();
@@ -212,7 +212,7 @@ it('affiche le reçu avec les mentions légales et le fournit en PDF', function 
     $this->actingAs($this->membre)->get(route('espace.recu', $commande))
         ->assertOk()
         ->assertSee((string) $commande->numero_recu)
-        ->assertSee('Resohelph SARL — RCCM CI-ABJ-2026-B-1')
+        ->assertSee('Rezohelp SARL — RCCM CI-ABJ-2026-B-1')
         ->assertDontSee('<script>alert(1)</script>', false)
         ->assertDontSee('onclick', false)
         ->assertSee(Montant::fcfa(1000))

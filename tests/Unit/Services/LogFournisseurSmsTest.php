@@ -15,12 +15,12 @@ it('écrit le SMS dans le journal et renvoie une référence', function () {
         }
     };
 
-    $resultat = (new LogFournisseurSms($journal))->envoyer('+2250708091011', 'Resohelph: votre code est 123456');
+    $resultat = (new LogFournisseurSms($journal))->envoyer('+2250708091011', 'Rezohelp: votre code est 123456');
 
     expect($resultat->envoye)->toBeTrue()
         ->and($resultat->reference)->toStartWith('LOG-')
         ->and($resultat->coutFcfa)->toBe(0)
         ->and($journal->lignes)->toHaveCount(1)
         ->and($journal->lignes[0]['contexte']['telephone'])->toBe('+2250708091011')
-        ->and($journal->lignes[0]['contexte']['message'])->toBe('Resohelph: votre code est 123456');
+        ->and($journal->lignes[0]['contexte']['message'])->toBe('Rezohelp: votre code est 123456');
 });

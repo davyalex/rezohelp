@@ -27,5 +27,5 @@ it('refuse un fichier absent du dossier', function () {
 })->throws(RuntimeException::class);
 
 it('renvoie une liste vide pour un dossier sans fichier', function () {
-    expect((new FakeSourceVeille(sys_get_temp_dir().'/resohelph-dossier-inexistant'))->listerFichiers())->toBe([]);
+    expect((new FakeSourceVeille(sys_get_temp_dir().'/rezohelp-dossier-inexistant'))->listerFichiers())->toBe([]);
 });

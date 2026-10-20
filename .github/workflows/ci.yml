@@ -15,7 +15,7 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: resohelph_test
+          MYSQL_DATABASE: rezohelp_test
         ports:
           - 3306:3306
         options: >-
@@ -28,7 +28,7 @@ jobs:
       DB_CONNECTION: mysql
       DB_HOST: 127.0.0.1
       DB_PORT: 3306
-      DB_DATABASE: resohelph_test
+      DB_DATABASE: rezohelp_test
       DB_USERNAME: root
       DB_PASSWORD: root
 
@@ -76,6 +76,6 @@ jobs:
 
       - name: Migrations et seeders sur base vide
         env:
-          DB_DATABASE: resohelph_test
+          DB_DATABASE: rezohelp_test
           CACHE_STORE: array
         run: php artisan migrate:fresh --seed --force

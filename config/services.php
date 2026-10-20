@@ -24,7 +24,7 @@ return [
         'client_id' => env('ORANGE_SMS_CLIENT_ID'),
         'client_secret' => env('ORANGE_SMS_CLIENT_SECRET'),
         'expediteur' => env('ORANGE_SMS_EXPEDITEUR'),
-        'nom_expediteur' => env('ORANGE_SMS_NOM_EXPEDITEUR', 'Resohelph'),
+        'nom_expediteur' => env('ORANGE_SMS_NOM_EXPEDITEUR', 'Rezohelp'),
         'url' => env('ORANGE_SMS_URL', 'https://api.orange.com'),
         'cout_fcfa' => (int) env('ORANGE_SMS_COUT_FCFA', 25),
     ],

@@ -34,7 +34,7 @@ class DetailEmploiFactory extends Factory
             'experience_requise' => fake()->randomElement(['Débutant accepté', '1 à 2 ans', '3 à 5 ans', 'Plus de 5 ans']),
             'niveau_etude' => fake()->randomElement(['BEPC', 'BAC', 'BTS', 'Licence', 'Master']),
             'date_limite' => now()->addDays(fake()->numberBetween(7, 30)),
-            'mode_candidature' => ModeCandidature::Resohelph,
+            'mode_candidature' => ModeCandidature::Rezohelp,
             'contact_candidature' => null,
         ];
     }

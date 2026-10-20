@@ -50,7 +50,7 @@ class AlerteCorrespondante extends Notification
     }
 
     /**
-     * « Resohelph: Electricien dispo, Cocody. Voir: resohelph.ci/p/ab12cd » (≤ 160 caractères, GSM-7).
+     * « Rezohelp: Electricien dispo, Cocody. Voir: rezohelp.ci/p/ab12cd » (≤ 160 caractères, GSM-7).
      */
     public function toSms(object $notifiable): MessageSms
     {

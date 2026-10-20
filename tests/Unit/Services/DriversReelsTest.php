@@ -20,8 +20,8 @@ function cinetpay(): CinetPayPasserelle
 
 function demandeCinetPay(): DemandePaiement
 {
-    return new DemandePaiement('CMD-2026-000007', 1000, 'Resohelph — Alertes SMS 30 jours', 'https://resohelph.test/retour/7',
-        'https://resohelph.test/paiements/notification/cinetpay', '+2250708091011', 'Awa Koné');
+    return new DemandePaiement('CMD-2026-000007', 1000, 'Rezohelp — Alertes SMS 30 jours', 'https://rezohelp.test/retour/7',
+        'https://rezohelp.test/paiements/notification/cinetpay', '+2250708091011', 'Awa Koné');
 }
 
 it('CinetPay : ouvre le guichet avec le montant, la référence et les URL', function () {
@@ -33,7 +33,7 @@ it('CinetPay : ouvre le guichet avec le montant, la référence et les URL', fun
         ->and($initialisation->donnees['payment_token'])->toBe('jeton');
     Http::assertSent(fn (RequeteHttp $requete): bool => $requete['transaction_id'] === 'CMD-2026-000007'
         && $requete['amount'] === 1000 && $requete['currency'] === 'XOF' && $requete['site_id'] === '105'
-        && $requete['notify_url'] === 'https://resohelph.test/paiements/notification/cinetpay');
+        && $requete['notify_url'] === 'https://rezohelp.test/paiements/notification/cinetpay');
 });
 
 it('CinetPay : signale un refus d’initialisation', function () {
@@ -75,7 +75,7 @@ it('CinetPay : vérifie le jeton x-token de la notification', function () {
 function orange(): OrangeFournisseurSms
 {
     return new OrangeFournisseurSms(app(Factory::class), app(CacheFil::class), [
-        'client_id' => 'id', 'client_secret' => 'secret', 'expediteur' => '+2250000', 'nom_expediteur' => 'Resohelph',
+        'client_id' => 'id', 'client_secret' => 'secret', 'expediteur' => '+2250000', 'nom_expediteur' => 'Rezohelp',
         'url' => 'https://api.orange.test', 'cout_fcfa' => 25,
     ]);
 }
@@ -86,8 +86,8 @@ it('Orange : obtient un jeton OAuth, le réutilise, et envoie le SMS', function 
         'api.orange.test/smsmessaging/*' => Http::response(['outboundSMSMessageRequest' => ['resourceURL' => 'https://api.orange.test/requests/ref-42']], 201),
     ]);
 
-    $premier = orange()->envoyer('+2250708091011', 'Resohelph: test');
-    $second = orange()->envoyer('+2250708091011', 'Resohelph: test 2');
+    $premier = orange()->envoyer('+2250708091011', 'Rezohelp: test');
+    $second = orange()->envoyer('+2250708091011', 'Rezohelp: test 2');
 
     expect($premier->envoye)->toBeTrue()
         ->and($premier->reference)->toBe('ref-42')
@@ -105,7 +105,7 @@ it('Orange : renvoie un échec sans lever d’exception', function () {
         'api.orange.test/smsmessaging/*' => Http::response(['requestError' => 'quota'], 403),
     ]);
 
-    $resultat = orange()->envoyer('+2250708091011', 'Resohelph: test');
+    $resultat = orange()->envoyer('+2250708091011', 'Rezohelp: test');
 
     expect($resultat->envoye)->toBeFalse()->and($resultat->erreur)->toContain('Orange 403');
 });
@@ -120,18 +120,18 @@ function twilio(): TwilioFournisseurSms
 it('Twilio : envoie le SMS en authentification basique', function () {
     Http::fake(['api.twilio.test/*' => Http::response(['sid' => 'SM42'], 201)]);
 
-    $resultat = twilio()->envoyer('+2250708091011', 'Resohelph: test');
+    $resultat = twilio()->envoyer('+2250708091011', 'Rezohelp: test');
 
     expect($resultat->envoye)->toBeTrue()->and($resultat->reference)->toBe('SM42')->and($resultat->coutFcfa)->toBe(50);
     Http::assertSent(fn (RequeteHttp $requete): bool => $requete->url() === 'https://api.twilio.test/2010-04-01/Accounts/AC123/Messages.json'
         && $requete->hasHeader('Authorization', 'Basic '.base64_encode('AC123:jeton'))
-        && $requete['To'] === '+2250708091011' && $requete['Body'] === 'Resohelph: test');
+        && $requete['To'] === '+2250708091011' && $requete['Body'] === 'Rezohelp: test');
 });
 
 it('Twilio : renvoie un échec lisible', function () {
     Http::fake(['api.twilio.test/*' => Http::response(['message' => 'Invalid To number'], 400)]);
 
-    $resultat = twilio()->envoyer('+2250708091011', 'Resohelph: test');
+    $resultat = twilio()->envoyer('+2250708091011', 'Rezohelp: test');
 
     expect($resultat->envoye)->toBeFalse()->and($resultat->erreur)->toBe('Twilio 400 : Invalid To number');
 });

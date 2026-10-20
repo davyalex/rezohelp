@@ -49,7 +49,7 @@ class EnvoyerRecapitulatifSms extends Command
 
                 $planifierSms->executer(
                     telephone: $membre->telephone,
-                    message: "Resohelph: {$total} autre(s) publication(s) correspondent a vos alertes aujourd'hui. Voir: {$lien}",
+                    message: "Rezohelp: {$total} autre(s) publication(s) correspondent a vos alertes aujourd'hui. Voir: {$lien}",
                     motif: MotifSms::Recap,
                     utilisateur: $membre,
                     respecterPlageSilencieuse: true,

@@ -26,7 +26,7 @@ class InitierPaiement
         $initialisation = $this->passerelle->initialiser(new DemandePaiement(
             reference: $commande->numero,
             montantFcfa: $commande->montant_ttc_fcfa,
-            description: 'Resohelph — '.($article->nom ?? 'commande').' ('.$commande->numero.')',
+            description: 'Rezohelp — '.($article->nom ?? 'commande').' ('.$commande->numero.')',
             urlRetour: route('paiements.retour', $commande->id),
             urlNotification: route('paiements.notification', $this->passerelle->nom()),
             telephoneClient: (string) $commande->utilisateur?->telephone,

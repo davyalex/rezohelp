@@ -1,4 +1,4 @@
-# CLAUDE.md — Resohelph
+# CLAUDE.md — Rezohelp
 
 Plateforme d'emploi, de home service / petits métiers et de formation à Abidjan, présentée comme un **fil d'actualité façon Facebook**, mobile d'abord.
 Contexte complet (fonctionnel, données, cache, alertes, publication, import, admin, abonnements) : **@docs/CONTEXTE.md** — à lire avant toute nouvelle fonctionnalité.

@@ -1,4 +1,4 @@
-# Resohelph — Avancement
+# Rezohelp — Avancement
 
 > Questions ouvertes pour Alex : aucune pour le moment.
 
@@ -25,7 +25,7 @@
 - **Dépôt** : `git init`, documents de référence rangés dans `docs/` (contenu inchangé).
 - **Paquets PHP** : `laravel/fortify`, `propaganistas/laravel-phone`, `spatie/laravel-permission`, `spatie/laravel-medialibrary`, `yajra/laravel-datatables`, `google/apiclient` (services limités à Drive), `barryvdh/laravel-dompdf` ; dev : `pestphp/pest`, `pestphp/pest-plugin-laravel`, `larastan/larastan`.
 - **Paquets JS** : `alpinejs` (public) ; `jquery`, `datatables.net-dt`, `select2`, `sweetalert2` (admin uniquement).
-- **Configuration** : locale `fr`, fuseau `Africa/Abidjan`, Carbon en français, traductions `lang/fr/*` ; cache `memcached` avec repli `file` si l'extension manque ; sessions et files `database` ; `config/resohelph.php` (drivers, compte admin).
+- **Configuration** : locale `fr`, fuseau `Africa/Abidjan`, Carbon en français, traductions `lang/fr/*` ; cache `memcached` avec repli `file` si l'extension manque ; sessions et files `database` ; `config/rezohelp.php` (drivers, compte admin).
 - **Vite** : entrées `resources/css/app.css` + `resources/js/app.js` (public) et `resources/css/admin.css` + `resources/js/admin.js` (admin) ; tokens `@theme` ; aucune police web.
 - **Code** :
   - `app/Models/Concerns/HorodatageFrancais.php` ;
@@ -36,7 +36,7 @@
   - `app/Providers/IntegrationsServiceProvider.php` (liaison selon `.env`) ;
   - `AppServiceProvider` : `preventLazyLoading()`, `preventSilentlyDiscardingAttributes()` hors production, locale Carbon.
 - **Vues** : `layouts/public.blade.php` (layout vide, `lang="fr"`) et `accueil.blade.php`.
-- **Qualité** : `phpstan.neon` (niveau 6), `pint.json`, Pest, `phpunit.xml` sur MySQL (`resohelph_test`).
+- **Qualité** : `phpstan.neon` (niveau 6), `pint.json`, Pest, `phpunit.xml` sur MySQL (`rezohelp_test`).
 - **CI** : `.github/workflows/ci.yml` (Pint, Larastan, build Vite, tests sur MySQL 8).
 - **Tests** : page d'accueil en français, localisation (fuseau, Carbon), trait d'horodatage, liaison des drivers, chaque driver fake / log.
 
@@ -67,7 +67,7 @@
 
 ### À vérifier par Alex
 
-- [ ] `composer install && npm install`, puis `php artisan migrate --seed` sur une base `resohelph` vide.
+- [ ] `composer install && npm install`, puis `php artisan migrate --seed` sur une base `rezohelp` vide.
 - [ ] `composer run dev` démarre (serveur, Vite, file) et `http://localhost:8000` affiche le layout vide en français.
 - [ ] Après le premier `git push` sur GitHub, la CI est verte.
 

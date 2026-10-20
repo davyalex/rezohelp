@@ -49,7 +49,7 @@ class DonneesStructurees
                     'addressCountry' => 'CI',
                 ]),
             ],
-            'directApply' => $detail?->mode_candidature === ModeCandidature::Resohelph,
+            'directApply' => $detail?->mode_candidature === ModeCandidature::Rezohelp,
             'url' => route('publications.show', $publication->slug),
         ];
 

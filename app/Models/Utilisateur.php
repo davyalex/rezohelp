@@ -105,7 +105,7 @@ class Utilisateur extends Authenticatable implements HasMedia
             $message .= ' Motif : '.$this->motif_suspension.'.';
         }
 
-        return $message.' Pour toute question, contactez l’équipe Resohelph.';
+        return $message.' Pour toute question, contactez l’équipe Rezohelp.';
     }
 
     public function registerMediaCollections(): void

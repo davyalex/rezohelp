@@ -309,7 +309,7 @@ class RemplissagePublication
      */
     private function contact(string $mode, mixed $valeur, string $pays): ?string
     {
-        if (! is_string($valeur) || trim($valeur) === '' || $mode === 'resohelph') {
+        if (! is_string($valeur) || trim($valeur) === '' || $mode === 'rezohelp') {
             return null;
         }
 

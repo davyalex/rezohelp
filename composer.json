@@ -1,8 +1,8 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "resohelph/resohelph",
+    "name": "rezohelp/rezohelp",
     "type": "project",
-    "description": "Resohelph : emploi, home service et formation à Abidjan, en fil d’actualité.",
+    "description": "Rezohelp : emploi, home service et formation à Abidjan, en fil d’actualité.",
     "keywords": [
         "emploi",
         "abidjan",

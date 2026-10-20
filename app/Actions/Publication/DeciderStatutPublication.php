@@ -36,7 +36,7 @@ class DeciderStatutPublication
         ?int $publicationIgnoreeId = null,
     ): StatutPublication {
         if ($auteur->confiance === ConfianceUtilisateur::Restreint) {
-            throw new PublicationImpossibleException('Votre compte ne peut plus publier. Contactez l’équipe Resohelph.');
+            throw new PublicationImpossibleException('Votre compte ne peut plus publier. Contactez l’équipe Rezohelp.');
         }
 
         if ($this->estPremierePublication($auteur, $publicationIgnoreeId)) {

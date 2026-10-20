@@ -53,7 +53,7 @@ class CreerCommande
             'montant_ttc_fcfa' => $ttc,
             'taux_tva' => $tva,
             'montant_ht_fcfa' => (int) round($ttc * 100 / (100 + $tva)),
-            'passerelle' => PasserelleCommande::from((string) config('resohelph.paiement.driver')),
+            'passerelle' => PasserelleCommande::from((string) config('rezohelp.paiement.driver')),
         ]);
         $commande->statut = StatutCommande::EnAttente;
         $commande->save();

@@ -74,7 +74,7 @@ class PublicationController extends Controller
     }
 
     /**
-     * « Postuler » ou « S'inscrire » hors Resohelph (lien, e-mail, téléphone) : le clic est compté (§11.8).
+     * « Postuler » ou « S'inscrire » hors Rezohelp (lien, e-mail, téléphone) : le clic est compté (§11.8).
      */
     public function contactExterne(string $slug, CompterInteraction $compter): RedirectResponse
     {

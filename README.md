@@ -1,4 +1,4 @@
-# Resohelph
+# Rezohelp
 
 Plateforme d'emploi, de home service / petits métiers et de formation à Abidjan, présentée comme un fil d'actualité, mobile d'abord.
 
@@ -16,7 +16,7 @@ PHP 8.3+ (extensions `intl`, `gd` avec WebP, `pdo_mysql`, `memcached` en product
 ```bash
 composer install && npm install
 cp .env.example .env && php artisan key:generate
-# créer les bases MySQL « resohelph » et « resohelph_test » (utf8mb4)
+# créer les bases MySQL « rezohelp » et « rezohelp_test » (utf8mb4)
 php artisan migrate --seed
 composer run dev        # serveur + Vite + file d'attente
 ```

@@ -4,7 +4,7 @@ it('affiche la page d’accueil en français', function () {
     $this->get('/')
         ->assertOk()
         ->assertSee('<html lang="fr">', false)
-        ->assertSee('Resohelph')
+        ->assertSee('Rezohelp')
         ->assertSee('Aller au contenu');
 });
 

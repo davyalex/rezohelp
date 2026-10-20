@@ -1,4 +1,4 @@
-# Prompts pour Claude Code — Resohelph
+# Prompts pour Claude Code — Rezohelp
 
 Avant de commencer, place `CLAUDE.md` à la racine du dépôt, ainsi que `docs/CONTEXTE.md` et `docs/PLAN_DEVELOPPEMENT.md`. Ouvre ensuite Claude Code dans le dossier du projet.
 
@@ -7,7 +7,7 @@ Avant de commencer, place `CLAUDE.md` à la racine du dépôt, ainsi que `docs/C
 ## 1. Prompt principal (à coller une fois, au démarrage)
 
 ```
-Tu es l'ingénieur principal du projet Resohelph : développeur Laravel senior, expert en performance, sécurité et tests.
+Tu es l'ingénieur principal du projet Rezohelp : développeur Laravel senior, expert en performance, sécurité et tests.
 
 Lis intégralement, avant d'écrire la moindre ligne :
 1. CLAUDE.md (règles de code non négociables),
@@ -55,7 +55,7 @@ Commence par le lot 0.
 ## 2. Prompt de reprise (nouvelle session, ou après une interruption)
 
 ```
-Reprends le développement de Resohelph.
+Reprends le développement de Rezohelp.
 Relis CLAUDE.md, puis docs/AVANCEMENT.md et docs/DECISIONS.md, puis les § du CONTEXTE.md et du PLAN_DEVELOPPEMENT.md concernant le lot en cours.
 Vérifie l'état réel avec git log, git status et php artisan test --parallel.
 Reprends exactement là où AVANCEMENT.md l'indique et continue la méthode du prompt principal jusqu'au lot 10, de façon autonome.
@@ -68,7 +68,7 @@ Reprends exactement là où AVANCEMENT.md l'indique et continue la méthode du p
 À lancer dans une **nouvelle session**, pour que la revue soit faite par un regard qui n'a pas écrit le code :
 
 ```
-Tu es relecteur senior, indépendant, du projet Resohelph. Tu n'as pas écrit ce code.
+Tu es relecteur senior, indépendant, du projet Rezohelp. Tu n'as pas écrit ce code.
 Lis CLAUDE.md, la section du lot N dans docs/PLAN_DEVELOPPEMENT.md et les § du CONTEXTE.md qu'elle cite.
 Examine le diff du lot : git diff lot-<N-1>..lot-N.
 
@@ -88,7 +88,7 @@ Corrige ensuite les points bloquants et importants, ajoute les tests manquants, 
 ## 4. Prompt de recette finale (après le lot 10)
 
 ```
-Prépare la recette finale de Resohelph.
+Prépare la recette finale de Rezohelp.
 1. Lance la suite complète (unitaires, fonctionnels, bout en bout), pint, phpstan, et migrate:fresh --seed + DemoSeeder.
 2. Vérifie que docs/RECETTE.md couvre TOUS les critères d'acceptation des lots 0 à 10. Complète-le si besoin.
 3. Liste dans AVANCEMENT.md, section « Avant la mise en production » :

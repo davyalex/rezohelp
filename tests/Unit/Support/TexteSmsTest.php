@@ -20,14 +20,14 @@ it('ne dépasse jamais 160 caractères et coupe proprement', function () {
 });
 
 it('garde toujours le lien court entier dans un SMS d’alerte', function () {
-    $sms = TexteSms::alerte(str_repeat('Électricien très expérimenté disponible ', 8), 'Port-Bouët', 'https://resohelph.ci/p/ab12cd');
+    $sms = TexteSms::alerte(str_repeat('Électricien très expérimenté disponible ', 8), 'Port-Bouët', 'https://rezohelp.ci/p/ab12cd');
 
     expect(strlen($sms))->toBeLessThanOrEqual(160)
-        ->and($sms)->toStartWith('Resohelph: Electricien')
-        ->and($sms)->toEndWith(', Port-Bouet. Voir: resohelph.ci/p/ab12cd');
+        ->and($sms)->toStartWith('Rezohelp: Electricien')
+        ->and($sms)->toEndWith(', Port-Bouet. Voir: rezohelp.ci/p/ab12cd');
 });
 
 it('compose un SMS d’alerte court sans commune', function () {
-    expect(TexteSms::alerte('Comptable CDI', null, 'http://resohelph.test/p/zz99aa'))
-        ->toBe('Resohelph: Comptable CDI. Voir: resohelph.test/p/zz99aa');
+    expect(TexteSms::alerte('Comptable CDI', null, 'http://rezohelp.test/p/zz99aa'))
+        ->toBe('Rezohelp: Comptable CDI. Voir: rezohelp.test/p/zz99aa');
 });

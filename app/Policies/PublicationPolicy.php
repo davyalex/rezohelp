@@ -36,7 +36,7 @@ class PublicationPolicy
         }
 
         if ($utilisateur->confiance === ConfianceUtilisateur::Restreint) {
-            return Response::deny('Votre compte ne peut plus publier. Contactez l’équipe Resohelph pour en savoir plus.');
+            return Response::deny('Votre compte ne peut plus publier. Contactez l’équipe Rezohelp pour en savoir plus.');
         }
 
         $limite = Parametre::entier('max_publications_par_jour');

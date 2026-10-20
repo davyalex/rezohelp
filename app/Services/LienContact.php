@@ -6,7 +6,7 @@ use App\Enums\ModeCandidature;
 use App\Models\Publication;
 
 /**
- * Lien de contact externe d'une offre (candidature ou inscription hors Resohelph) :
+ * Lien de contact externe d'une offre (candidature ou inscription hors Rezohelp) :
  * mailto:, tel: ou adresse web en http(s) uniquement.
  */
 class LienContact

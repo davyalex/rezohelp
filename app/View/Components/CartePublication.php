@@ -39,7 +39,7 @@ class CartePublication extends Component
     {
         $this->titre = JetonsCarte::neutraliser($publication->titre);
         $this->extrait = JetonsCarte::neutraliser($publication->extrait);
-        $this->auteur = JetonsCarte::neutraliser($publication->auteur_nom_affiche ?? 'Membre Resohelph');
+        $this->auteur = JetonsCarte::neutraliser($publication->auteur_nom_affiche ?? 'Membre Rezohelp');
         $this->commune = $referentiels->nomCommune($publication->commune_id);
         $this->categorie = $referentiels->nomCategorie($publication->categorie_id);
         $this->faits = array_map(JetonsCarte::neutraliser(...), $publication->faits_cles ?? []);

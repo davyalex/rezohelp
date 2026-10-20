@@ -1,4 +1,4 @@
-# Resohelph — Décisions prises en cours de développement
+# Rezohelp — Décisions prises en cours de développement
 
 > Format : date · sujet · options · choix · raison. Les écarts avec `docs/CONTEXTE.md` sont notés ici, jamais dans le CONTEXTE.
 
@@ -11,7 +11,7 @@
 
 ### D-002 · 2026-10-16 · Base de données des tests
 - **Options** : SQLite en mémoire (squelette Laravel) ; MySQL 8.
-- **Choix** : MySQL 8 (`resohelph_test`, une base par processus avec `--parallel`).
+- **Choix** : MySQL 8 (`rezohelp_test`, une base par processus avec `--parallel`).
 - **Raison** : le fil et la recherche utilisent FULLTEXT et des index propres à MySQL ; la CI tourne aussi sur MySQL 8. Les tests vérifient ainsi le comportement réel.
 
 ### D-003 · 2026-10-16 · Accès au cache
@@ -129,7 +129,7 @@
 - **Raison** : respecte « jamais de données propres à l'utilisateur dans le cache partagé » tout en affichant des compteurs et des dates justes, avec ou sans JavaScript.
 
 ### D-027 · 2026-10-16 · Bouton principal de la carte
-- **Choix** : « Postuler », « Contacter », « Je suis disponible » et « S'inscrire » mènent à la section « Répondre » de la page détail, qui présente le bon mode (lien, e-mail, téléphone, WhatsApp, formulaire Resohelph au lot 4).
+- **Choix** : « Postuler », « Contacter », « Je suis disponible » et « S'inscrire » mènent à la section « Répondre » de la page détail, qui présente le bon mode (lien, e-mail, téléphone, WhatsApp, formulaire Rezohelp au lot 4).
 - **Raison** : la carte ne lit pas `details_*` (mode de candidature, téléphone affiché ou non) ; la page détail les charge.
 
 ### D-028 · 2026-10-16 · Visibilité de la page détail

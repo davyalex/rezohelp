@@ -11,7 +11,7 @@ enum ModeCandidature: string
 {
     use AvecLibelles;
 
-    case Resohelph = 'resohelph';
+    case Rezohelp = 'rezohelp';
     case Email = 'email';
     case Lien = 'lien';
     case Telephone = 'telephone';
@@ -19,7 +19,7 @@ enum ModeCandidature: string
     public function libelle(): string
     {
         return match ($this) {
-            self::Resohelph => 'Sur Resohelph',
+            self::Rezohelp => 'Sur Rezohelp',
             self::Email => 'Par e-mail',
             self::Lien => 'Sur le site du recruteur',
             self::Telephone => 'Par téléphone',

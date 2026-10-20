@@ -19,8 +19,8 @@
     $emploi = $p->detailEmploi;
     $service = $p->detailService;
     $formation = $p->detailFormation;
-    $lienExterne = ($emploi && $emploi->mode_candidature !== ModeCandidature::Resohelph && $emploi->contact_candidature)
-        || ($formation && $formation->mode_inscription !== ModeInscription::Resohelph && $formation->contact_inscription);
+    $lienExterne = ($emploi && $emploi->mode_candidature !== ModeCandidature::Rezohelp && $emploi->contact_candidature)
+        || ($formation && $formation->mode_inscription !== ModeInscription::Rezohelp && $formation->contact_inscription);
 @endphp
 
 <section id="repondre" class="mt-6 space-y-3 border-t border-slate-100 pt-4" aria-label="Répondre">
