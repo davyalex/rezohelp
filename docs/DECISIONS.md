@@ -219,3 +219,18 @@
 
 ### D-053 · 2026-10-19 · Reçus et CinetPay
 - **Choix** : les mentions légales du reçu acceptent des balises simples sans attribut (`p`, `br`, `strong`, `em`, `ul`, `li`) ; PDF A5 par dompdf ; reçu visible pour une commande payée ou remboursée. Le jeton `x-token` de CinetPay est calculé sur les champs `cpm_*` dans l'ordre de la documentation CinetPay : **à confirmer en bac à sable** avant la mise en production.
+
+### D-054 · 2026-10-22 · Mise en ligne par une décision humaine
+- **Choix** : `DeciderStatutPublication` reste le seul à décider **automatiquement** de la mise en ligne d'une publication soumise par un membre. Les décisions humaines du back-office (validation en modération, rétablissement après signalements, prolongation d'une publication expirée) mettent aussi en ligne, chacune par son action admin journalisée. La validation pose `publiee_le` et `tri_le` à la première mise en ligne seulement : une publication remise en ligne garde sa place dans le fil.
+- **Raison** : la règle de CLAUDE.md porte sur la publication par les utilisateurs (§11) ; le §13.3.B prévoit explicitement « Valider → statut = publiee ». Ne pas remonter une publication réhabilitée évite une remontée gratuite.
+
+### D-055 · 2026-10-22 · Dépublier
+- **Choix** : « Dépublier » remet la publication **en attente de modération** (et non clôturée), l'auteur est prévenu (`PublicationRemiseEnAttente`) et ses mises en avant sont suspendues.
+- **Raison** : une publication retirée par l'équipe ne doit plus être visible, même par sa page (une clôture la laisserait consultable) ; l'équipe décide ensuite de la valider ou de la refuser avec un motif.
+
+### D-056 · 2026-10-22 · Suspension d'un compte
+- **Choix** : la suspension retire du fil les publications en ligne du membre (retour en attente), sans les refuser ; la réactivation ne les remet pas en ligne automatiquement (la modération les revoit). Un compte est suspendu jusqu'à une date ou définitivement ; il est déconnecté à sa prochaine requête (`VerifierCompteActif`).
+- **Raison** : « ses publications sont dépubliées » (§13.3.F) sans perdre leur contenu si la suspension était une erreur.
+
+### D-057 · 2026-10-22 · Écrans du back-office
+- **Choix** : (1) l'arbre des catégories est rendu par le serveur (liste hiérarchique bornée) ; toutes les autres listes sont des DataTables côté serveur. (2) Les listes sont déclarées par attributs `data-*` lus par `admin.js` plutôt que par les scripts générés de Yajra Html, pour qu'aucune vue admin ne contienne de script en ligne (CSP du lot 9). (3) Le graphique du tableau de bord est un SVG rendu par le serveur, sans Chart.js. (4) La levée d'une restriction de confiance enregistre `utilisateurs.restriction_levee_le` : les rejets et signalements antérieurs ne comptent plus. (5) Un paramètre (clé textuelle) est journalisé par sa clé dans les données, `journal_activites.sujet_id` étant numérique.

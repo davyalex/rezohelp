@@ -11,7 +11,7 @@
 | 4 | Publication par les utilisateurs | terminé (tag `lot-4`) |
 | 5 | Mon espace, alertes et notifications | terminé (tag `lot-5`) |
 | 6 | Abonnements, paiements, SMS, visibilité payante | terminé (tag `lot-6`) |
-| 7 | Back-office | en cours (pause, voir « Point de reprise ») |
+| 7 | Back-office | terminé (tag `lot-7`) |
 | 8 | Import de la veille et enrichissement IA | à faire |
 | 9 | PWA, performance, accessibilité, sécurité | à faire |
 | 10 | Recette finale et mise en production | à faire |
@@ -377,15 +377,42 @@
 - **K — Plans et paiements** : plans (formulaire + éditeur de limites de toutes les clés `CleDroit` ; suppression interdite si souscrit), produits, abonnements (offrir avec motif, prolonger, résilier), commandes (détail, payload, revérifier, rembourser, reçu, export CSV), revenus (CA du mois par source, abonnements actifs par plan, essais et conversion, échéances à 7 j, coût SMS et IA).
 - **Tests** : accès modérateur / administrateur par module ; valider et rejeter (événement, notifications, confiance) ; actions groupées ; auto-suspension interdite ; anonymisation ; plan souscrit non supprimable ; limite modifiée → droits recalculés ; une ligne de journal par action ; listes DataTables (JSON serveur, filtres) ; expiration et purge.
 
-### Point de reprise (pause demandée par Alex pour tester, 19/10/2026)
+### Fait
 
-**Écrit et vérifié** (Pint, Larastan niveau 6 : 0 erreur ; `AccesAdminTest` : 51 tests verts ; `migrate:fresh --seed` + `DemoSeeder` ; build Vite) :
-- Socle : `routes/admin.php` (auth + `role:administrateur|moderateur` + `no-store`, `can:` par module), alias Spatie, layout et composants `x-admin.*`, `admin.js` (DataTables serveur par attributs, Select2 Ajax, SweetAlert2, raccourcis de modération), base `TableAdmin`, trait `JournaliseActivite`, `StatistiquesService` (cache `admin:*` 5 min).
-- Modules A, B, C, D, E (écrans), F, G, K complets : contrôleurs `Admin\*`, actions `Actions\Admin\*`, 13 listes `App\DataTables\*`, vues `admin/*`.
-- Commandes `publications:expirer` (02h00, avec le préavis de 3 jours), `publications:purger` (hebdomadaire, `jours_purge_publications`), `fil:vider-cache`.
-- Notifications `PublicationValidee` (avec incitation de remontée), `PublicationRejetee`, `PublicationExpireBientot`.
-- `utilisateurs.restriction_levee_le` (levée durable de la restriction) ; `DemoSeeder` : 20 annonces à modérer + 4 signalements.
+- **Socle** : `routes/admin.php` chargé par `bootstrap/app.php` (préfixe `/admin`, noms `admin.*`, `auth` + `role:administrateur|moderateur` + `PasDeCache`, puis `can:<permission>` par module) ; layout `admin/layout.blade.php` (menu selon `@can`, compteurs « en attente » et « signalements » exacts à chaque page, menu repliable sur mobile) ; composants `x-admin.table`, `x-admin.filtres`, `x-admin.flash`, `x-admin.badge-statut`, `x-admin.carte-stat` ; `admin.js` sans aucun script en ligne dans les vues : listes DataTables **serveur** déclarées par `data-datatable`, filtres envoyés à chaque requête, Select2 (Ajax `/admin/recherche/*`), confirmations et toasts SweetAlert2, raccourcis de modération ; base `App\DataTables\TableAdmin` et 13 listes ; contrôleurs `Admin\*` (base `ControleurAdmin`) ; actions `app/Actions/Admin/*` avec le trait `JournaliseActivite` (auteur, action, sujet, avant / après, motif, IP) ; lien « Administration » dans l'en-tête public selon `@can`.
+- **A — Tableau de bord** : `StatistiquesService` (publiées aujourd'hui par type, en attente, signalements ouverts, inscrits jour / 7 j, alertes actives, notifications du jour ; cache `admin:compteurs` 5 min via `CacheFil::admin`), dernier import et bandeau rouge après 9 h sans import réussi, graphique 30 jours en SVG (aucune bibliothèque), raccourcis.
+- **B — Modération** : file des publications en attente (score croissant, filtres type / source, cases à cocher, lot valider / refuser), détail (carte identique au fil, texte complet, signaux de risque surlignés, lien source, historique de l'auteur, publications similaires), raccourcis **V / R / D / →**, passage automatique à la suivante ; `ValiderPublication` (publiée, `publiee_le` et `tri_le` à la première mise en ligne, `PublicationPubliee`, notification `PublicationValidee` avec l'incitation « Remontez votre annonce » pour un artisan), `RejeterPublication` (motif `MotifRejet` + précision, obligatoire pour « Autre » ; notification `PublicationRejetee`), `MarquerDoublon`, `ModererLot`.
+- **C — Publications** : liste filtrable (type, statut, source, commune, catégorie, auteur via Select2, période, titre), modification (titre, texte, catégorie, commune, expiration ; extrait recalculé), dépublication (retour en modération, auteur prévenu), prolongation (+ `jours_prolongation`, une publication expirée revient en ligne), suppression ; commandes `publications:expirer` (02h00, avec la notification `PublicationExpireBientot` à 3 jours), `publications:purger` (dimanche 03h00, `jours_purge_publications`) et `fil:vider-cache`.
+- **D — Signalements** : liste groupée par publication (nombre, motifs, premier signalement), fiche, décisions `retablir | supprimer | supprimer_et_suspendre` (`TraiterSignalements` : signalements traités et retenus ou non, publication masquée remise en ligne, confiance recalculée, suspension définitive de l'auteur).
+- **E — Veille** : historique des imports (lien Drive, compteurs, statut, erreur) et détail avec les publications créées ; sources (création, modification, domaine normalisé, importées, taux de rejet sur 30 j) ; coût de l'API IA par mois (`appels_ia`).
+- **F — Utilisateurs et entreprises** : recherche par numéro normalisé ou par nom, fiche (rôles, publications, alertes, signalements reçus, formules, historique des actions de l'équipe), modification, suspension (motif, date de fin facultative, publications retirées du fil) et réactivation, mot de passe temporaire affiché une seule fois, rôles par Select2, levée de la restriction de confiance (`restriction_levee_le`), suppression avec anonymisation (`AnonymiserUtilisateur`) ; un administrateur ne peut ni se suspendre, ni retirer son propre rôle, ni anonymiser son compte ; entreprises : liste, fiche, badge « vérifiée » (recopié sur les cartes), fusion de deux fiches (publications, abonnements, crédits et commandes rattachés).
+- **G — Référentiels et paramètres** : arbre des catégories (type → catégorie → sous-catégorie, icône, activation, flèches haut / bas), communes et pays (activation, ordre, ajout), paramètres typés (entier, booléen, texte, HTML, JSON validé ; `modifie_par`), boutons « Vider le cache du fil » et « Vider les référentiels ».
+- **K — Plans et paiements** : plans (formulaire + éditeur de toutes les clés `CleDroit` : oui / non, nombre ou « illimité » ; un seul plan par défaut par cible ; suppression refusée si souscrit ou par défaut), produits, abonnements (liste filtrable par plan, statut et échéance ; offrir avec motif, prolonger, résilier), commandes (détail avec la charge utile et les notifications reçues, « Revérifier le statut », remboursement manuel qui arrête abonnement, crédits et mises en avant, reçu, export CSV des filtres), revenus (CA du mois par source, abonnements actifs par plan, essais et conversion, échéances à 7 jours, coûts SMS et IA).
+- **Démo** : `DemoSeeder` ajoute 20 annonces à modérer (scores et signaux variés) et 4 signalements, dont 3 « arnaque » qui masquent une publication.
 
-**Reste à faire pour le lot 7**
-1. Tests Pest des règles : valider / rejeter (événement, notifications, confiance), doublon, lot, auto-suspension interdite, rôle d'administrateur conservé, anonymisation, signalements (3 décisions), plan souscrit non supprimable, limite modifiée → droits recalculés, offrir / prolonger / résilier, remboursement, revérification, fusion d'entreprises, paramètres typés, déplacement des référentiels, une ligne de journal par action, `publications:expirer` et `publications:purger`, recherche par téléphone normalisé.
-2. `php artisan test --parallel`, docs (Fait, tests, écarts, À vérifier ; DECISIONS D-054 à D-057 : validation humaine hors `DeciderStatutPublication`, dépublication → en attente, suspension → publications en attente, arbre des catégories rendu par le serveur), commit « lot 7 » et tag `lot-7`.
+### Tests ajoutés (107 tests, 6 fichiers ; total 633)
+
+- `tests/Feature/Admin/AccesAdminTest.php` (51 : chaque page pour l'administrateur et sans cache, accès du modérateur limité à ses modules, refus aux membres et visiteurs, listes DataTables en JSON serveur, fiches de détail)
+- `tests/Feature/Admin/ModerationTest.php` (11 : validation avec événement, notification, journal et incitation de remontée ; remise en ligne sans remontée ; rejet et motif ; précision pour « Autre » ; restriction après 2 rejets pour arnaque ; doublon ; publication suivante ; décision refusée hors attente ; lots ; recherche Select2)
+- `tests/Feature/Admin/UtilisateursTest.php` (15 : recherche par numéro sous 5 formes ou par nom, suspension et réactivation, auto-suspension interdite, rôle d'administrateur conservé, droits réservés à l'administrateur, mot de passe temporaire, anonymisation ARTCI, levée durable de restriction, modification journalisée, vérification et fusion d'entreprises)
+- `tests/Feature/Admin/SignalementsTest.php` (5) · `tests/Feature/Admin/PlansEtPaiementsTest.php` (12 : prix et limite modifiés avec effet immédiat, « illimité », plan par défaut unique, validations, plan souscrit non supprimable, offrir / refuser une autre cible, prolonger et résilier, revérification idempotente, remboursement, export CSV, revenus)
+- `tests/Feature/Admin/PublicationsEtReferentielsTest.php` (13 : filtres, modification journalisée, dépublication / prolongation / suppression, `publications:expirer`, `publications:purger`, catégories et flèches, rattachement refusé, communes et pays désactivés, paramètres typés et invalides, boutons de cache, sources, tableau de bord)
+
+### Écarts avec le CONTEXTE
+
+- Décisions D-054 à D-057.
+- Veille : les boutons « Importer maintenant » et « Relancer » ainsi que le détail ligne par ligne d'un import arrivent avec l'import réel (lot 8).
+- Modules V2 non développés (§13.3 H, I, J sauf l'écriture du journal) : statistiques, modération des commentaires, vue des alertes, consultation du journal, jobs échoués et santé, publications épinglées.
+- Le formulaire d'édition d'une publication ne change pas le statut : il passe par les actions dédiées (modérer, dépublier, prolonger), pour garder une seule porte vers chaque statut.
+
+### À vérifier par Alex
+
+- [ ] Se connecter avec le compte administrateur du `.env`, ouvrir `/admin` : compteurs, graphique, bandeau d'import en retard.
+- [ ] Modération : modérer les 20 annonces de démo au clavier (V, R, D, →) ; essayer un lot.
+- [ ] Signalements : la publication signalée 3 fois « arnaque » est masquée ; tester les trois décisions.
+- [ ] Utilisateurs : rechercher `07 08 09 10 11` et `+225…` ; suspendre puis réactiver un membre ; réinitialiser un mot de passe et se connecter avec ; vérifier qu'on ne peut pas se suspendre soi-même.
+- [ ] Plans : modifier le prix d'« Alertes SMS 30 jours » et une limite d'« Artisan gratuit », puis vérifier `/tarifs` et « Mon abonnement » d'un membre ; offrir « Artisan Pro » à un artisan.
+- [ ] Donner le rôle `moderateur` à un membre : il ne voit que ses modules (pas de plans, paramètres, référentiels ni veille).
+- [ ] Paramètres : modifier `frequence_sponsorise`, vider le cache du fil.
+
+---
