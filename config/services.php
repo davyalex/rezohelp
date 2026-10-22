@@ -47,6 +47,12 @@ return [
         'modele' => env('CLAUDE_MODELE', 'claude-haiku-5-5'),
         'url' => env('CLAUDE_URL', 'https://api.anthropic.com/v1'),
         'version' => env('CLAUDE_API_VERSION', '2023-06-01'),
+        // Analyse courte : effort bas ; max_tokens laisse la place à la réflexion (active par défaut sur Haiku 5.5).
+        'effort' => env('CLAUDE_EFFORT', 'low'),
+        'max_tokens' => (int) env('CLAUDE_MAX_TOKENS', 4000),
+        'tentatives' => (int) env('CLAUDE_TENTATIVES', 3),
+        'attente_ms' => (int) env('CLAUDE_ATTENTE_MS', 1000),
+        'delai' => (int) env('CLAUDE_DELAI', 60),
         // Estimation du coût affichée dans l'admin (FCFA par million de tokens)
         'cout_entree_fcfa_par_million' => (int) env('CLAUDE_COUT_ENTREE_FCFA', 600),
         'cout_sortie_fcfa_par_million' => (int) env('CLAUDE_COUT_SORTIE_FCFA', 3000),

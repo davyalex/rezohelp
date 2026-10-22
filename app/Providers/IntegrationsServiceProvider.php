@@ -7,6 +7,7 @@ use App\Contracts\FournisseurSms;
 use App\Contracts\PasserellePaiement;
 use App\Contracts\SourceVeille;
 use App\Services\CacheFil;
+use App\Services\IA\ClaudeClientIA;
 use App\Services\IA\FakeClientIA;
 use App\Services\Paiement\CinetPayPasserelle;
 use App\Services\Paiement\FakePasserelle;
@@ -14,6 +15,7 @@ use App\Services\Sms\LogFournisseurSms;
 use App\Services\Sms\OrangeFournisseurSms;
 use App\Services\Sms\TwilioFournisseurSms;
 use App\Services\Veille\FakeSourceVeille;
+use App\Services\Veille\GoogleDriveSourceVeille;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Support\Facades\Log;
@@ -44,11 +46,13 @@ class IntegrationsServiceProvider extends ServiceProvider
 
         $this->app->singleton(SourceVeille::class, fn (Application $app): SourceVeille => match ($this->driver('veille')) {
             'fake' => new FakeSourceVeille((string) config('rezohelp.veille.fake.dossier')),
+            'google_drive' => new GoogleDriveSourceVeille($app->make(Factory::class), (array) config('services.google_drive')),
             default => $this->driverInconnu('veille'),
         });
 
         $this->app->singleton(ClientIA::class, fn (Application $app): ClientIA => match ($this->driver('ia')) {
             'fake' => new FakeClientIA,
+            'claude' => new ClaudeClientIA($app->make(Factory::class), (array) config('services.claude')),
             default => $this->driverInconnu('ia'),
         });
     }

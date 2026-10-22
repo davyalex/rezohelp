@@ -64,6 +64,8 @@ Route::middleware('can:signalements.traiter')->group(function () {
 Route::middleware('can:veille.gerer')->prefix('veille')->name('veille.')->group(function () {
     Route::get('/imports', [VeilleController::class, 'index'])->name('imports.index');
     Route::get('/imports/{import}', [VeilleController::class, 'show'])->name('imports.show');
+    Route::post('/imports/{import}/relancer', [VeilleController::class, 'relancer'])->name('imports.relancer');
+    Route::post('/importer-maintenant', [VeilleController::class, 'importerMaintenant'])->middleware('throttle:6,1')->name('importer-maintenant');
     Route::resource('sources', SourceVeilleController::class)->except(['show', 'destroy'])->parameters(['sources' => 'source']);
 });
 

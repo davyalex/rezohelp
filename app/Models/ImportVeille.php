@@ -48,6 +48,14 @@ class ImportVeille extends Model
     }
 
     /**
+     * @return HasMany<LigneImportVeille, $this>
+     */
+    public function lignes(): HasMany
+    {
+        return $this->hasMany(LigneImportVeille::class, 'import_veille_id');
+    }
+
+    /**
      * @return HasMany<AppelIa, $this>
      */
     public function appelsIa(): HasMany

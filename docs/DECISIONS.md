@@ -234,3 +234,16 @@
 
 ### D-057 · 2026-10-22 · Écrans du back-office
 - **Choix** : (1) l'arbre des catégories est rendu par le serveur (liste hiérarchique bornée) ; toutes les autres listes sont des DataTables côté serveur. (2) Les listes sont déclarées par attributs `data-*` lus par `admin.js` plutôt que par les scripts générés de Yajra Html, pour qu'aucune vue admin ne contienne de script en ligne (CSP du lot 9). (3) Le graphique du tableau de bord est un SVG rendu par le serveur, sans Chart.js. (4) La levée d'une restriction de confiance enregistre `utilisateurs.restriction_levee_le` : les rejets et signalements antérieurs ne comptent plus. (5) Un paramètre (clé textuelle) est journalisé par sa clé dans les données, `journal_activites.sujet_id` étant numérique.
+
+### D-058 · 2026-10-22 · Publication automatique de la veille
+- **Choix** : une annonce de la veille entre en attente à l'import ; après l'enrichissement IA, `DeciderPublicationVeille` (seul point de décision pour la veille, comme `DeciderStatutPublication` pour les membres) la met en ligne si **toutes** ces conditions sont réunies : source active, `niveau_confiance = haut`, `publication_auto` coché, `score_fiabilite >= seuil_publication_auto`. Le score décidant la mise en ligne, aucune annonce de la veille n'est publiée sans score (IA en échec → en attente).
+- **Raison** : la règle de CLAUDE.md (« haut **et** score ≥ 70 ») fixe des conditions nécessaires ; `publication_auto` (déjà présent dans `sources_veille`) sert d'interrupteur par source, réglable dans l'admin sans toucher au niveau de confiance.
+
+### D-059 · 2026-10-22 · Normalisation des URL de la veille
+- **Choix** : https, hôte en minuscules sans `www.`, port gardé, chemin sans slash final, sans fragment ; paramètres retirés : `utm_*`, `fbclid`, `gclid`, `dclid`, `msclkid`, `igshid`, `mc_cid`, `mc_eid`, `ref_src`, `_ga`, `_gl`, `yclid` ; les autres paramètres sont gardés et triés (ils désignent souvent l'annonce : `?id=42`). Seuls les liens http(s) sont acceptés.
+
+### D-060 · 2026-10-22 · Contenu d'une annonce de la veille
+- **Choix** : la publication garde le résumé fourni par la veille, limité à 600 caractères (jamais le texte source), et le lien d'origine ; l'extrait de la carte est le texte réécrit par l'IA (220 caractères). La catégorie vient de la colonne « Domaine » ; celle proposée par l'IA ne sert que si « Domaine » ne correspond à aucune catégorie. Une annonce de service externe n'affiche aucun numéro (contact par le lien d'origine). Le type « Home service / petits métiers » devient une **offre** de service. Les champs « Contrat/Durée/Prix » sont lus par mots-clés (CDI, CDD, stage, intérim, freelance ; montant en FCFA ; « gratuit »).
+
+### D-061 · 2026-10-22 · Driver Claude
+- **Choix** : appel HTTP direct de l'API Messages par le client HTTP de Laravel (CONTEXTE §6 « via HTTP client Laravel » ; le SDK PHP d'Anthropic serait une dépendance non listée), modèle `claude-haiku-5-5` par défaut (CONTEXTE : modèle Haiku), effort `low` (analyse courte), `max_tokens` 4 000 pour laisser la place à la réflexion active par défaut, sortie structurée par schéma JSON revalidée côté serveur. Les nouvelles tentatives immédiates (429 avec `retry-after`, 529, 5xx, réseau) s'ajoutent à celles du job (30 s, 2 min, 10 min).

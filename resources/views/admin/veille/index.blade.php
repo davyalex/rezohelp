@@ -5,7 +5,13 @@
 @section('contenu')
     <div class="flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-2xl font-bold">Veille IA — imports</h1>
-        <x-bouton :href="route('admin.veille.sources.index')" variante="secondaire">Sources de la veille</x-bouton>
+        <div class="flex flex-wrap gap-2">
+            <form method="POST" action="{{ route('admin.veille.importer-maintenant') }}" data-confirmer="Chercher maintenant les nouveaux fichiers du dossier Drive ?">
+                @csrf
+                <x-bouton>Importer maintenant</x-bouton>
+            </form>
+            <x-bouton :href="route('admin.veille.sources.index')" variante="secondaire">Sources de la veille</x-bouton>
+        </div>
     </div>
     <p class="mb-4 text-sm text-slate-600">Fichiers déposés par la veille dans Google Drive et importés à 01h20, 09h20 et 17h20.</p>
 

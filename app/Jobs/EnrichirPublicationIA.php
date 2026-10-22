@@ -2,25 +2,34 @@
 
 namespace App\Jobs;
 
+use App\Actions\Veille\DeciderPublicationVeille;
 use App\Contracts\ClientIA;
 use App\Donnees\DemandeEnrichissement;
 use App\Donnees\ResultatEnrichissement;
 use App\Enums\SourcePublication;
 use App\Enums\StatutAppelIa;
 use App\Enums\StatutPublication;
+use App\Events\PublicationPubliee;
 use App\Models\AppelIa;
 use App\Models\Categorie;
 use App\Models\Parametre;
 use App\Models\Publication;
 use App\Notifications\PublicationRemiseEnAttente;
+use App\Services\CorrespondanceVeille;
+use App\Services\Referentiels;
+use App\Support\IdentifiantsPublication;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
 
 /**
- * Score de fiabilité et signaux d'arnaque calculés par l'IA, après l'envoi (CONTEXTE §11.5).
- * Une publication en ligne dont le score tombe sous seuil_remise_en_attente
- * repasse en attente et son auteur est prévenu.
+ * Score de fiabilité et signaux d'arnaque calculés par l'IA, en file (CONTEXTE §11.5, §12).
+ *
+ * - Publication d'un membre : le texte n'est jamais réécrit (D-038) ; une publication en ligne dont
+ *   le score tombe sous seuil_remise_en_attente repasse en attente et son auteur est prévenu.
+ * - Annonce de la veille : texte de carte et catégorie fine proposés par l'IA, puis mise en ligne
+ *   automatique si DeciderPublicationVeille l'autorise ; sinon elle reste en attente de modération.
+ *   Si l'IA échoue, l'annonce reste en attente.
  */
 class EnrichirPublicationIA implements ShouldQueue
 {
@@ -35,7 +44,7 @@ class EnrichirPublicationIA implements ShouldQueue
 
     public function __construct(public readonly int $publicationId) {}
 
-    public function handle(ClientIA $client): void
+    public function handle(ClientIA $client, DeciderPublicationVeille $decider, CorrespondanceVeille $correspondance): void
     {
         $publication = Publication::query()->with(['entreprise:id,nom'])->find($this->publicationId);
 
@@ -43,14 +52,15 @@ class EnrichirPublicationIA implements ShouldQueue
             return;
         }
 
+        $veille = $publication->source === SourcePublication::VeilleIa;
         $debut = hrtime(true);
         $resultat = $client->enrichir(new DemandeEnrichissement(
             type: $publication->type->value,
             titre: $publication->titre,
             contenu: $publication->contenu,
             entreprise: $publication->entreprise->nom ?? $publication->auteur_nom_affiche,
-            lieu: null,
-            categoriesPossibles: Categorie::query()->where('type', $publication->type->value)->whereNull('parent_id')->pluck('nom')->all(),
+            lieu: app(Referentiels::class)->nomCommune($publication->commune_id),
+            categoriesPossibles: Categorie::query()->actives()->where('type', $publication->type->value)->orderBy('ordre')->pluck('nom')->all(),
         ));
 
         $this->journaliser($publication, $resultat, (int) ((hrtime(true) - $debut) / 1_000_000));
@@ -58,27 +68,60 @@ class EnrichirPublicationIA implements ShouldQueue
         $publication->score_fiabilite = $resultat->scoreFiabilite;
         $publication->signaux_risque = array_values(array_unique([...($publication->signaux_risque ?? []), ...$resultat->signauxRisque]));
 
+        if ($veille) {
+            $this->enrichirAnnonceVeille($publication, $resultat, $correspondance);
+        }
+
         $remiseEnAttente = $publication->statut === StatutPublication::Publiee
             && $resultat->scoreFiabilite < Parametre::entier('seuil_remise_en_attente');
+        $miseEnLigne = $veille && $decider->peutPublier($publication);
 
         if ($remiseEnAttente) {
             $publication->statut = StatutPublication::EnAttente;
+        } elseif ($miseEnLigne) {
+            $publication->statut = StatutPublication::Publiee;
+            $publication->publiee_le = now();
+            $publication->tri_le = now();
         }
 
         $publication->save();
 
-        if ($remiseEnAttente && $publication->source === SourcePublication::Utilisateur) {
+        if ($miseEnLigne) {
+            PublicationPubliee::dispatch($publication);
+        }
+
+        if ($remiseEnAttente && ! $veille) {
             $publication->auteur?->notify(new PublicationRemiseEnAttente($publication));
         }
     }
 
     public function failed(?Throwable $erreur): void
     {
+        $publication = Publication::query()->find($this->publicationId, ['id', 'import_veille_id']);
+
         AppelIa::query()->create([
             'publication_id' => $this->publicationId,
+            'import_veille_id' => $publication?->import_veille_id,
             'modele' => (string) config('rezohelp.ia.driver'),
             'statut' => StatutAppelIa::Echec,
         ]);
+    }
+
+    /**
+     * Texte de carte de l'IA (le texte source n'est jamais affiché en entier) et catégorie manquante.
+     */
+    private function enrichirAnnonceVeille(Publication $publication, ResultatEnrichissement $resultat, CorrespondanceVeille $correspondance): void
+    {
+        $texte = trim($resultat->texteCarte);
+
+        if ($texte !== '') {
+            $publication->extrait = IdentifiantsPublication::extrait($texte);
+        }
+
+        // La colonne « Domaine » de la veille fait foi ; l'IA ne fait que combler une catégorie introuvable.
+        if ($publication->categorie_id === null && $resultat->categorie !== null) {
+            $publication->categorie_id = $correspondance->categorieParNom($publication->type, $resultat->categorie);
+        }
     }
 
     private function journaliser(Publication $publication, ResultatEnrichissement $resultat, int $dureeMs): void

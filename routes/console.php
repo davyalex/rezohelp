@@ -9,3 +9,7 @@ Schedule::command('abonnements:traiter')->hourly()->withoutOverlapping();
 Schedule::command('mises-en-avant:compter')->everyFiveMinutes()->withoutOverlapping();
 Schedule::command('publications:expirer')->dailyAt('02:00')->withoutOverlapping();
 Schedule::command('publications:purger')->weeklyOn(0, '03:00')->withoutOverlapping();
+// La veille dépose ses fichiers à 00h51, 08h51 et 16h51 (CONTEXTE §12).
+foreach (['01:20', '09:20', '17:20'] as $heure) {
+    Schedule::command('veille:importer')->dailyAt($heure)->withoutOverlapping();
+}

@@ -12,7 +12,7 @@
 | 5 | Mon espace, alertes et notifications | terminé (tag `lot-5`) |
 | 6 | Abonnements, paiements, SMS, visibilité payante | terminé (tag `lot-6`) |
 | 7 | Back-office | terminé (tag `lot-7`) |
-| 8 | Import de la veille et enrichissement IA | à faire |
+| 8 | Import de la veille et enrichissement IA | terminé (tag `lot-8`) |
 | 9 | PWA, performance, accessibilité, sécurité | à faire |
 | 10 | Recette finale et mise en production | à faire |
 
@@ -414,5 +414,50 @@
 - [ ] Plans : modifier le prix d'« Alertes SMS 30 jours » et une limite d'« Artisan gratuit », puis vérifier `/tarifs` et « Mon abonnement » d'un membre ; offrir « Artisan Pro » à un artisan.
 - [ ] Donner le rôle `moderateur` à un membre : il ne voit que ses modules (pas de plans, paramètres, référentiels ni veille).
 - [ ] Paramètres : modifier `frequence_sponsorise`, vider le cache du fil.
+
+---
+
+## Lot 8 — Import de la veille et enrichissement IA
+
+### Plan d'implémentation
+
+- **Sources** : driver `google_drive` (`google/apiclient`, compte de service, fichiers du dossier — Google Sheets exportés en CSV, CSV téléchargés ; le client Google passe par le client HTTP de Laravel pour que `Http::fake()` couvre les tests) ; driver `fake` existant (CSV de `tests/Fixtures/veille/`).
+- **Lancement** : `veille:importer` (01h20, 09h20, 17h20) et bouton « Importer maintenant » (job en file) → action `LancerImportVeille` : fichiers déjà présents dans `imports_veille` ignorés, une ligne `imports_veille` par nouveau fichier, un job `ImporterFichierVeille` par fichier ; bouton « Relancer » (action `RelancerImportVeille`, sans risque grâce aux empreintes).
+- **Import d'un fichier** (`ImporterFichierVeille`) : lecture CSV tolérante (BOM, `,` ou `;`, en-têtes sans accents), pour chaque ligne (`ImporterLigneVeille`) : URL normalisée (`UrlSource` : https, hôte en minuscules sans `www.`, paramètres de suivi retirés, paramètres restants triés, sans fragment ni slash final) → `source_empreinte` → doublon ignoré ; type depuis « Catégorie » ; catégorie fine depuis « Domaine » ; commune depuis « Lieu » ; source par domaine (sous-domaines compris), sinon « Inconnue » ; détails (contrat, durée, prix, lien de candidature ou d'inscription) ; **résumé seulement**, limité, jamais le texte source complet ; statut `en_attente` ; journal ligne par ligne (`lignes_import_veille` : importée, doublon, rejetée et sa raison) et compteurs `imports_veille`.
+- **Enrichissement** (`EnrichirPublicationIA`, en file) : pour une publication de la veille, texte de carte et catégorie fine proposés par l'IA, score et signaux ; décision `DeciderPublicationVeille` : en ligne seulement si la source est active, de confiance **haute**, autorisée à la publication automatique **et** score ≥ `seuil_publication_auto`, sinon reste en attente ; échec de l'IA → reste en attente.
+- **Driver `claude`** (`ClaudeClientIA`, client HTTP Laravel) : API Messages, modèle `claude-haiku-5-5` (configurable), sortie structurée `output_config.format` (schéma JSON), réponse revalidée strictement (`ReponseIAInvalideException`), lecture du bloc `text` (la réflexion est active par défaut), nouvelles tentatives sur 429 / 529 / 5xx et erreurs réseau avec `retry-after` et temporisation croissante, jetons et durée dans `appels_ia` avec le coût estimé.
+- **Back-office** : boutons « Importer maintenant » et « Relancer », détail ligne par ligne d'un import.
+- **Tests** : fichier déjà importé ignoré ; doublon d'URL (paramètres de suivi, slash final, `www.`, http/https) ; les 3 catégories ; commune et source ; publication automatique seulement si confiance haute **et** score ≥ seuil ; ligne rejetée ; réponse IA invalide (JSON, schéma, refus, `max_tokens`) ; 429 / 529 rejoués ; résumé limité ; driver Google Drive avec `Http::fake()` ; boutons du back-office.
+
+### Fait
+
+- **Lancement** : commande `veille:importer` planifiée à 01h20, 09h20 et 17h20 ; action `LancerImportVeille` : les fichiers déjà présents dans `imports_veille` sont ignorés (y compris deux lancements simultanés, grâce à l'unicité de `fichier_drive_id`), une ligne `imports_veille` et un job `ImporterFichierVeille` par nouveau fichier ; bouton « Importer maintenant » (job `LancerImportVeilleEnFile`, unique, jamais pendant la requête HTTP) et « Relancer » dans le back-office.
+- **Lecture** : `LecteurCsvVeille` (BOM, séparateur `,` ou `;`, cellules sur plusieurs lignes, en-têtes avec ou sans accents, dans n'importe quel ordre).
+- **Import d'une ligne** (`ImporterLigneVeille`) : URL normalisée par `UrlSource` (https, hôte en minuscules sans `www.`, paramètres `utm_*`, `fbclid`, `gclid`… retirés, paramètres restants triés, sans fragment ni slash final) → `source_empreinte` (SHA-256) → doublon écarté ; `CorrespondanceVeille` : type depuis « Catégorie », catégorie depuis « Domaine », commune depuis « Lieu », source par domaine ou sous-domaine (sinon « Inconnue », confiance basse), contrat, durée, prix et tarif lus dans « Contrat/Durée/Prix » ; détails créés (candidature ou inscription par le lien d'origine ; aucun numéro tiré d'une annonce externe) et faits clés de la carte ; **résumé limité à 600 caractères**, jamais le texte source complet ; statut `en_attente` ; journal ligne par ligne `lignes_import_veille` (importée → publication, doublon → publication existante, rejetée → raison : colonne vide, lien invalide, catégorie inconnue, source désactivée) ; compteurs de `imports_veille`, statut `erreur` et message si le fichier est illisible. Un import rejoué recompte ses propres annonces comme importées et ne les renvoie pas à l'IA.
+- **Enrichissement** (`EnrichirPublicationIA`) : pour une annonce de la veille, texte de carte réécrit par l'IA (extrait de 220 caractères), catégorie proposée seulement si « Domaine » n'a rien donné, score et signaux ; `DeciderPublicationVeille` : mise en ligne automatique seulement si la source est active, de confiance **haute**, autorisée à publier seule **et** que le score atteint `seuil_publication_auto` (70) — sinon l'annonce reste en attente de modération ; mise en ligne → `PublicationPubliee` (alertes, cache) ; échec de l'IA → l'annonce reste en attente et l'échec est journalisé dans `appels_ia` avec l'import.
+- **Driver `claude`** (`ClaudeClientIA`, client HTTP Laravel, sans SDK — CONTEXTE §6) : `POST /v1/messages`, modèle `claude-haiku-5-5` (variable `CLAUDE_MODELE`), effort `low`, sortie structurée `output_config.format` (schéma JSON : `texte_carte`, `categorie` dans la liste fournie ou nulle, `score_fiabilite`, `signaux_risque` dans une liste fermée), consignes qui traitent l'annonce comme une donnée et non comme une instruction ; lecture du bloc `text` (la réflexion est active par défaut sur ce modèle) ; validation stricte (`ReponseIAInvalideException` : refus, réponse tronquée, JSON invalide, score hors 0–100, signal ou catégorie inconnus, texte vide) ; nouvelles tentatives sur 408, 429 (avec `retry-after`), 5xx, 529 et erreurs réseau, temporisation croissante (`CLAUDE_TENTATIVES`, `CLAUDE_ATTENTE_MS`) ; jetons d'entrée et de sortie, durée et coût estimé dans `appels_ia`.
+- **Driver `google_drive`** (`GoogleDriveSourceVeille`, `google/apiclient` limité à Drive) : compte de service, fichiers du dossier (Google Sheets et CSV, pages successives, Drive partagés compris), export CSV d'un Google Sheet, téléchargement d'un CSV ; le client Google passe par le client HTTP de Laravel (délais et `Http::fake()` en test) ; message clair si les identifiants manquent.
+- **Back-office** : détail d'un import ligne par ligne (sort, lien d'origine, publication créée ou existante avec son score et son statut), boutons « Importer maintenant » et « Relancer l'import ».
+
+### Tests ajoutés (45 tests, 5 fichiers ; total 679)
+
+- `tests/Unit/Support/VeilleSupportTest.php` (12 : même empreinte malgré le suivi, le slash final, `www.`, http et le fragment ; paramètres utiles gardés ; liens refusés ; CSV avec BOM, `;` et cellule sur plusieurs lignes ; fichier de démonstration)
+- `tests/Feature/Veille/ImportVeilleTest.php` (11 : import des 3 catégories avec commune, source et détails ; publication automatique seulement si confiance haute **et** score ≥ seuil ; seuil relevé ou source sans publication automatique ; fichier déjà importé ignoré ; doublon d'URL depuis un autre fichier ; lignes rejetées et leur raison ; source « Inconnue » ; résumé limité ; échec de l'IA ; import rejoué ; fichier illisible)
+- `tests/Unit/Services/ClaudeClientIATest.php` (14 : requête Messages et lecture après le bloc de réflexion, 9 réponses invalides, 429 avec `retry-after` puis 529, abandon après 3 tentatives, pas de nouvelle tentative sur 400, choix par `IA_DRIVER`)
+- `tests/Unit/Services/GoogleDriveSourceVeilleTest.php` (4 : liste paginée du dossier, export d'un Google Sheet et téléchargement d'un CSV, identifiants manquants) · `tests/Feature/Veille/VeilleAdminTest.php` (4 : importer maintenant en file, relancer, détail des lignes, accès réservé)
+
+### Écarts avec le CONTEXTE
+
+- Décisions D-058 à D-061.
+- **Identifiants à fournir** (dans `.env`, jamais commités) : `GOOGLE_DRIVE_FICHIER_IDENTIFIANTS` (chemin du fichier JSON du compte de service, hors du dépôt), `GOOGLE_DRIVE_DOSSIER_ID` (dossier « Offres Emploi Abidjan » partagé avec l'adresse du compte de service), `CLAUDE_API_KEY` ; puis `VEILLE_DRIVE_DRIVER=google_drive` et `IA_DRIVER=claude`.
+- L'authentification du compte de service (échange du jeton Google) n'est pas couverte par les tests : `Http::fake()` répond avant le middleware d'authentification de Google. Elle est à vérifier une fois avec les vrais identifiants.
+
+### À vérifier par Alex
+
+- [ ] Sans identifiants : `php artisan veille:importer` puis `php artisan queue:work --stop-when-empty` importe le fichier de démonstration : 2 annonces en ligne (Emploi.ci, Orange Digital Center), 1 en attente (Facebook) ; `/admin/veille/imports` montre le détail ligne par ligne.
+- [ ] Relancer la commande : « Aucun nouveau fichier. » ; « Relancer l'import » dans l'admin ne crée aucun doublon.
+- [ ] Avec les vrais identifiants dans `.env` (`VEILLE_DRIVE_DRIVER=google_drive`, `IA_DRIVER=claude`) : lancer `veille:importer` sur le dossier « Offres Emploi Abidjan » ; les offres apparaissent en ligne ou restent en attente selon la source et le score ; le coût IA du mois s'affiche dans la page Veille.
+- [ ] En modération, une annonce de la veille montre son score, ses signaux et le lien vers l'annonce d'origine.
+- [ ] Ajuster les sources (niveau de confiance, publication automatique) et le paramètre `seuil_publication_auto` selon les premiers imports.
 
 ---
