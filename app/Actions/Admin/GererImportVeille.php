@@ -6,12 +6,14 @@ use App\Actions\Admin\Concerns\JournaliseActivite;
 use App\Enums\StatutImportVeille;
 use App\Jobs\ImporterFichierVeille;
 use App\Jobs\LancerImportVeilleEnFile;
+use App\Jobs\ReevaluerAnnoncesVeilleEnFile;
 use App\Models\ImportVeille;
 use App\Models\Utilisateur;
 use Illuminate\Support\Facades\DB;
 
 /**
- * E — Boutons « Importer maintenant » et « Relancer » de la veille (CONTEXTE §13.3.E) :
+ * E — Boutons « Importer maintenant », « Réévaluer les annonces en attente » et « Relancer » de la
+ * veille (CONTEXTE §13.3.E) :
  * le travail part en file, la page répond tout de suite.
  */
 class GererImportVeille
@@ -22,6 +24,12 @@ class GererImportVeille
     {
         LancerImportVeilleEnFile::dispatch();
         $this->journaliser($admin, 'veille.import_lance');
+    }
+
+    public function reevaluer(Utilisateur $admin): void
+    {
+        ReevaluerAnnoncesVeilleEnFile::dispatch();
+        $this->journaliser($admin, 'veille.reevaluation_lancee');
     }
 
     /**

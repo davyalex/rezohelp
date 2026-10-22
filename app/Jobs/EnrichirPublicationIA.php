@@ -79,9 +79,7 @@ class EnrichirPublicationIA implements ShouldQueue
         if ($remiseEnAttente) {
             $publication->statut = StatutPublication::EnAttente;
         } elseif ($miseEnLigne) {
-            $publication->statut = StatutPublication::Publiee;
-            $publication->publiee_le = now();
-            $publication->tri_le = now();
+            $decider->mettreEnLigne($publication);
         }
 
         $publication->save();

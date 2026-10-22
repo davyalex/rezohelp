@@ -460,6 +460,13 @@
 - [ ] En modération, une annonce de la veille montre son score, ses signaux et le lien vers l'annonce d'origine.
 - [ ] Ajuster les sources (niveau de confiance, publication automatique) et le paramètre `seuil_publication_auto` selon les premiers imports.
 
+### Complément (22/10/2026) — réévaluation des annonces en attente
+
+- `ReevaluerAnnoncesVeille` (D-063) : commande `veille:reevaluer`, bouton « Réévaluer les annonces en attente » (job `ReevaluerAnnoncesVeilleEnFile`, unique, journalisé `veille.reevaluation_lancee`) et lancement automatique en file après chaque ajout ou modification d'une source. Chaque annonce en attente est rattachée à la source déclarée pour son domaine, puis mise en ligne si `DeciderPublicationVeille` l'autorise ; les annonces retirées après une mise en ligne, sans score ou expirées ne sont jamais reprises. `DeciderPublicationVeille::mettreEnLigne()` est partagé avec `EnrichirPublicationIA`.
+- Tests (+4 ; total 693) : rattachement et mise en ligne après la déclaration d'un domaine de confiance haute ; aucune remise en ligne d'une annonce retirée, non notée, expirée ou sous le seuil ; bouton en file et journalisé ; réévaluation après l'ajout d'une source.
+- Base locale : les données de démonstration (20 membres, 80 publications, l'import de test et ce qui en dépendait) ont été supprimées ; il reste l'administrateur et les imports réels du dossier Drive. Sauvegarde avant nettoyage : `storage/app/private/sauvegardes/rezohelp-avant-nettoyage-demo-2026-10-22.sql`. `DatabaseSeeder` ne crée aucune donnée de démonstration (seulement `db:seed --class=DemoSeeder`).
+- [ ] À vérifier par Alex : déclarer dans « Sources de la veille » les domaines qui le méritent (abbih.com, projobivoire.com, goafricaonline.com, jobivoire.ci…), puis lancer `php artisan queue:work --stop-when-empty` : leurs annonces en attente passent en ligne si la source est de confiance haute avec publication automatique.
+
 ---
 
 ## Lot 9 — PWA, performance, accessibilité, sécurité

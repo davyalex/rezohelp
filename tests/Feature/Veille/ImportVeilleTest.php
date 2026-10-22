@@ -244,3 +244,49 @@ it('marque l’import en erreur quand le fichier est illisible', function () {
     expect($import->refresh()->statut)->toBe(StatutImportVeille::Erreur)
         ->and($import->erreur)->toContain('introuvable');
 });
+
+it('réévalue les annonces en attente quand leur domaine est déclaré comme source de confiance haute', function () {
+    Event::fake([PublicationPubliee::class]);
+    deposerVeille($this->dossier, 'veille.csv', [ligneEmploi('https://jobs.exemple-inconnu.ci/offre/5', [7 => 'Site Exemple'])]);
+    $this->artisan('veille:importer');
+    $publication = Publication::query()->sole();
+    expect($publication->statut)->toBe(StatutPublication::EnAttente);
+
+    $source = Source::query()->create(['nom' => 'Exemple Emploi', 'domaine' => 'exemple-inconnu.ci', 'niveau_confiance' => 'haut', 'publication_auto' => true, 'actif' => true]);
+
+    $this->artisan('veille:reevaluer')->assertSuccessful()
+        ->expectsOutputToContain('1 annonce(s) examinée(s), 1 rattachée(s) à une autre source, 1 mise(s) en ligne');
+
+    $publication->refresh();
+    expect($publication->statut)->toBe(StatutPublication::Publiee)
+        ->and($publication->source_veille_id)->toBe($source->id)
+        ->and($publication->source_nom)->toBe('Exemple Emploi')
+        ->and($publication->publiee_le)->not->toBeNull()
+        ->and($publication->tri_le?->equalTo($publication->publiee_le))->toBeTrue();
+    Event::assertDispatchedTimes(PublicationPubliee::class, 1);
+});
+
+it('ne remet jamais en ligne une annonce retirée, non notée, expirée ou sous le seuil', function () {
+    Event::fake([PublicationPubliee::class]);
+    deposerVeille($this->dossier, 'veille.csv', [
+        ligneEmploi('https://jobs.exemple-inconnu.ci/offre/1'),
+        ligneEmploi('https://jobs.exemple-inconnu.ci/offre/2'),
+        ligneEmploi('https://jobs.exemple-inconnu.ci/offre/3'),
+        ligneEmploi('https://jobs.exemple-inconnu.ci/offre/4'),
+    ]);
+    $this->artisan('veille:importer');
+    Source::query()->create(['nom' => 'Exemple Emploi', 'domaine' => 'exemple-inconnu.ci', 'niveau_confiance' => 'haut', 'publication_auto' => true, 'actif' => true]);
+
+    [$retiree, $nonNotee, $expiree, $faible] = Publication::query()->orderBy('id')->get()->all();
+    $retiree->forceFill(['publiee_le' => now()->subDay()])->save();
+    $nonNotee->forceFill(['score_fiabilite' => null])->save();
+    $expiree->forceFill(['expire_le' => now()->subMinute()])->save();
+    $faible->forceFill(['score_fiabilite' => 50])->save();
+
+    $this->artisan('veille:reevaluer')->assertSuccessful();
+
+    expect(Publication::query()->where('statut', StatutPublication::Publiee->value)->count())->toBe(0)
+        // L'annonce sous le seuil est tout de même rattachée à la nouvelle source.
+        ->and($faible->refresh()->source_nom)->toBe('Exemple Emploi');
+    Event::assertNotDispatched(PublicationPubliee::class);
+});

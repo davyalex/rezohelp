@@ -247,3 +247,11 @@
 
 ### D-061 · 2026-10-22 · Driver Claude
 - **Choix** : appel HTTP direct de l'API Messages par le client HTTP de Laravel (CONTEXTE §6 « via HTTP client Laravel » ; le SDK PHP d'Anthropic serait une dépendance non listée), modèle `claude-haiku-5-5` par défaut (CONTEXTE : modèle Haiku), effort `low` (analyse courte), `max_tokens` 4 000 pour laisser la place à la réflexion active par défaut, sortie structurée par schéma JSON revalidée côté serveur. Les nouvelles tentatives immédiates (429 avec `retry-after`, 529, 5xx, réseau) s'ajoutent à celles du job (30 s, 2 min, 10 min).
+
+### D-062 · 2026-10-22 · CSP et Alpine
+- **Choix** : la CSP autorise les scripts du site avec le nonce posé par Vite, plus `'unsafe-eval'`, nécessaire à la version standard d'Alpine qui évalue les expressions `x-data` et `@click`. Aucun script en ligne sans nonce n'est accepté.
+- **Raison** : la version CSP d'Alpine (`@alpinejs/csp`) supprimerait `'unsafe-eval'` mais oblige à réécrire toutes les expressions en composants enregistrés ; c'est une dépendance non listée, à proposer seulement avec accord.
+
+### D-063 · 2026-10-22 · Réévaluation des annonces de la veille en attente
+- **Choix** : `ReevaluerAnnoncesVeille` (commande `veille:reevaluer`, bouton « Réévaluer les annonces en attente » de la page Veille, et lancement automatique en file après chaque ajout ou modification d'une source) rattache chaque annonce en attente à la source déclarée pour son domaine, puis applique `DeciderPublicationVeille` avec le score déjà calculé. Ne sont jamais reprises : les annonces déjà mises en ligne puis remises en attente (`publiee_le` renseigné : signalements, dépublication, score en baisse), celles sans score et celles expirées. Une annonce mise en ligne ainsi part en tête du fil (`publiee_le` = `tri_le` = maintenant) et déclenche `PublicationPubliee`.
+- **Raison** : sans cela, une annonce importée avant la déclaration de sa source restait en modération pour toujours ; l'IA n'est pas rappelée (pas de coût), et une annonce retirée par l'équipe ou par les signalements ne revient jamais seule.

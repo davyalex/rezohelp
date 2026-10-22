@@ -54,6 +54,13 @@ class VeilleController extends ControleurAdmin
         return back()->with('statut', 'Recherche de nouveaux fichiers lancée : les imports apparaîtront dans quelques instants.');
     }
 
+    public function reevaluer(Request $requete): RedirectResponse
+    {
+        $this->gerer->reevaluer($this->admin($requete));
+
+        return back()->with('statut', 'Réévaluation lancée : les annonces en attente autorisées par leur source passeront en ligne dans quelques instants.');
+    }
+
     public function relancer(Request $requete, ImportVeille $import): RedirectResponse
     {
         $this->gerer->relancer($import, $this->admin($requete));

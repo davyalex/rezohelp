@@ -10,6 +10,10 @@
                 @csrf
                 <x-bouton>Importer maintenant</x-bouton>
             </form>
+            <form method="POST" action="{{ route('admin.veille.reevaluer') }}" data-confirmer="Réévaluer les annonces en attente selon les sources actuelles ? Celles autorisées passeront en ligne.">
+                @csrf
+                <x-bouton variante="secondaire">Réévaluer les annonces en attente</x-bouton>
+            </form>
             <x-bouton :href="route('admin.veille.sources.index')" variante="secondaire">Sources de la veille</x-bouton>
         </div>
     </div>

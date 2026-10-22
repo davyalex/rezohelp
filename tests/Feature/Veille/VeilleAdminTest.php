@@ -4,6 +4,7 @@ use App\Contracts\SourceVeille;
 use App\Enums\StatutImportVeille;
 use App\Jobs\ImporterFichierVeille;
 use App\Jobs\LancerImportVeilleEnFile;
+use App\Jobs\ReevaluerAnnoncesVeilleEnFile;
 use App\Models\ImportVeille;
 use App\Models\JournalActivite;
 use App\Models\Utilisateur;
@@ -59,4 +60,24 @@ it('réserve la veille à l’administrateur', function () {
     $moderateur->assignRole('moderateur');
 
     $this->actingAs($moderateur)->post(route('admin.veille.importer-maintenant'))->assertForbidden();
+});
+
+it('lance en file la réévaluation des annonces en attente depuis le bouton', function () {
+    Queue::fake();
+
+    $this->actingAs($this->admin)->get(route('admin.veille.imports.index'))->assertSee('Réévaluer les annonces en attente');
+    $this->actingAs($this->admin)->post(route('admin.veille.reevaluer'))->assertSessionHas('statut');
+
+    Queue::assertPushed(ReevaluerAnnoncesVeilleEnFile::class, 1);
+    expect(JournalActivite::query()->where('action', 'veille.reevaluation_lancee')->exists())->toBeTrue();
+});
+
+it('réévalue les annonces en attente après l’ajout d’une source', function () {
+    Queue::fake();
+
+    $this->actingAs($this->admin)->post(route('admin.veille.sources.store'), [
+        'nom' => 'Projob Ivoire', 'domaine' => 'https://www.projobivoire.com/', 'niveau_confiance' => 'haut', 'publication_auto' => '1', 'actif' => '1',
+    ])->assertRedirect(route('admin.veille.sources.index'));
+
+    Queue::assertPushed(ReevaluerAnnoncesVeilleEnFile::class, 1);
 });

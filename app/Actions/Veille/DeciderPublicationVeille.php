@@ -33,4 +33,14 @@ class DeciderPublicationVeille
             && $source->niveau_confiance === NiveauConfiance::Haut
             && $publication->score_fiabilite >= Parametre::entier('seuil_publication_auto');
     }
+
+    /**
+     * Passe l'annonce en ligne (sans l'enregistrer) : en tête du fil à partir de maintenant.
+     */
+    public function mettreEnLigne(Publication $publication): void
+    {
+        $publication->statut = StatutPublication::Publiee;
+        $publication->publiee_le = now();
+        $publication->tri_le = now();
+    }
 }
