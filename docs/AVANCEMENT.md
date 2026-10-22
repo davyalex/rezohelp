@@ -467,6 +467,15 @@
 - Base locale : les données de démonstration (20 membres, 80 publications, l'import de test et ce qui en dépendait) ont été supprimées ; il reste l'administrateur et les imports réels du dossier Drive. Sauvegarde avant nettoyage : `storage/app/private/sauvegardes/rezohelp-avant-nettoyage-demo-2026-10-22.sql`. `DatabaseSeeder` ne crée aucune donnée de démonstration (seulement `db:seed --class=DemoSeeder`).
 - [ ] À vérifier par Alex : déclarer dans « Sources de la veille » les domaines qui le méritent (abbih.com, projobivoire.com, goafricaonline.com, jobivoire.ci…), puis lancer `php artisan queue:work --stop-when-empty` : leurs annonces en attente passent en ligne si la source est de confiance haute avec publication automatique.
 
+### Complément (22/10/2026) — notation gratuite et catégories
+
+- Driver `regles` (`ReglesClientIA`, D-064) : score par les règles anti-arnaque et la liste `mots_a_risque`, sans IA externe ni coût ; `.env` local passé à `IA_DRIVER=regles`. `veille:reevaluer --renoter` renote en file les annonces en ligne ou en attente.
+- `CorrespondanceVeille::categorie` réécrite pour les domaines composés (mot à mot, synonymes par type, « Autres métiers » à défaut pour un emploi).
+- Base locale : catégories des 294 annonces recalculées depuis les fichiers Drive (218 corrigées, dont 203 offres d'emploi mises à tort en « Informatique et numérique ») ; scores recalculés avec `regles` : 293 à 85, 1 à 55 (frais demandés) ; journal `appels_ia` du driver `fake` vidé.
+- Tests (+25 ; total 718) : `tests/Feature/Veille/ReglesEtCategoriesVeilleTest.php` (driver choisi par `IA_DRIVER`, score par signal, liste `mots_a_risque` de l'admin, extrait gardé et aucun appel journalisé, annonce retirée jamais remise en ligne, renotation en file, 19 domaines réels).
+- [ ] À vérifier par Alex : 5 annonces de service sans catégorie (« Gardiennage / Sécurité » ×3, « Élevage », « Reprographie ») : créer si besoin une catégorie de service « Gardiennage et sécurité » dans Admin → Catégories, puis relancer l'import concerné ou corriger ces annonces à la main.
+- [ ] À vérifier par Alex : après une modification de `.env`, redémarrer le worker (`php artisan queue:restart`, puis relancer `queue:work`) : un worker déjà lancé garde l'ancienne configuration.
+
 ---
 
 ## Lot 9 — PWA, performance, accessibilité, sécurité

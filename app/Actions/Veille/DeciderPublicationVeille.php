@@ -21,6 +21,8 @@ class DeciderPublicationVeille
     {
         if ($publication->source !== SourcePublication::VeilleIa
             || $publication->statut !== StatutPublication::EnAttente
+            // Déjà mise en ligne puis retirée (signalements, dépublication, score) : seule l'équipe la remet en ligne.
+            || $publication->publiee_le !== null
             || $publication->score_fiabilite === null) {
             return false;
         }

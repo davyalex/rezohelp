@@ -9,6 +9,7 @@ use App\Contracts\SourceVeille;
 use App\Services\CacheFil;
 use App\Services\IA\ClaudeClientIA;
 use App\Services\IA\FakeClientIA;
+use App\Services\IA\ReglesClientIA;
 use App\Services\Paiement\CinetPayPasserelle;
 use App\Services\Paiement\FakePasserelle;
 use App\Services\Sms\LogFournisseurSms;
@@ -52,6 +53,7 @@ class IntegrationsServiceProvider extends ServiceProvider
 
         $this->app->singleton(ClientIA::class, fn (Application $app): ClientIA => match ($this->driver('ia')) {
             'fake' => new FakeClientIA,
+            'regles' => $app->make(ReglesClientIA::class),
             'claude' => new ClaudeClientIA($app->make(Factory::class), (array) config('services.claude')),
             default => $this->driverInconnu('ia'),
         });

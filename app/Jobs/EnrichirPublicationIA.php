@@ -124,6 +124,10 @@ class EnrichirPublicationIA implements ShouldQueue
 
     private function journaliser(Publication $publication, ResultatEnrichissement $resultat, int $dureeMs): void
     {
+        if (! $resultat->appelExterne) {
+            return;
+        }
+
         $cout = ($resultat->tokensEntree * (int) config('services.claude.cout_entree_fcfa_par_million')
             + $resultat->tokensSortie * (int) config('services.claude.cout_sortie_fcfa_par_million')) / 1_000_000;
 

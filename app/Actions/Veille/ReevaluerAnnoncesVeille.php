@@ -5,6 +5,7 @@ namespace App\Actions\Veille;
 use App\Enums\SourcePublication;
 use App\Enums\StatutPublication;
 use App\Events\PublicationPubliee;
+use App\Jobs\EnrichirPublicationIA;
 use App\Models\Publication;
 use App\Services\CorrespondanceVeille;
 use App\Support\UrlSource;
@@ -64,6 +65,35 @@ class ReevaluerAnnoncesVeille
             });
 
         return $bilan;
+    }
+
+    /**
+     * Recalcule en file le score des annonces de la veille en ligne ou en attente (jamais retirées),
+     * avec le driver IA actuel — après un changement de driver ou de la liste mots_a_risque.
+     * EnrichirPublicationIA décide ensuite comme à l'import : mise en ligne, ou retrait si le score
+     * d'une annonce en ligne tombe sous seuil_remise_en_attente.
+     *
+     * @return int nombre d'annonces envoyées à la notation
+     */
+    public function renoter(): int
+    {
+        $nombre = 0;
+
+        Publication::query()
+            ->where('source', SourcePublication::VeilleIa->value)
+            ->where(fn ($requete) => $requete
+                ->where('statut', StatutPublication::Publiee->value)
+                ->orWhere(fn ($attente) => $attente->where('statut', StatutPublication::EnAttente->value)->whereNull('publiee_le')))
+            ->where(fn ($requete) => $requete->whereNull('expire_le')->orWhere('expire_le', '>', now()))
+            ->select('id')
+            ->chunkById(500, function ($publications) use (&$nombre): void {
+                foreach ($publications as $publication) {
+                    EnrichirPublicationIA::dispatch($publication->id);
+                    $nombre++;
+                }
+            });
+
+        return $nombre;
     }
 
     /**

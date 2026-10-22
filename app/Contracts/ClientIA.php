@@ -7,7 +7,7 @@ use App\Donnees\ResultatEnrichissement;
 
 /**
  * Client d'IA pour la réécriture des cartes et le score de fiabilité
- * (drivers : claude, fake).
+ * (drivers : regles — gratuit, sans IA externe —, claude, fake).
  */
 interface ClientIA
 {
