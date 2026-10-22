@@ -20,6 +20,7 @@ use App\Http\Controllers\PublierController;
 use App\Http\Controllers\ReferencementController;
 use App\Http\Controllers\ReponseController;
 use App\Http\Controllers\TarifController;
+use App\Http\Middleware\PasDeCache;
 use Illuminate\Support\Facades\Route;
 
 // Fil public (CONTEXTE §5, §8)
@@ -53,7 +54,7 @@ Route::post('/publication/{publication:slug}/repondre', [ReponseController::clas
     ->middleware(['auth', 'throttle:20,1'])->name('publications.repondre');
 
 // Publication par les membres (CONTEXTE §11.3, §11.9)
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', PasDeCache::class])->group(function () {
     $parcours = ['emploi', 'service-offre', 'service-demande', 'formation'];
 
     Route::get('/publier', [PublierController::class, 'choix'])->name('publier.choix');
@@ -123,6 +124,9 @@ Route::get('/tarifs', [TarifController::class, 'index'])->name('tarifs');
 Route::match(['get', 'post'], '/paiements/notification/{passerelle}', [PaiementController::class, 'notification'])
     ->where('passerelle', '[a-z]+')->middleware('throttle:120,1')->name('paiements.notification');
 
+// Page hors ligne de la PWA (mise en cache par le service worker)
+Route::view('/hors-ligne', 'hors-ligne')->name('hors-ligne');
+
 // Référencement
 Route::get('/sitemap.xml', [ReferencementController::class, 'sitemap'])->name('referencement.sitemap');
 Route::get('/robots.txt', [ReferencementController::class, 'robots'])->name('referencement.robots');
@@ -137,7 +141,7 @@ Route::middleware('guest')->group(function () {
         ->middleware('throttle:otp')->name('mot-de-passe.reinitialiser');
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', PasDeCache::class])->group(function () {
     Route::get('/verification-telephone', [VerificationTelephoneController::class, 'afficher'])->name('telephone.verification');
     Route::post('/verification-telephone/code', [VerificationTelephoneController::class, 'envoyer'])
         ->middleware('throttle:otp')->name('telephone.verification.envoyer');

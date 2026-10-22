@@ -8,6 +8,9 @@
     <meta name="url-connexion" content="{{ route('login') }}">
     <title>@hasSection('titre')@yield('titre') · {{ config('app.name') }}@else{{ config('app.name') }} — Emplois, home service et formations à Abidjan @endif</title>
     <meta name="description" content="@yield('description', 'Emplois, home service et formations à Abidjan, dans un seul fil.')">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" href="/icones/apple-touch-icon.png">
     @stack('entete')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -60,6 +63,15 @@
 
         @yield('contenu')
     </main>
+
+    {{-- Invitation à installer l'application (pwa.js), à partir de la 2e visite. --}}
+    <aside id="invitation-installation" hidden aria-label="Installer l’application"
+           class="fixed inset-x-3 bottom-20 z-50 mx-auto flex max-w-md items-center gap-3 rounded-2xl bg-white p-3 shadow-lg ring-1 ring-slate-200 lg:bottom-6">
+        <img src="/icones/icone-192.png" alt="" width="40" height="40" class="size-10 rounded-lg">
+        <p class="flex-1 text-sm text-slate-800">Installez Rezohelp sur votre téléphone : plus rapide, même avec une connexion faible.</p>
+        <button type="button" data-plus-tard class="min-h-11 px-2 text-sm text-slate-600 hover:text-slate-900">Plus tard</button>
+        <button type="button" data-installer class="min-h-11 rounded-lg bg-brand px-3 text-sm font-semibold text-white hover:bg-brand-fonce">Installer</button>
+    </aside>
 
     {{-- Navigation basse (mobile) --}}
     <nav aria-label="Navigation principale" class="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white lg:hidden">

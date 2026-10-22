@@ -5,6 +5,11 @@ const jeton = () => document.querySelector('meta[name="csrf-token"]')?.content ?
  * Renvoie la réponse JSON, ou null en cas d'échec.
  */
 export async function envoyerFormulaire(formulaire) {
+    // Un fragment du fil peut venir du cache du service worker avec un ancien jeton :
+    // le jeton de la page, toujours à jour, remplace celui du formulaire.
+    const donnees = new FormData(formulaire);
+    donnees.set('_token', jeton());
+
     try {
         const reponse = await fetch(formulaire.action, {
             method: 'POST',
@@ -13,7 +18,7 @@ export async function envoyerFormulaire(formulaire) {
                 'X-CSRF-TOKEN': jeton(),
                 'X-Requested-With': 'XMLHttpRequest',
             },
-            body: new FormData(formulaire),
+            body: donnees,
             credentials: 'same-origin',
         });
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnTetesSecurite;
 use App\Http\Middleware\ExigerChangementMotDePasse;
 use App\Http\Middleware\PasDeCache;
 use App\Http\Middleware\VerifierCompteActif;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
+            EnTetesSecurite::class,
             VerifierCompteActif::class,
             ExigerChangementMotDePasse::class,
         ]);

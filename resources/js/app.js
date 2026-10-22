@@ -4,6 +4,7 @@ import Alpine from 'alpinejs';
 import { demarrerFil, suivreMisesEnAvant } from './fil';
 import { envoyerFormulaire } from './requetes';
 import { formulairePublication } from './publication';
+import { demarrerPwa } from './pwa';
 
 Alpine.data('formulairePublication', formulairePublication);
 
@@ -61,3 +62,4 @@ Alpine.start();
 
 demarrerFil();
 suivreMisesEnAvant();
+demarrerPwa();

@@ -13,7 +13,7 @@
 | 6 | Abonnements, paiements, SMS, visibilité payante | terminé (tag `lot-6`) |
 | 7 | Back-office | terminé (tag `lot-7`) |
 | 8 | Import de la veille et enrichissement IA | terminé (tag `lot-8`) |
-| 9 | PWA, performance, accessibilité, sécurité | à faire |
+| 9 | PWA, performance, accessibilité, sécurité | en cours |
 | 10 | Recette finale et mise en production | à faire |
 
 ---
@@ -461,3 +461,20 @@
 - [ ] Ajuster les sources (niveau de confiance, publication automatique) et le paramètre `seuil_publication_auto` selon les premiers imports.
 
 ---
+
+## Lot 9 — PWA, performance, accessibilité, sécurité
+
+### Plan d'implémentation
+
+- **PWA** (`vite-plugin-pwa`, Workbox, listé dans CLAUDE.md) : manifeste (nom, icônes 192 / 512 / maskable, `theme_color`, `display: standalone`, `lang: fr`), service worker servi à la racine (`/sw.js`, portée `/`) : *cache-first* pour les assets versionnés (précache), *stale-while-revalidate* pour `/fil/suite`, *network-first* pour les pages, page hors ligne `/hors-ligne` ; **jamais de cache** pour `/mon-espace/*`, `/admin/*`, `/paiements/*`, `/publier*` ni les réponses POST ; invitation discrète à installer l'application après 2 visites.
+- **En-têtes** : middleware `EnTetesSecurite` sur toutes les réponses web : CSP (`default-src 'self'`, scripts avec nonce Vite, `frame-ancestors 'none'`, `form-action` limité au site et au guichet CinetPay, `object-src 'none'`, `base-uri 'self'`), HSTS en HTTPS, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` ; `Cache-Control: no-store` sur `/mon-espace`, `/publier` et les paiements.
+- **Performance** : revue des requêtes (aucun N+1, nombre de requêtes du fil borné et testé), `EXPLAIN` des requêtes du fil sur les index, images avec `width` / `height` et `loading="lazy"`, budget JS public < 50 Ko vérifié par un script en CI.
+- **Accessibilité** : revue du parcours public (lien d'évitement, focus visible, libellés, cibles ≥ 44 px, `aria-live`, `prefers-reduced-motion`, contrastes).
+- **Sécurité** : revue des Policies sur toutes les routes, tests d'accès croisé sur chaque ressource d'un membre, envois de fichiers (types et tailles), limites de débit.
+- **Tests** : accès croisé (publications, réponses, alertes, notifications, commentaires, reçus, commandes), en-têtes de sécurité présents, `no-store` sur « Mon espace », manifeste et service worker servis, nombre de requêtes du fil.
+
+### Point de reprise (22/10/2026)
+
+**Fait** (Pint, Larastan, 689 tests verts) : PWA (`vite-plugin-pwa`, service worker `/sw.js` portée `/`, précache des assets publics et de `/hors-ligne`, stale-while-revalidate sur `/fil/suite`, network-first sur les pages, rien en cache pour `/mon-espace`, `/admin`, `/paiements`, `/publier` et l'authentification, manifeste statique `public/manifest.webmanifest`, icônes 192 / 512 / maskable, invitation à installer après 2 visites, jeton CSRF de la page imposé aux envois) ; middleware `EnTetesSecurite` (CSP avec nonce Vite, HSTS en HTTPS, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy, COOP) ; `no-store` sur toutes les pages connectées ; tests `tests/Feature/Securite/EnTetesEtPwaTest.php` (10).
+
+**Reste à faire** : tests d'accès croisé sur chaque ressource du membre ; nombre de requêtes du fil borné (test) et `EXPLAIN` des requêtes du fil ; revue accessibilité du parcours public ; script de budget JS en CI ; Lighthouse mobile ; docs (Fait, tests, écarts, À vérifier, décisions D-062 et suivantes) ; commit « lot 9 » et tag.
