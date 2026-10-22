@@ -25,8 +25,15 @@
 
 <section id="repondre" class="mt-6 space-y-3 border-t border-slate-100 pt-4" aria-label="Répondre">
     @if ($p->source === \App\Enums\SourcePublication::VeilleIa && $p->source_url)
-        <p class="text-sm text-slate-600">Annonce repérée par notre veille{{ $p->source_nom ? ' sur '.$p->source_nom : '' }}. Ce résumé ne remplace pas l’annonce d’origine.</p>
-        <x-bouton :href="$p->source_url" target="_blank" rel="noopener nofollow" class="w-full sm:w-auto">Voir l’annonce</x-bouton>
+        @if ($p->statut === StatutPublication::Publiee)
+            <x-bouton :href="$p->source_url" target="_blank" rel="noopener nofollow" @class(['w-full sm:w-auto', 'bg-emploi' => $emploi, 'bg-formation' => $formation])>
+                {{ match (true) { (bool) $emploi => 'Voir l’annonce et postuler', (bool) $formation => 'Voir l’annonce et s’inscrire', default => 'Voir l’annonce' } }}
+                <span aria-hidden="true">↗</span>
+            </x-bouton>
+            <p class="text-sm text-slate-600">Annonce repérée par notre veille{{ $p->source_nom ? ' sur '.$p->source_nom : '' }} : ce résumé ne remplace pas l’annonce d’origine, qui s’ouvre dans un nouvel onglet.</p>
+        @else
+            <p class="text-sm text-slate-600">Cette annonce n’accepte plus de candidatures. <a href="{{ $p->source_url }}" target="_blank" rel="noopener nofollow" class="font-semibold text-brand hover:underline">Voir l’annonce d’origine</a></p>
+        @endif
     @elseif ($p->statut !== StatutPublication::Publiee)
         <p class="text-sm text-slate-600">Cette publication n’accepte plus de réponse.</p>
     @elseif ($lienExterne)

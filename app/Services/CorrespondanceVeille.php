@@ -300,19 +300,70 @@ class CorrespondanceVeille
         );
     }
 
+    /**
+     * Contrat cité dans « Contrat/Durée/Prix » ; le premier cité l'emporte (« CDD / CDI » → CDD).
+     * Rien de reconnu (« Non précisé », « Temps plein ») : aucun contrat, plutôt qu'un « Autre » vide de sens.
+     */
     public function typeContrat(string $conditions): ?TypeContrat
     {
         $texte = '-'.Str::slug($conditions).'-';
+        $motsCles = [
+            '-cdi-' => TypeContrat::Cdi,
+            '-cdd-' => TypeContrat::Cdd,
+            '-stage' => TypeContrat::Stage,
+            '-interim' => TypeContrat::Interim,
+            'freelance' => TypeContrat::Freelance,
+            'consultan' => TypeContrat::Freelance,
+            '-mission' => TypeContrat::Freelance,
+            'independant' => TypeContrat::Freelance,
+        ];
 
-        return match (true) {
-            str_contains($texte, '-cdi-') => TypeContrat::Cdi,
-            str_contains($texte, '-cdd-') => TypeContrat::Cdd,
-            str_contains($texte, '-stage') => TypeContrat::Stage,
-            str_contains($texte, '-interim') => TypeContrat::Interim,
-            str_contains($texte, 'freelance') || str_contains($texte, 'consultant') || str_contains($texte, 'mission') => TypeContrat::Freelance,
-            trim($conditions) === '' => null,
-            default => TypeContrat::Autre,
-        };
+        $premier = null;
+        $position = PHP_INT_MAX;
+
+        foreach ($motsCles as $motCle => $contrat) {
+            $trouve = strpos($texte, $motCle);
+
+            if ($trouve !== false && $trouve < $position) {
+                $position = $trouve;
+                $premier = $contrat;
+            }
+        }
+
+        return $premier;
+    }
+
+    /**
+     * Salaire mensuel cité : « 200 000 à 300 000 F CFA » → [200 000, 300 000], « 150 000 F CFA » →
+     * [150 000, 150 000], « moins de 150 000 F CFA » → [null, 150 000]. Une prime n'est pas un salaire.
+     *
+     * @return array{0: ?int, 1: ?int}
+     */
+    public function salaire(string $conditions): array
+    {
+        $nombre = '(\d{1,3}(?:[\s.\x{00A0}\x{202F}]\d{3})+|\d+)';
+        $devise = '\s*(?:f\s?cfa|fcfa|f\b|xof)';
+        $entier = fn (string $texte): int => (int) preg_replace('/\D/', '', $texte);
+
+        if (preg_match('/'.$nombre.'\s*(?:à|a|-|–)\s*'.$nombre.$devise.'/iu', $conditions, $plage) === 1) {
+            return [$entier($plage[1]), $entier($plage[2])];
+        }
+
+        // Le montant commence par son premier groupe de chiffres (pas « 000 » de « 150 000 »).
+        if (preg_match('/(?<![\d.])(?<!\d\s)'.$nombre.$devise.'/iu', $conditions, $seul, PREG_OFFSET_CAPTURE) !== 1) {
+            return [null, null];
+        }
+
+        // Les quelques mots qui précèdent le montant : « prime mensuelle de », « moins de ».
+        $avant = Str::slug(mb_substr(substr($conditions, 0, $seul[0][1]), -25));
+
+        if (str_contains($avant, 'prime')) {
+            return [null, null];
+        }
+
+        $montant = $entier($seul[1][0]);
+
+        return str_contains($avant, 'moins-de') ? [null, $montant] : [$montant, $montant];
     }
 
     /**

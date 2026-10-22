@@ -290,3 +290,77 @@ it('ne remet jamais en ligne une annonce retirée, non notée, expirée ou sous 
         ->and($faible->refresh()->source_nom)->toBe('Exemple Emploi');
     Event::assertNotDispatched(PublicationPubliee::class);
 });
+
+it('enregistre la date de clôture, le salaire et les notes de la veille, et nettoie le texte public', function () {
+    $cloture = now()->addDays(10);
+    deposerVeille($this->dossier, 'veille.csv', [ligneEmploi(surcharge: [
+        4 => 'CDD / CDI ; 200 000 à 300 000 F CFA',
+        5 => now()->format('d/m/Y'),
+        9 => 'Traitement d’appels clients dans un centre d’appels à Angré. Clôture '.$cloture->format('d/m').'. Détail non ouvert ce passage, à vérifier.',
+    ])]);
+
+    $this->artisan('veille:importer');
+
+    $publication = Publication::query()->with('detailEmploi')->sole();
+    expect($publication->contenu)->toBe('Traitement d’appels clients dans un centre d’appels à Angré.')
+        ->and($publication->note_veille)->toBe('Détail non ouvert ce passage, à vérifier.')
+        ->and($publication->detailEmploi?->date_limite?->toDateString())->toBe($cloture->toDateString())
+        ->and($publication->expire_le?->toDateTimeString())->toBe($cloture->copy()->endOfDay()->toDateTimeString())
+        ->and($publication->detailEmploi?->type_contrat)->toBe(TypeContrat::Cdd)
+        ->and([$publication->detailEmploi?->salaire_min, $publication->detailEmploi?->salaire_max])->toBe([200000, 300000])
+        ->and($publication->faits_cles)->toContain('Jusqu’au '.$cloture->translatedFormat('j M'));
+});
+
+it('n’affiche pas « Autre » quand le contrat n’est pas précisé', function () {
+    deposerVeille($this->dossier, 'veille.csv', [ligneEmploi(surcharge: [4 => 'Contrat et salaire non précisés'])]);
+
+    $this->artisan('veille:importer');
+
+    expect(Publication::query()->with('detailEmploi')->sole()->detailEmploi?->type_contrat)->toBeNull();
+});
+
+it('n’importe pas une annonce déjà close', function () {
+    deposerVeille($this->dossier, 'veille.csv', [ligneEmploi(surcharge: [5 => now()->subDays(5)->format('d/m/Y'), 9 => 'Vendeur. Clôture le '.now()->subDays(2)->format('d/m').'.'])]);
+
+    $this->artisan('veille:importer');
+
+    expect(Publication::query()->count())->toBe(0)
+        ->and(LigneImportVeille::query()->sole()->raison)->toStartWith('Annonce déjà clôturée le ');
+});
+
+it('retire du fil une annonce close, puis la supprime 5 jours après sa clôture (publications:expirer)', function () {
+    $close = Publication::factory()->veille()->publiee()->create(['expire_le' => now()->subHour()]);
+    $closeDepuis6Jours = Publication::factory()->veille()->create(['expire_le' => now()->subDays(6)]);
+    $closeDepuis6Jours->forceFill(['statut' => StatutPublication::Expiree])->save();
+    $enAttenteClose = Publication::factory()->veille()->enAttente()->create(['expire_le' => now()->subHour()]);
+    $membreExpire = Publication::factory()->create(['expire_le' => now()->subDays(30)]);
+    $membreExpire->forceFill(['statut' => StatutPublication::Expiree])->save();
+
+    $this->artisan('publications:expirer')->assertSuccessful()->expectsOutputToContain('1 annonce(s) de la veille supprimée(s)');
+
+    expect($close->refresh()->statut)->toBe(StatutPublication::Expiree)
+        ->and($enAttenteClose->refresh()->statut)->toBe(StatutPublication::Expiree)
+        ->and(Publication::query()->whereKey($closeDepuis6Jours->id)->exists())->toBeFalse()
+        ->and(Publication::withTrashed()->whereKey($closeDepuis6Jours->id)->exists())->toBeTrue()
+        // Une publication de membre expirée reste : son auteur peut la prolonger.
+        ->and(Publication::query()->whereKey($membreExpire->id)->exists())->toBeTrue();
+});
+
+it('expire une offre d’emploi dont la date limite de candidature est passée', function () {
+    $publication = Publication::factory()->emploi()->publiee()->create(['expire_le' => now()->addDays(20)]);
+    $publication->detailEmploi()->create(['type_contrat' => TypeContrat::Cdi, 'date_limite' => now()->subDay()->toDateString(), 'mode_candidature' => 'rezohelp']);
+
+    $this->artisan('publications:expirer')->assertSuccessful();
+
+    expect($publication->refresh()->statut)->toBe(StatutPublication::Expiree);
+});
+
+it('ne supprime jamais les annonces de la veille quand jours_suppression_veille vaut 0', function () {
+    parametre('jours_suppression_veille', '0');
+    $close = Publication::factory()->veille()->create(['expire_le' => now()->subDays(30)]);
+    $close->forceFill(['statut' => StatutPublication::Expiree])->save();
+
+    $this->artisan('publications:expirer')->assertSuccessful();
+
+    expect(Publication::query()->whereKey($close->id)->exists())->toBeTrue();
+});

@@ -19,7 +19,9 @@ use App\Services\CorrespondanceVeille;
 use App\Services\FaitsCles;
 use App\Support\IdentifiantsPublication;
 use App\Support\LecteurCsvVeille;
+use App\Support\ResumeVeille;
 use App\Support\UrlSource;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -27,8 +29,10 @@ use Illuminate\Support\Str;
 /**
  * Une ligne du fichier de la veille (CONTEXTE §12) : doublon écarté par l'empreinte de l'URL,
  * sinon publication en attente rattachée aux référentiels, avec un **résumé limité** et le lien
- * vers l'annonce d'origine (jamais le texte source complet). La mise en ligne éventuelle est
- * décidée après l'enrichissement IA (DeciderPublicationVeille).
+ * vers l'annonce d'origine (jamais le texte source complet). La date de clôture, le contrat et le
+ * salaire sont lus dans le résumé et « Contrat/Durée/Prix » (ResumeVeille, D-067) ; une annonce
+ * déjà close n'est pas importée. La mise en ligne éventuelle est décidée après l'enrichissement
+ * IA (DeciderPublicationVeille).
  */
 class ImporterLigneVeille
 {
@@ -36,6 +40,8 @@ class ImporterLigneVeille
     public const int LONGUEUR_RESUME = 600;
 
     public const int LONGUEUR_TITRE = 150;
+
+    public const int LONGUEUR_NOTE = 1000;
 
     public function __construct(
         private readonly CorrespondanceVeille $correspondance,
@@ -88,10 +94,15 @@ class ImporterLigneVeille
             return $ligne(StatutLigneVeille::Rejetee, raison: 'Source désactivée : '.$source->nom.'.');
         }
 
+        $lecture = ResumeVeille::lire($valeurs['resume'] ?? '', $valeurs['conditions'] ?? '', $valeurs['date'] ?? '');
+        if ($lecture->dateLimite !== null && $lecture->dateLimite->lessThan(CarbonImmutable::today())) {
+            return $ligne(StatutLigneVeille::Rejetee, raison: 'Annonce déjà clôturée le '.$lecture->dateLimite->format('d/m/Y').'.');
+        }
+
         try {
-            return DB::transaction(function () use ($import, $valeurs, $type, $url, $lien, $source, $intitule, $ligne): LigneImportVeille {
-                $publication = $this->creerPublication($import, $valeurs, $type, $lien, $url, $source, $intitule);
-                $this->creerDetails($publication, $type, $valeurs, $lien);
+            return DB::transaction(function () use ($import, $valeurs, $type, $url, $lien, $source, $intitule, $lecture, $ligne): LigneImportVeille {
+                $publication = $this->creerPublication($import, $valeurs, $type, $lien, $url, $source, $intitule, $lecture);
+                $this->creerDetails($publication, $type, $valeurs, $lien, $lecture);
 
                 $publication->load(['detailEmploi', 'detailService', 'detailFormation']);
                 $this->faitsCles->appliquer($publication);
@@ -108,11 +119,11 @@ class ImporterLigneVeille
     /**
      * @param  array<string, string>  $valeurs
      */
-    private function creerPublication(ImportVeille $import, array $valeurs, TypePublication $type, string $lien, string $url, SourceVeille $source, string $intitule): Publication
+    private function creerPublication(ImportVeille $import, array $valeurs, TypePublication $type, string $lien, string $url, SourceVeille $source, string $intitule, ResumeVeille $lecture): Publication
     {
         $entreprise = Str::limit(Str::squish($valeurs['entreprise'] ?? ''), 150, '');
         $nomSource = $source->domaine === null ? (trim($valeurs['source'] ?? '') ?: UrlSource::hote($url)) : $source->nom;
-        $resume = $this->resume($valeurs, $entreprise);
+        $resume = $this->resume($lecture->texte, $entreprise, $valeurs['lieu'] ?? '');
 
         $publication = new Publication([
             'uuid' => (string) Str::uuid(),
@@ -128,10 +139,12 @@ class ImporterLigneVeille
             'source' => SourcePublication::VeilleIa,
             'source_nom' => Str::limit($nomSource, 100, ''),
             'source_url' => Str::limit($lien, 2048, ''),
+            'note_veille' => $lecture->notes !== null ? Str::limit($lecture->notes, self::LONGUEUR_NOTE) : null,
             'source_empreinte' => UrlSource::empreinte($url),
             'source_veille_id' => $source->id,
             'import_veille_id' => $import->id,
-            'expire_le' => now()->addDays(Parametre::entier('jours_expiration_defaut')),
+            // L'annonce quitte le fil le soir de sa clôture (publications:expirer).
+            'expire_le' => $lecture->dateLimite?->endOfDay() ?? now()->addDays(Parametre::entier('jours_expiration_defaut')),
             'code_court' => IdentifiantsPublication::codeCourt(),
         ]);
         $publication->statut = StatutPublication::EnAttente;
@@ -141,16 +154,16 @@ class ImporterLigneVeille
     }
 
     /**
-     * Résumé fourni par la veille, limité ; à défaut, une phrase neutre qui renvoie à l'annonce d'origine.
-     *
-     * @param  array<string, string>  $valeurs
+     * Résumé de la veille sans ses notes ni la phrase de clôture, limité ; à défaut, une phrase
+     * neutre qui renvoie à l'annonce d'origine (contrat, salaire et date s'affichent à part).
      */
-    private function resume(array $valeurs, string $entreprise): string
+    private function resume(string $texte, string $entreprise, string $lieu): string
     {
-        $resume = Str::squish($valeurs['resume'] ?? '');
+        $resume = Str::squish($texte);
 
         if ($resume === '') {
-            $resume = trim(implode(' · ', array_filter([$entreprise, $valeurs['lieu'] ?? '', $valeurs['conditions'] ?? '']))).'. Tous les détails sur l’annonce d’origine.';
+            $qui = implode(', ', array_filter([$entreprise, Str::squish($lieu)]));
+            $resume = ($qui !== '' ? $qui.'. ' : '').'Tous les détails de l’offre sont sur l’annonce d’origine.';
         }
 
         return Str::limit($resume, self::LONGUEUR_RESUME);
@@ -159,14 +172,18 @@ class ImporterLigneVeille
     /**
      * @param  array<string, string>  $valeurs
      */
-    private function creerDetails(Publication $publication, TypePublication $type, array $valeurs, string $lien): void
+    private function creerDetails(Publication $publication, TypePublication $type, array $valeurs, string $lien, ResumeVeille $lecture): void
     {
         $conditions = $valeurs['conditions'] ?? '';
         $contact = Str::limit($lien, 255, '');
+        [$salaireMin, $salaireMax] = $this->correspondance->salaire($conditions);
 
         match ($type) {
             TypePublication::Emploi => $publication->detailEmploi()->create([
                 'type_contrat' => $this->correspondance->typeContrat($conditions),
+                'salaire_min' => $salaireMin,
+                'salaire_max' => $salaireMax,
+                'date_limite' => $lecture->dateLimite?->toDateString(),
                 'mode_candidature' => ModeCandidature::Lien,
                 'contact_candidature' => $contact,
             ]),

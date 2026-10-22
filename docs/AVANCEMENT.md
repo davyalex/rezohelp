@@ -476,6 +476,16 @@
 - [ ] À vérifier par Alex : 5 annonces de service sans catégorie (« Gardiennage / Sécurité » ×3, « Élevage », « Reprographie ») : créer si besoin une catégorie de service « Gardiennage et sécurité » dans Admin → Catégories, puis relancer l'import concerné ou corriger ces annonces à la main.
 - [ ] À vérifier par Alex : après une modification de `.env`, redémarrer le worker (`php artisan queue:restart`, puis relancer `queue:work`) : un worker déjà lancé garde l'ancienne configuration.
 
+### Complément (22/10/2026) — date de clôture, texte public et page détail
+
+- `ResumeVeille` (D-067) : date de clôture lue dans le résumé, enregistrée en `details_emploi.date_limite` et `expire_le` ; notes de la veille retirées du texte public et rangées dans `publications.note_veille` (nouvelle colonne) ; phrase de clôture retirée (la date s'affiche à part) ; annonce déjà close non importée. Contrat (premier cité, rien plutôt qu'« Autre ») et salaire lus dans « Contrat/Durée/Prix ».
+- `publications:expirer` : expiration à la date limite de candidature, annonces de la veille closes pendant la modération retirées de la file, suppression des annonces de la veille `jours_suppression_veille` jours après la clôture (nouveau paramètre, 5).
+- Page détail : bloc « Informations clés » en tête (date limite avec les jours restants, contrat, lieu, salaire…), bouton d'action juste en dessous, puis la description ; initiale de l'auteur et « via Emploi.ci » dans l'en-tête. En-tête du site : loupe dans la recherche, « Publier une annonce » séparé et à contour.
+- Base locale : les 294 annonces reprises depuis les fichiers Drive (161 dates de clôture, 71 notes de veille rangées à part, 13 salaires) ; 10 annonces déjà closes sont sorties du fil.
+- Tests (+30) : `tests/Unit/Support/ResumeVeilleTest.php` (20 : formes de la date, année suivante, dates douteuses ignorées, notes et phrase de clôture retirées), `tests/Feature/Veille/ImportVeilleTest.php` (+6 : date, salaire et notes à l'import, contrat non précisé, annonce close non importée, expiration puis suppression à J+5, date limite d'un emploi, suppression désactivée), `tests/Feature/Publications/FicheDetailTest.php` (5 : ordre de la page, notes jamais affichées, dernier jour, annonce close, en-tête).
+- [ ] À vérifier par Alex : ouvrir une offre de la veille (par exemple « Agent de centre d'appel ») : date limite et jours restants en tête, bouton « Voir l'annonce et postuler », texte sans « à vérifier ». Sur ordinateur, la recherche et le bouton « Publier une annonce » ne se confondent plus.
+- [ ] À vérifier par Alex : la note de la veille n'est pas encore affichée dans l'écran de modération (back-office en cours de refonte dans une autre session).
+
 ---
 
 ## Lot 9 — PWA, performance, accessibilité, sécurité

@@ -82,6 +82,7 @@ class ParametresSeeder extends Seeder
             'contenu_confidentialite' => [TypeParametre::Html, '<p>Politique de confidentialité à compléter (loi n° 2013-450, ARTCI).</p>', 'Politique de confidentialité'],
             'jours_purge_recherches' => [TypeParametre::Entier, 180, 'Conservation du journal des recherches (jours)'],
             'jours_purge_publications' => [TypeParametre::Entier, 90, 'Délai avant purge définitive des publications supprimées (jours)'],
+            'jours_suppression_veille' => [TypeParametre::Entier, 5, 'Délai avant suppression d’une annonce de la veille après sa clôture (jours, 0 = jamais)'],
         ];
     }
 }

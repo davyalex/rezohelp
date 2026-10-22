@@ -21,14 +21,22 @@
         <div class="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4">
             <a href="{{ route('fil.index') }}" class="shrink-0 text-xl font-bold text-brand">{{ config('app.name') }}</a>
 
-            <form method="GET" action="{{ route('fil.recherche') }}" role="search" class="min-w-0 flex-1">
+            {{-- Recherche : loupe dans le champ, largeur bornée, pour ne pas se confondre avec « Publier ». --}}
+            <form method="GET" action="{{ route('fil.recherche') }}" role="search" class="relative min-w-0 flex-1 lg:max-w-xl">
                 <label for="recherche-entete" class="sr-only">Rechercher une offre, un métier, une formation</label>
-                <input id="recherche-entete" type="search" name="q" value="{{ request('q') }}" placeholder="Rechercher…"
-                       class="h-10 w-full rounded-full border-0 bg-fond px-4 text-base focus:ring-2 focus:ring-brand/40" maxlength="100">
+                <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" class="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-500">
+                    <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 3.4 9.83l3.13 3.14a.75.75 0 1 0 1.06-1.06l-3.13-3.14A5.5 5.5 0 0 0 9 3.5ZM5 9a4 4 0 1 1 8 0 4 4 0 0 1-8 0Z" clip-rule="evenodd"/>
+                </svg>
+                <input id="recherche-entete" type="search" name="q" value="{{ request('q') }}" placeholder="Emploi, métier, formation…"
+                       class="h-10 w-full rounded-full border-0 bg-fond pl-10 pr-4 text-base placeholder:text-slate-500 focus:ring-2 focus:ring-brand/40" maxlength="100">
             </form>
 
-            <nav aria-label="Compte" class="flex shrink-0 items-center gap-2">
-                <x-bouton :href="route('publier.choix')" class="hidden min-h-10 px-3 text-sm lg:inline-flex">+ Publier</x-bouton>
+            <nav aria-label="Compte" class="ml-auto flex shrink-0 items-center gap-2">
+                <x-bouton :href="route('publier.choix')" variante="secondaire" class="hidden min-h-10 gap-1.5 rounded-lg border-brand px-3 text-sm font-semibold text-brand hover:bg-brand-clair lg:inline-flex">
+                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" class="size-4"><path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z"/></svg>
+                    Publier une annonce
+                </x-bouton>
+                <span aria-hidden="true" class="mx-1 hidden h-6 w-px bg-slate-200 lg:block"></span>
                 @auth
                     @php($nbNonLues = auth()->user()->unreadNotifications()->count())
                     <a href="{{ route('espace.notifications') }}" class="relative inline-flex size-10 items-center justify-center rounded-full text-xl hover:bg-slate-100">

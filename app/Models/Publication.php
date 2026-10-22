@@ -67,6 +67,7 @@ class Publication extends Model implements HasMedia
         'source',
         'source_nom',
         'source_url',
+        'note_veille',
         'source_empreinte',
         'source_veille_id',
         'import_veille_id',
