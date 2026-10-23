@@ -222,3 +222,12 @@ it('affiche le reçu avec les mentions légales et le fournit en PDF', function 
     expect($pdf->headers->get('content-type'))->toBe('application/pdf')
         ->and($pdf->headers->get('content-disposition'))->toContain('recu-'.$commande->numero_recu.'.pdf');
 });
+
+it('n’actualise pas la page de retour devant le guichet simulé, où rien ne bouge avant le clic', function () {
+    $commande = commander($this->membre, 'alertes_sms_30j');
+
+    $this->actingAs($this->membre)->get(route('paiements.retour', $commande))
+        ->assertOk()
+        ->assertSee('Guichet de paiement simulé')
+        ->assertDontSee('http-equiv="refresh"', false);
+});

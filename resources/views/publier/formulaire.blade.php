@@ -188,8 +188,8 @@
                             <x-champ name="date_souhaitee" type="date" label="Date précise (si besoin)" :valeur="$v('date_souhaitee')" />
                             <x-champ name="budget" type="number" label="Budget (FCFA, facultatif)" :valeur="$v('budget')" min="0" inputmode="numeric" />
                             <x-champ name="telephone_contact" type="tel" label="Votre numéro de téléphone" :valeur="$v('telephone_contact')" inputmode="tel" autocomplete="tel-national" />
-                            <x-case name="afficher_telephone" label="Les prestataires qui répondent à ma demande peuvent m’appeler" :coche="$v('afficher_telephone', true)" />
-                            <x-message type="info">Votre numéro n’apparaît pas sur votre demande. Quand un prestataire clique sur « Je suis disponible », il voit votre numéro et peut vous appeler. De votre côté, vous voyez qui vous a répondu dans « Mes publications ».</x-message>
+                            <x-case name="afficher_telephone" label="Afficher mon numéro sur ma demande pour être appelé" :coche="$v('afficher_telephone', true)" />
+                            <x-message type="info">Votre numéro s’affiche sur votre demande : tout le monde peut vous appeler ou vous écrire sur WhatsApp. Décochez la case si vous préférez que les prestataires vous répondent d’abord sur Rezohelp.</x-message>
                             @break
 
                         @case(ParcoursPublication::Formation)

@@ -18,8 +18,16 @@
             </li>
         @endforeach
     </ul>
-    <div class="mt-3 flex flex-wrap gap-x-4">
-        <a href="{{ route('fil.demandes') }}" class="inline-flex min-h-11 items-center text-sm font-semibold text-service hover:underline">Voir toutes les demandes →</a>
-        <a href="{{ route('publier.formulaire', 'service-demande') }}" class="inline-flex min-h-11 items-center text-sm font-semibold text-slate-800 hover:underline">Publier mon besoin</a>
+    <a href="{{ route('fil.demandes') }}" class="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-service hover:underline">Voir toutes les demandes →</a>
+
+    {{-- Appel à publier : mis en valeur pour les particuliers qui cherchent un artisan. --}}
+    <div class="mt-3 rounded-xl bg-white p-3 ring-1 ring-service/20">
+        <p class="text-sm font-semibold text-slate-900">Vous cherchez un artisan ?</p>
+        <p class="mt-0.5 text-sm text-slate-700">Décrivez votre besoin en 2 minutes : les prestataires disponibles vous contactent.</p>
+        <a href="{{ route('publier.formulaire', 'service-demande') }}"
+           class="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-service px-4 font-semibold text-white shadow-sm transition hover:brightness-110 motion-reduce:transition-none">
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" class="size-5"><path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z"/></svg>
+            Publier mon besoin
+        </a>
     </div>
 </section>

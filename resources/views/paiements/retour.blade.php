@@ -4,7 +4,9 @@
 
 @push('entete')
     <meta name="robots" content="noindex">
-    @if ($actualiser)
+    {{-- Pas d'actualisation devant le guichet simulé (développement) : rien ne bouge avant le clic,
+         et un rechargement pendant le clic annulerait le paiement simulé. --}}
+    @if ($actualiser && ! $guichetSimule)
         {{-- En attendant la notification de la passerelle : actualisation toutes les 3 s pendant 60 s. --}}
         <meta http-equiv="refresh" content="3;url={{ route('paiements.retour', ['commande' => $commande->id, 'n' => $actualisationSuivante]) }}">
     @endif

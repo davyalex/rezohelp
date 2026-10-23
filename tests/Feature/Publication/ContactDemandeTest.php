@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\SousTypeService;
+use App\Enums\StatutPublication;
 use App\Enums\TypeReponse;
 use App\Models\Publication;
 use App\Models\Reponse;
@@ -8,8 +9,8 @@ use App\Models\Utilisateur;
 use Illuminate\Support\Facades\Queue;
 
 /**
- * D-071 : le numéro de l'auteur d'une demande de prestation n'est jamais public ; seul un
- * prestataire connecté qui a répondu « Je suis disponible » le voit, si l'auteur l'accepte.
+ * D-072 : le numéro de l'auteur d'une demande de prestation est visible par tous (visiteurs compris)
+ * quand il choisit de l'afficher ; sinon, aucun numéro n'apparaît.
  */
 beforeEach(function () {
     referentielsPublication();
@@ -61,32 +62,35 @@ it('exige un numéro valide quand l’auteur choisit de le donner', function () 
     ]))->assertSessionHasErrors('telephone_contact');
 });
 
-it('ne montre jamais le numéro au public ni à un membre qui n’a pas répondu', function () {
+it('montre le numéro de l’auteur à tout le monde, visiteur compris, quand il l’a choisi', function () {
     $demande = demandeAvecContact($this->auteur);
 
-    $this->get(route('publications.show', $demande->slug))->assertOk()->assertDontSee('0506070809')->assertDontSee('tel:+225', false);
-    $this->actingAs($this->prestataire)->get(route('publications.show', $demande->slug))
+    $this->get(route('publications.show', $demande->slug))
         ->assertOk()
-        ->assertSee('Je suis disponible')
-        ->assertDontSee('tel:+2250506070809', false);
-});
-
-it('donne le numéro de l’auteur au prestataire qui a répondu « Je suis disponible »', function () {
-    $demande = demandeAvecContact($this->auteur);
-    Reponse::factory()->create(['publication_id' => $demande->id, 'utilisateur_id' => $this->prestataire->id, 'type' => TypeReponse::Proposition]);
-
-    $this->actingAs($this->prestataire)->get(route('publications.show', $demande->slug))
-        ->assertOk()
-        ->assertSee('Contactez l’auteur de la demande')
+        ->assertSee('Appelez l’auteur de la demande')
         ->assertSee('href="tel:+2250506070809"', false)
         ->assertSee('https://wa.me/2250506070809', false);
+
+    // Un prestataire connecté voit aussi le numéro, et peut répondre « Je suis disponible ».
+    $this->actingAs($this->prestataire)->get(route('publications.show', $demande->slug))
+        ->assertSee('href="tel:+2250506070809"', false)
+        ->assertSee('Je suis disponible');
 });
 
-it('prévient le prestataire quand l’auteur a préféré garder son numéro', function () {
+it('ne montre aucun numéro quand l’auteur a choisi de ne pas l’afficher', function () {
     $demande = demandeAvecContact($this->auteur, partage: false);
-    Reponse::factory()->create(['publication_id' => $demande->id, 'utilisateur_id' => $this->prestataire->id, 'type' => TypeReponse::Proposition]);
 
+    $this->get(route('publications.show', $demande->slug))->assertOk()->assertDontSee('tel:', false);
+
+    Reponse::factory()->create(['publication_id' => $demande->id, 'utilisateur_id' => $this->prestataire->id, 'type' => TypeReponse::Proposition]);
     $this->actingAs($this->prestataire)->get(route('publications.show', $demande->slug))
-        ->assertSee('L’auteur a préféré ne pas partager son numéro')
+        ->assertSee('L’auteur a préféré ne pas afficher son numéro')
         ->assertDontSee('tel:', false);
+});
+
+it('ne montre plus le numéro quand la demande n’est plus en ligne', function () {
+    $demande = demandeAvecContact($this->auteur);
+    $demande->forceFill(['statut' => StatutPublication::Cloturee])->save();
+
+    $this->get(route('publications.show', $demande->slug))->assertDontSee('tel:+2250506070809', false);
 });

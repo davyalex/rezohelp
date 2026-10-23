@@ -309,3 +309,12 @@
   - les demandes de prestation sont aussi accessibles depuis les deux colonnes latérales sur tous les onglets : un lien avec le nombre de demandes à gauche, l'encadré « Ils cherchent un prestataire » à droite.
 - **Raison** : demande d'Alex. Pour un besoin urgent (fuite, panne), l'artisan doit pouvoir appeler. Réserver le numéro aux prestataires qui ont répondu garde une trace de qui l'a vu, et le protège des robots et des arnaqueurs.
 - **Écart** : CLAUDE.md (« Le téléphone d'un demandeur de service n'est jamais affiché ») et CONTEXTE §11.4 / §11.8 décrivent l'ancienne règle. Ces deux fichiers sont à mettre à jour avec l'accord d'Alex.
+
+### D-072 · 2026-10-23 · Numéro de l'auteur d'une demande visible par tous
+- **Choix** : remplace D-071 sur la visibilité du numéro (décision d'Alex).
+  - Quand l'auteur d'une demande de prestation coche « Afficher mon numéro sur ma demande pour être appelé » (cochée par défaut), son numéro s'affiche sur la page de la demande pour tout le monde, visiteurs compris : boutons « Appeler » et WhatsApp, comme pour un artisan.
+  - Le numéro disparaît quand la demande n'est plus en ligne.
+  - Si l'auteur décoche la case, aucun numéro n'apparaît : les prestataires répondent « Je suis disponible » et l'auteur reçoit leurs coordonnées.
+- **Raison** : le besoin est souvent urgent (fuite, panne), et l'appel direct est le plus simple à Abidjan.
+- **Risque accepté** : un numéro public peut être relevé par des robots ou des arnaqueurs. Le formulaire le dit clairement, et la case permet de le masquer.
+- **Écart** : CLAUDE.md et CONTEXTE §11.4 / §11.8 décrivent encore l'ancienne règle (« jamais affiché »). Ils sont à mettre à jour avec l'accord d'Alex.
