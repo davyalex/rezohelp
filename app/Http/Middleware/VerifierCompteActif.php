@@ -15,7 +15,12 @@ class VerifierCompteActif
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $utilisateur = $request->user();
+        // Le back-office a ses propres comptes (D-066) : la session membre n'y intervient pas.
+        if ($request->is('admin', 'admin/*')) {
+            return $next($request);
+        }
+
+        $utilisateur = $request->user('web');
 
         if ($utilisateur instanceof Utilisateur && $utilisateur->estSuspendu()) {
             Auth::guard('web')->logout();

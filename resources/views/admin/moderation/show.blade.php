@@ -75,6 +75,13 @@
                             @endforeach
                         </ul>
                     @endif
+                    @if ($publication->note_veille)
+                        {{-- Remarques de la veille, retirées du texte public (D-067). --}}
+                        <div class="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-950">
+                            <p class="font-semibold">Note de la veille</p>
+                            <p class="mt-1">{{ $publication->note_veille }}</p>
+                        </div>
+                    @endif
                     @if ($publication->source_url)
                         <p class="mt-3 text-sm">Annonce d’origine : <a href="{{ $publication->source_url }}" target="_blank" rel="noopener noreferrer nofollow" class="font-semibold text-brand underline">{{ $publication->source_nom ?? parse_url($publication->source_url, PHP_URL_HOST) }}</a></p>
                     @endif

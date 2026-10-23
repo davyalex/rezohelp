@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Administrateur;
 use App\Models\Utilisateur;
 
 return [
@@ -42,6 +43,12 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // Back-office : comptes de l'équipe, séparés des membres (D-066).
+        'admin' => [
+            'driver' => 'session',
+            'provider' => 'administrateurs',
+        ],
     ],
 
     /*
@@ -65,6 +72,11 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', Utilisateur::class),
+        ],
+
+        'administrateurs' => [
+            'driver' => 'eloquent',
+            'model' => Administrateur::class,
         ],
 
         // 'users' => [

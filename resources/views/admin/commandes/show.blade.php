@@ -60,7 +60,7 @@
                     </form>
                 @endif
                 @can('voirRecu', $commande)
-                    <x-bouton :href="route('espace.recu', $commande)" variante="secondaire" class="w-full">Voir le reçu {{ $commande->numero_recu }}</x-bouton>
+                    <x-bouton :href="route('admin.commandes.recu-pdf', $commande)" variante="secondaire" class="w-full">Télécharger le reçu {{ $commande->numero_recu }}</x-bouton>
                 @endcan
                 @if ($commande->statut === \App\Enums\StatutCommande::Payee)
                     <form method="POST" action="{{ route('admin.commandes.rembourser', $commande) }}" class="space-y-2" data-confirmer="Marquer cette commande comme remboursée ? Les droits associés seront arrêtés." data-danger="1">

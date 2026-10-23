@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Publication\CompterInteraction;
 use App\Enums\StatutCommentaire;
+use App\Models\Administrateur;
 use App\Models\Publication;
 use App\Models\Utilisateur;
 use App\Services\DonneesStructurees;
@@ -45,8 +46,9 @@ class PublicationController extends Controller
             ])
             ->firstOrFail();
 
-        // Une publication non publiée n'existe pas pour le public (404, pas 403).
-        abort_unless(Gate::allows('view', $publication), 404);
+        // Une publication non publiée n'existe pas pour le public (404, pas 403) ; l'équipe connectée
+        // au back-office (garde admin, D-066) la voit pour la modérer.
+        abort_unless(Gate::forUser($request->user('web'))->allows('view', $publication) || (bool) $request->user(Administrateur::GARDE)?->can('publications.moderer'), 404);
 
         defer(fn () => $compter->executer($publication->id, CompterInteraction::VUES));
 

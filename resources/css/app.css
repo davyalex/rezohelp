@@ -42,6 +42,11 @@
         @apply outline-2 outline-offset-2 outline-brand;
     }
 
+    /* Le contenu ne glisse pas sous l'en-tête fixe quand on suit une ancre. */
+    html {
+        scroll-padding-top: 4.5rem;
+    }
+
     @media (prefers-reduced-motion: reduce) {
         *,
         *::before,
@@ -51,5 +56,42 @@
             transition-duration: 0.01ms !important;
             scroll-behavior: auto !important;
         }
+    }
+}
+
+/* Rangées défilantes (x-rangee-defilante) : barre masquée, fondu sur le bord où il reste du contenu. */
+@utility sans-barre {
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+@layer components {
+    /* Bouton d'envoi en cours (activerSpinners, resources/js/interface.js). */
+    button[data-chargement] {
+        cursor: wait;
+        pointer-events: none;
+        opacity: 0.85;
+    }
+
+    .masque-gauche {
+        --masque-g: 2.5rem;
+    }
+
+    .masque-droite {
+        --masque-d: 2.5rem;
+    }
+
+    .masque-gauche,
+    .masque-droite {
+        mask-image: linear-gradient(
+            to right,
+            transparent 0,
+            #000 var(--masque-g, 0px),
+            #000 calc(100% - var(--masque-d, 0px)),
+            transparent 100%
+        );
     }
 }

@@ -56,11 +56,11 @@ class Parametre extends Model
     }
 
     /**
-     * @return BelongsTo<Utilisateur, $this>
+     * @return BelongsTo<Administrateur, $this>
      */
     public function modifiePar(): BelongsTo
     {
-        return $this->belongsTo(Utilisateur::class, 'modifie_par');
+        return $this->belongsTo(Administrateur::class, 'modifie_par');
     }
 
     /**

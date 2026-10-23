@@ -3,6 +3,7 @@
 use App\Enums\ModeCandidature;
 use App\Enums\StatutPublication;
 use App\Enums\TypeContrat;
+use App\Models\Administrateur;
 use App\Models\DetailEmploi;
 use App\Models\DetailService;
 use App\Models\Entreprise;
@@ -41,13 +42,13 @@ it('renvoie 404 pour un slug inconnu ou une publication supprimée', function ()
 
 it('laisse l’auteur et la modération voir une publication en attente', function () {
     $publication = Publication::factory()->enAttente()->create();
-    $moderateur = Utilisateur::factory()->create();
-    $moderateur->assignRole('moderateur');
+    $moderateur = Administrateur::factory()->moderateur()->create();
 
     $this->actingAs($publication->auteur()->firstOrFail())->get('/publication/'.$publication->slug)
         ->assertOk()->assertSee('n’est pas visible dans le fil');
-    $this->actingAs($moderateur)->get('/publication/'.$publication->slug)->assertOk();
     $this->actingAs(Utilisateur::factory()->create())->get('/publication/'.$publication->slug)->assertNotFound();
+    // L'équipe connectée au back-office (garde admin) la voit aussi, pour la modérer.
+    $this->actingAs($moderateur, 'admin')->get('/publication/'.$publication->slug)->assertOk();
 });
 
 it('garde visible une publication clôturée, avec un bandeau', function () {

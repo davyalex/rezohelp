@@ -2,6 +2,7 @@
 
 use App\Enums\MotifSignalement;
 use App\Enums\StatutPublication;
+use App\Models\Administrateur;
 use App\Models\Parametre;
 use App\Models\Publication;
 use App\Models\Signalement;
@@ -14,8 +15,7 @@ use Illuminate\Support\Facades\Notification;
 beforeEach(function () {
     $this->seed([ParametresSeeder::class, RolesEtPermissionsSeeder::class]);
     Notification::fake();
-    $this->moderateur = Utilisateur::factory()->create();
-    $this->moderateur->assignRole('moderateur');
+    $this->moderateur = Administrateur::factory()->moderateur()->create();
     $this->publication = Publication::factory()->publiee()->create();
 });
 

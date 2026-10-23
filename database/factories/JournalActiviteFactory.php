@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Models\Administrateur;
 use App\Models\JournalActivite;
 use App\Models\Publication;
-use App\Models\Utilisateur;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -20,7 +20,7 @@ class JournalActiviteFactory extends Factory
     public function definition(): array
     {
         return [
-            'utilisateur_id' => Utilisateur::factory(),
+            'administrateur_id' => Administrateur::factory(),
             'action' => 'publication.validee',
             'sujet_type' => 'publication',
             'sujet_id' => Publication::factory(),

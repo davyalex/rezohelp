@@ -8,16 +8,18 @@ use App\Actions\Publication\MettreAJourConfiance;
 use App\Enums\ConfianceUtilisateur;
 use App\Enums\StatutPublication;
 use App\Exceptions\OperationImpossibleException;
+use App\Models\Administrateur;
 use App\Models\Publication;
 use App\Models\Utilisateur;
+use Database\Seeders\RolesEtPermissionsSeeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 
 /**
- * F — Gestion des comptes par l'équipe (CONTEXTE §13.3.F). Un administrateur ne peut ni se
- * suspendre, ni retirer son propre rôle d'administrateur, ni anonymiser son compte.
+ * F — Gestion des comptes membres par l'équipe (CONTEXTE §13.3.F). Les comptes de l'équipe sont
+ * séparés (Administrateur, D-066) : seuls les rôles de membres s'attribuent ici.
  */
 class GererUtilisateur
 {
@@ -33,7 +35,7 @@ class GererUtilisateur
     /**
      * @param  array{nom: string, prenoms: ?string, email: ?string, commune_id: ?int}  $donnees
      */
-    public function modifier(Utilisateur $utilisateur, Utilisateur $admin, array $donnees): void
+    public function modifier(Utilisateur $utilisateur, Administrateur $admin, array $donnees): void
     {
         $utilisateur->fill($donnees);
 
@@ -52,12 +54,8 @@ class GererUtilisateur
      * Suspension (définitive si $jusquau est nul) : plus de connexion ni de publication, et les
      * publications en ligne sortent du fil pour revue (D-056).
      */
-    public function suspendre(Utilisateur $utilisateur, Utilisateur $admin, string $motif, ?Carbon $jusquau = null): void
+    public function suspendre(Utilisateur $utilisateur, Administrateur $admin, string $motif, ?Carbon $jusquau = null): void
     {
-        if ($utilisateur->is($admin)) {
-            throw new OperationImpossibleException('Vous ne pouvez pas suspendre votre propre compte.');
-        }
-
         DB::transaction(function () use ($utilisateur, $admin, $motif, $jusquau): void {
             $utilisateur->forceFill([
                 'suspendu_le' => now(),
@@ -84,7 +82,7 @@ class GererUtilisateur
         });
     }
 
-    public function reactiver(Utilisateur $utilisateur, Utilisateur $admin): void
+    public function reactiver(Utilisateur $utilisateur, Administrateur $admin): void
     {
         DB::transaction(function () use ($utilisateur, $admin): void {
             $utilisateur->forceFill(['suspendu_le' => null, 'suspendu_jusqu_au' => null, 'motif_suspension' => null])->save();
@@ -95,7 +93,7 @@ class GererUtilisateur
     /**
      * Mot de passe temporaire, à changer à la prochaine connexion. Renvoyé une seule fois, jamais journalisé.
      */
-    public function reinitialiserMotDePasse(Utilisateur $utilisateur, Utilisateur $admin): string
+    public function reinitialiserMotDePasse(Utilisateur $utilisateur, Administrateur $admin): string
     {
         $temporaire = Str::password(self::LONGUEUR_MOT_DE_PASSE_TEMPORAIRE, symbols: false);
 
@@ -111,14 +109,13 @@ class GererUtilisateur
     /**
      * @param  list<string>  $roles
      */
-    public function roles(Utilisateur $utilisateur, Utilisateur $admin, array $roles): void
+    public function roles(Utilisateur $utilisateur, Administrateur $admin, array $roles): void
     {
-        if ($utilisateur->is($admin) && $admin->hasRole('administrateur') && ! in_array('administrateur', $roles, true)) {
-            throw new OperationImpossibleException('Vous ne pouvez pas retirer votre propre rôle d’administrateur.');
-        }
-
+        // Seuls les rôles de membres (garde web) : l'équipe a ses propres comptes (D-066).
         $avant = $utilisateur->getRoleNames()->sort()->values()->all();
-        $roles = Role::query()->whereIn('name', $roles)->pluck('name')->sort()->values()->all();
+        $roles = Role::query()->where('guard_name', 'web')
+            ->whereIn('name', array_intersect($roles, RolesEtPermissionsSeeder::ROLES_MEMBRES))
+            ->pluck('name')->sort()->values()->all();
 
         if ($avant === $roles) {
             return;
@@ -133,7 +130,7 @@ class GererUtilisateur
     /**
      * Seul l'admin lève la restriction (§11.6) : les faits antérieurs ne comptent plus.
      */
-    public function leverRestriction(Utilisateur $utilisateur, Utilisateur $admin): void
+    public function leverRestriction(Utilisateur $utilisateur, Administrateur $admin): void
     {
         if ($utilisateur->confiance !== ConfianceUtilisateur::Restreint) {
             throw new OperationImpossibleException('Ce compte n’est pas restreint.');
@@ -149,12 +146,8 @@ class GererUtilisateur
     /**
      * Suppression ARTCI : anonymisation (D-042), publications conservées sous « Utilisateur supprimé ».
      */
-    public function anonymiser(Utilisateur $utilisateur, Utilisateur $admin): void
+    public function anonymiser(Utilisateur $utilisateur, Administrateur $admin): void
     {
-        if ($utilisateur->is($admin)) {
-            throw new OperationImpossibleException('Vous ne pouvez pas supprimer votre propre compte depuis l’administration.');
-        }
-
         DB::transaction(function () use ($utilisateur, $admin): void {
             $this->journaliser($admin, 'utilisateur.anonymise', $utilisateur);
             $this->anonymiser->executer($utilisateur);

@@ -2,61 +2,57 @@
 
 namespace Database\Seeders;
 
+use App\Models\Administrateur;
+use App\Support\PermissionsAdmin;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
 /**
- * Rôles et permissions (CONTEXTE §2, §13.2).
+ * Rôles et permissions (CONTEXTE §2, §13.2, D-066).
+ *  - Équipe (garde « admin ») : catalogue et permissions par défaut dans config/admin.php ;
+ *    super_administrateur a toujours tout.
+ *  - Membres (garde « web ») : membre, recruteur, artisan, organisme, sans permission d'équipe.
+ * Les rôles déjà présents gardent les permissions réglées dans l'admin : seules les manquantes sont ajoutées
+ * aux rôles livrés lors de leur création.
  */
 class RolesEtPermissionsSeeder extends Seeder
 {
-    /**
-     * Permission => accordée au modérateur ?
-     *
-     * @var array<string, bool>
-     */
-    public const array PERMISSIONS = [
-        'tableau_de_bord.voir' => true,
-        'publications.moderer' => true,
-        'publications.gerer' => true,
-        'signalements.traiter' => true,
-        'commentaires.moderer' => true,
-        'utilisateurs.voir' => true,
-        'utilisateurs.suspendre' => true,
-        'utilisateurs.gerer' => false,
-        'entreprises.verifier' => false,
-        'veille.gerer' => false,
-        'referentiels.gerer' => false,
-        'parametres.gerer' => false,
-        'statistiques.voir' => true,
-        'systeme.voir' => false,
-        'abonnements.gerer' => false,
-        'paiements.voir' => false,
-    ];
-
-    /**
-     * Rôles fonctionnels, sans permission d'administration : attribués
-     * automatiquement à la première publication de chaque type (§11.1).
-     */
     public const array ROLES_MEMBRES = ['membre', 'recruteur', 'artisan', 'organisme'];
 
     public function run(): void
     {
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        foreach (array_keys(self::PERMISSIONS) as $nom) {
-            Permission::findOrCreate($nom, 'web');
+        foreach (PermissionsAdmin::cles() as $cle) {
+            Permission::findOrCreate($cle, Administrateur::GARDE);
         }
 
-        Role::findOrCreate('administrateur', 'web')->syncPermissions(array_keys(self::PERMISSIONS));
-        Role::findOrCreate('moderateur', 'web')->syncPermissions(array_keys(array_filter(self::PERMISSIONS)));
+        // Le super administrateur a toujours toutes les permissions (et Gate::before le confirme).
+        Role::findOrCreate(PermissionsAdmin::ROLE_SUPER, Administrateur::GARDE)->syncPermissions(PermissionsAdmin::cles());
+
+        // Permissions par défaut des autres rôles livrés : config/admin.php (« roles » de chaque permission).
+        $this->creerSiAbsent(PermissionsAdmin::ROLE_ADMIN, PermissionsAdmin::parDefaut(PermissionsAdmin::ROLE_ADMIN));
+        $this->creerSiAbsent(PermissionsAdmin::ROLE_MODERATEUR, PermissionsAdmin::parDefaut(PermissionsAdmin::ROLE_MODERATEUR));
 
         foreach (self::ROLES_MEMBRES as $role) {
             Role::findOrCreate($role, 'web');
         }
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+
+    /**
+     * @param  list<string>  $permissions
+     */
+    private function creerSiAbsent(string $nom, array $permissions): void
+    {
+        $existe = Role::query()->where('name', $nom)->where('guard_name', Administrateur::GARDE)->exists();
+        $role = Role::findOrCreate($nom, Administrateur::GARDE);
+
+        if (! $existe) {
+            $role->syncPermissions($permissions);
+        }
     }
 }

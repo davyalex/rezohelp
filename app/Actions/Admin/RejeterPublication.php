@@ -7,6 +7,7 @@ use App\Enums\MotifRejet;
 use App\Enums\SourcePublication;
 use App\Enums\StatutPublication;
 use App\Exceptions\OperationImpossibleException;
+use App\Models\Administrateur;
 use App\Models\Publication;
 use App\Models\Utilisateur;
 use App\Notifications\PublicationRejetee;
@@ -20,7 +21,7 @@ class RejeterPublication
 {
     use JournaliseActivite;
 
-    public function executer(Publication $publication, Utilisateur $moderateur, MotifRejet $motif, ?string $detail = null, string $action = 'publication.rejetee'): void
+    public function executer(Publication $publication, Administrateur $moderateur, MotifRejet $motif, ?string $detail = null, string $action = 'publication.rejetee'): void
     {
         if ($publication->statut !== StatutPublication::EnAttente) {
             throw new OperationImpossibleException('Seule une publication en attente peut être refusée.');

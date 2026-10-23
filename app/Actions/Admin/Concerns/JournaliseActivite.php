@@ -2,8 +2,8 @@
 
 namespace App\Actions\Admin\Concerns;
 
+use App\Models\Administrateur;
 use App\Models\JournalActivite;
-use App\Models\Utilisateur;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -15,10 +15,10 @@ trait JournaliseActivite
     /**
      * @param  array<string, mixed>  $donnees
      */
-    protected function journaliser(Utilisateur $auteur, string $action, ?Model $sujet = null, array $donnees = []): JournalActivite
+    protected function journaliser(Administrateur $auteur, string $action, ?Model $sujet = null, array $donnees = []): JournalActivite
     {
         return JournalActivite::query()->create([
-            'utilisateur_id' => $auteur->id,
+            'administrateur_id' => $auteur->id,
             'action' => $action,
             'sujet_type' => $sujet?->getMorphClass(),
             'sujet_id' => $sujet?->getKey(),

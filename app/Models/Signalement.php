@@ -53,10 +53,10 @@ class Signalement extends Model
     }
 
     /**
-     * @return BelongsTo<Utilisateur, $this>
+     * @return BelongsTo<Administrateur, $this>
      */
     public function traitePar(): BelongsTo
     {
-        return $this->belongsTo(Utilisateur::class, 'traite_par');
+        return $this->belongsTo(Administrateur::class, 'traite_par');
     }
 }

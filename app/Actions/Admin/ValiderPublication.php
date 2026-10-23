@@ -9,6 +9,7 @@ use App\Enums\StatutPublication;
 use App\Enums\TypeProduit;
 use App\Events\PublicationPubliee;
 use App\Exceptions\OperationImpossibleException;
+use App\Models\Administrateur;
 use App\Models\Produit;
 use App\Models\Publication;
 use App\Models\Utilisateur;
@@ -27,7 +28,7 @@ class ValiderPublication
 
     public function __construct(private readonly Offres $offres) {}
 
-    public function executer(Publication $publication, Utilisateur $moderateur): void
+    public function executer(Publication $publication, Administrateur $moderateur): void
     {
         if ($publication->statut !== StatutPublication::EnAttente) {
             throw new OperationImpossibleException('Seule une publication en attente peut être validée.');

@@ -3,8 +3,6 @@
 namespace App\View\Components;
 
 use App\Enums\SourcePublication;
-use App\Enums\SousTypeService;
-use App\Enums\TypePublication;
 use App\Models\Publication;
 use App\Services\Referentiels;
 use App\Support\JetonsCarte;
@@ -28,8 +26,6 @@ class CartePublication extends Component
 
     public ?string $categorie;
 
-    public string $libelleAction;
-
     /**
      * @var list<string>
      */
@@ -43,12 +39,6 @@ class CartePublication extends Component
         $this->commune = $referentiels->nomCommune($publication->commune_id);
         $this->categorie = $referentiels->nomCategorie($publication->categorie_id);
         $this->faits = array_map(JetonsCarte::neutraliser(...), $publication->faits_cles ?? []);
-        $this->libelleAction = match (true) {
-            $publication->type === TypePublication::Emploi => 'Postuler',
-            $publication->sous_type === SousTypeService::Demande => 'Je suis disponible',
-            $publication->type === TypePublication::Service => 'Contacter',
-            default => 'S’inscrire',
-        };
     }
 
     public function estVeille(): bool

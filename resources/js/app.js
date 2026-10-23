@@ -5,7 +5,9 @@ import { demarrerFil, suivreMisesEnAvant } from './fil';
 import { envoyerFormulaire } from './requetes';
 import { formulairePublication } from './publication';
 import { demarrerPwa } from './pwa';
+import { activerSpinners, enregistrerComposants } from './interface';
 
+enregistrerComposants(Alpine);
 Alpine.data('formulairePublication', formulairePublication);
 
 // « J'aime » optimiste : l'interface change tout de suite, le serveur confirme.
@@ -60,6 +62,7 @@ Alpine.data('incitation', (cle) => ({
 window.Alpine = Alpine;
 Alpine.start();
 
+activerSpinners();
 demarrerFil();
 suivreMisesEnAvant();
 demarrerPwa();

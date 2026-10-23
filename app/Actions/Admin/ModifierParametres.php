@@ -4,8 +4,8 @@ namespace App\Actions\Admin;
 
 use App\Actions\Admin\Concerns\JournaliseActivite;
 use App\Enums\TypeParametre;
+use App\Models\Administrateur;
 use App\Models\Parametre;
-use App\Models\Utilisateur;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -20,7 +20,7 @@ class ModifierParametres
      * @param  array<string, mixed>  $valeurs  clé => valeur saisie (déjà validée)
      * @return int nombre de paramètres modifiés
      */
-    public function executer(array $valeurs, Utilisateur $admin): int
+    public function executer(array $valeurs, Administrateur $admin): int
     {
         return DB::transaction(function () use ($valeurs, $admin): int {
             $modifies = 0;

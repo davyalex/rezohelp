@@ -2,6 +2,7 @@
 
 use App\Enums\CibleOffre;
 use App\Enums\CleDroit;
+use App\Models\Administrateur;
 use App\Models\Categorie;
 use App\Models\Commune;
 use App\Models\Parametre;
@@ -12,6 +13,7 @@ use App\Models\Publication;
 use App\Models\Signalement;
 use App\Models\SourceVeille;
 use App\Models\Utilisateur;
+use App\Support\PermissionsAdmin;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\DemoSeeder;
 use Database\Seeders\RolesEtPermissionsSeeder;
@@ -20,9 +22,8 @@ use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
     config([
-        'rezohelp.admin.telephone' => '07 08 09 10 11',
-        'rezohelp.admin.pays_code' => 'CI',
-        'rezohelp.admin.mot_de_passe' => 'Admin-Rezohelp-2026',
+        'admin.super_administrateur.nom_utilisateur' => 'superadmin',
+        'admin.super_administrateur.mot_de_passe' => 'Admin-Rezohelp-2026',
     ]);
 });
 
@@ -39,17 +40,36 @@ it('crée les référentiels de base', function () {
         ->and(SourceVeille::query()->whereNull('domaine')->value('nom'))->toBe('Inconnue');
 });
 
-it('crée les rôles et les permissions du §13.2', function () {
+it('crée les rôles et les permissions du §13.2 sur la garde de l’équipe, et les rôles de membres sur celle du site', function () {
     $this->seed(DatabaseSeeder::class);
 
-    $moderateur = Role::findByName('moderateur', 'web');
+    $moderateur = Role::findByName('moderateur', 'admin');
+    $total = count(PermissionsAdmin::cles());
 
-    expect(Permission::query()->count())->toBe(count(RolesEtPermissionsSeeder::PERMISSIONS))
-        ->and(Role::findByName('administrateur', 'web')->permissions)->toHaveCount(count(RolesEtPermissionsSeeder::PERMISSIONS))
+    expect(Permission::query()->where('guard_name', 'admin')->count())->toBe($total)
+        ->and(Permission::query()->where('guard_name', 'web')->count())->toBe(0)
+        ->and(Role::findByName('super_administrateur', 'admin')->permissions)->toHaveCount($total)
+        ->and(Role::findByName('administrateur', 'admin')->permissions)->toHaveCount(count(PermissionsAdmin::parDefaut('administrateur')))
+        ->and(Role::findByName('administrateur', 'admin')->hasPermissionTo('administrateurs.gerer'))->toBeFalse()
         ->and($moderateur->hasPermissionTo('publications.moderer'))->toBeTrue()
         ->and($moderateur->hasPermissionTo('utilisateurs.gerer'))->toBeFalse()
         ->and($moderateur->hasPermissionTo('abonnements.gerer'))->toBeFalse()
-        ->and(Role::query()->pluck('name')->all())->toContain('membre', 'recruteur', 'artisan', 'organisme');
+        ->and(Role::query()->where('guard_name', 'web')->pluck('name')->all())->toEqualCanonicalizing(RolesEtPermissionsSeeder::ROLES_MEMBRES);
+});
+
+it('crée une permission ajoutée dans config/admin.php, donnée au super administrateur et aux rôles indiqués', function () {
+    $this->seed(DatabaseSeeder::class);
+    // Clé avec un point : on remplace le tableau entier (la notation pointée créerait une sous-clé).
+    config(['admin.permissions' => [
+        ...config('admin.permissions'),
+        'journal.voir' => ['groupe' => 'Pilotage', 'libelle' => 'Voir le journal', 'roles' => ['moderateur']],
+    ]]);
+
+    $this->seed(RolesEtPermissionsSeeder::class);
+
+    expect(Permission::query()->where('name', 'journal.voir')->where('guard_name', 'admin')->exists())->toBeTrue()
+        ->and(Role::findByName('super_administrateur', 'admin')->hasPermissionTo('journal.voir'))->toBeTrue()
+        ->and(PermissionsAdmin::libelle('journal.voir'))->toBe('Voir le journal');
 });
 
 it('crée tous les paramètres cités aux §11, §13 et §14', function () {
@@ -89,22 +109,35 @@ it('crée la grille des plans du §14.4 réglée pour le lancement', function ()
         ->and($entreprise->duree_essai_jours)->toBe(14);
 });
 
-it('crée le compte administrateur avec un téléphone normalisé', function () {
+it('crée le super administrateur de l’équipe depuis .env, séparé des membres', function () {
+    config(['admin.super_administrateur.prenoms' => 'Alex', 'admin.super_administrateur.email' => 'equipe@rezohelp.ci']);
+
     $this->seed(DatabaseSeeder::class);
 
-    $admin = Utilisateur::query()->where('telephone', '+2250708091011')->firstOrFail();
+    $admin = Administrateur::query()->where('nom_utilisateur', 'superadmin')->sole();
 
-    expect($admin->hasRole('administrateur'))->toBeTrue()
-        ->and($admin->telephone_verifie_le)->not->toBeNull()
-        ->and(Hash::check('Admin-Rezohelp-2026', $admin->mot_de_passe))->toBeTrue();
+    expect($admin->estSuperAdministrateur())->toBeTrue()
+        ->and($admin->prenoms)->toBe('Alex')
+        ->and($admin->email)->toBe('equipe@rezohelp.ci')
+        ->and($admin->doit_changer_mot_de_passe)->toBeTrue()
+        ->and(Hash::check('Admin-Rezohelp-2026', $admin->mot_de_passe))->toBeTrue()
+        ->and(Utilisateur::query()->count())->toBe(0);
 });
 
-it('ne crée pas d’administrateur sans identifiants dans .env', function () {
-    config(['rezohelp.admin.telephone' => null]);
+it('génère un mot de passe de 8 caractères quand .env n’en fixe pas', function () {
+    config(['admin.super_administrateur.mot_de_passe' => null]);
 
     $this->seed(DatabaseSeeder::class);
 
-    expect(Utilisateur::query()->count())->toBe(0);
+    expect(Administrateur::query()->where('nom_utilisateur', 'superadmin')->sole()->doit_changer_mot_de_passe)->toBeTrue();
+});
+
+it('ne crée pas de super administrateur sans nom d’utilisateur', function () {
+    config(['admin.super_administrateur.nom_utilisateur' => '']);
+
+    $this->seed(DatabaseSeeder::class);
+
+    expect(Administrateur::query()->count())->toBe(0);
 });
 
 it('peut être relancé sans doublon ni perte des réglages', function () {
@@ -116,7 +149,8 @@ it('peut être relancé sans doublon ni perte des réglages', function () {
 
     expect(Commune::query()->count())->toBe(13)
         ->and(Plan::query()->count())->toBe(9)
-        ->and(Utilisateur::query()->count())->toBe(1)
+        ->and(Utilisateur::query()->count())->toBe(0)
+        ->and(Administrateur::query()->count())->toBe(1)
         ->and(Parametre::query()->whereKey('seuil_publication_auto')->value('valeur'))->toBe('80')
         ->and(Plan::query()->where('code', 'alertes_sms_30j')->value('prix_fcfa'))->toBe(1500);
 });
@@ -133,7 +167,7 @@ it('génère des données de démonstration cohérentes', function () {
         ->and(Signalement::query()->count())->toBe(4)
         ->and($publications->pluck('type')->unique())->toHaveCount(3)
         ->and($publications->pluck('commune_id')->filter()->unique()->count())->toBeGreaterThan(5)
-        ->and(Utilisateur::query()->count())->toBe(21)
+        ->and(Utilisateur::query()->count())->toBe(20)
         ->and(Publication::query()->publiees()->whereNull('tri_le')->count())->toBe(0)
         ->and(Publication::query()->where('type', 'emploi')->doesntHave('detailEmploi')->count())->toBe(0)
         ->and(Publication::query()->where('type', 'service')->doesntHave('detailService')->count())->toBe(0)

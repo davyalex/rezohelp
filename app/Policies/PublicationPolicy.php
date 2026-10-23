@@ -13,7 +13,7 @@ class PublicationPolicy
 {
     /**
      * Page publique : publiée, ou clôturée / expirée (avec un bandeau).
-     * Une publication non publiée n'est visible que par son auteur et la modération.
+     * Une publication non publiée n'est visible que par son auteur (et par l'équipe : PublicationController, garde admin).
      */
     public function view(?Utilisateur $utilisateur, Publication $publication): bool
     {
@@ -21,8 +21,7 @@ class PublicationPolicy
             return true;
         }
 
-        return $utilisateur !== null
-            && ($utilisateur->id === $publication->auteur_id || $utilisateur->can('publications.moderer'));
+        return $utilisateur !== null && $utilisateur->id === $publication->auteur_id;
     }
 
     /**

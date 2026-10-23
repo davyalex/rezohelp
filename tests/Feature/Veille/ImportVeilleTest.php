@@ -16,6 +16,7 @@ use App\Events\PublicationPubliee;
 use App\Exceptions\ReponseIAInvalideException;
 use App\Jobs\EnrichirPublicationIA;
 use App\Jobs\ImporterFichierVeille;
+use App\Models\Administrateur;
 use App\Models\AppelIa;
 use App\Models\Categorie;
 use App\Models\Commune;
@@ -23,7 +24,6 @@ use App\Models\ImportVeille;
 use App\Models\LigneImportVeille;
 use App\Models\Publication;
 use App\Models\SourceVeille as Source;
-use App\Models\Utilisateur;
 use App\Services\Veille\FakeSourceVeille;
 use Database\Seeders\SourcesVeilleSeeder;
 use Illuminate\Support\Facades\Event;
@@ -222,7 +222,7 @@ it('rejoue un import sans dupliquer ni recompter en doublons ses propres annonce
     $import = ImportVeille::query()->sole();
     $appels = AppelIa::query()->count();
 
-    app(GererImportVeille::class)->relancer($import, Utilisateur::factory()->create());
+    app(GererImportVeille::class)->relancer($import, Administrateur::factory()->create());
 
     $import->refresh();
     expect([$import->nb_lignes, $import->nb_importees, $import->nb_doublons])->toBe([2, 2, 0])

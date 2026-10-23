@@ -5,12 +5,14 @@
 <div class="space-y-1.5">
     <label for="{{ $name }}" class="block text-sm font-medium text-slate-800">{{ $label }}</label>
     <div class="flex gap-2">
-        <label for="{{ $nomPays }}" class="sr-only">Pays</label>
+        {{-- Indicatif court (« CI +225 ») : le nom complet reste lisible au survol et par les lecteurs d'écran. --}}
+        <label for="{{ $nomPays }}" class="sr-only">Pays (indicatif)</label>
         <select id="{{ $nomPays }}" name="{{ $nomPays }}"
-                class="min-h-11 rounded-lg border border-slate-300 bg-white px-2 text-base focus:border-brand focus:ring-2 focus:ring-brand/30">
+                class="min-h-11 w-[6.75rem] shrink-0 rounded-lg border border-slate-300 bg-white px-2 text-base font-medium tabular-nums focus:border-brand focus:ring-2 focus:ring-brand/30">
             @foreach ($pays as $option)
-                <option value="{{ $option['code'] }}" @selected(old($nomPays, $paysSelectionne) === $option['code'])>
-                    {{ $option['drapeau'] }} {{ $option['indicatif'] }} — {{ $option['nom'] }}
+                <option value="{{ $option['code'] }}" title="{{ $option['nom'] }}" aria-label="{{ $option['nom'] }} {{ $option['indicatif'] }}"
+                        @selected(old($nomPays, $paysSelectionne) === $option['code'])>
+                    {{ $option['code'] }} {{ $option['indicatif'] }}
                 </option>
             @endforeach
         </select>

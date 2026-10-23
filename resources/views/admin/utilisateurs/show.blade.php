@@ -78,7 +78,7 @@
                 <h2 id="titre-historique" class="font-semibold">Historique des actions de l’équipe</h2>
                 <ul class="mt-2 divide-y divide-slate-100 text-sm">
                     @forelse ($sanctions as $ligne)
-                        <li class="py-2">{{ $ligne->cree_le?->format('d/m/Y H:i') }} · {{ $ligne->action }} · par {{ $ligne->utilisateur?->nomAffiche() ?? '—' }}@if ($ligne->donnees['motif'] ?? null) · {{ $ligne->donnees['motif'] }}@endif</li>
+                        <li class="py-2">{{ $ligne->cree_le?->format('d/m/Y H:i') }} · {{ $ligne->action }} · par {{ $ligne->administrateur?->nomAffiche() ?? '—' }}@if ($ligne->donnees['motif'] ?? null) · {{ $ligne->donnees['motif'] }}@endif</li>
                     @empty
                         <li class="py-2 text-slate-600">Aucune.</li>
                     @endforelse

@@ -3,10 +3,10 @@
 namespace App\Actions\Admin;
 
 use App\Actions\Admin\Concerns\JournaliseActivite;
+use App\Models\Administrateur;
 use App\Models\Categorie;
 use App\Models\Commune;
 use App\Models\Pays;
-use App\Models\Utilisateur;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -18,7 +18,7 @@ class DeplacerReferentiel
 {
     use JournaliseActivite;
 
-    public function executer(Categorie|Commune|Pays $element, string $sens, Utilisateur $admin): void
+    public function executer(Categorie|Commune|Pays $element, string $sens, Administrateur $admin): void
     {
         $voisin = $this->groupe($element)
             ->whereKeyNot($element->getKey())

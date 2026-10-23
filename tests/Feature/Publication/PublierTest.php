@@ -247,7 +247,7 @@ it('rend l’aperçu avec le vrai composant de carte, sans rien enregistrer', fu
 
     expect($html)->toContain('<article')
         ->toContain('Électricien disponible à Cocody')
-        ->toContain('Contacter')
+        ->toContain('Voir plus')
         ->not->toContain('⟦');
     expect(Publication::query()->count())->toBe(0)
         ->and(Entreprise::query()->count())->toBe(0);

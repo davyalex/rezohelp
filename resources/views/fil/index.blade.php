@@ -6,11 +6,20 @@
 
     $referentiels = app(\App\Services\Referentiels::class);
     $onglets = [
-        ['type' => null, 'libelle' => 'Tout'],
-        ['type' => TypePublication::Emploi, 'libelle' => 'Emplois'],
-        ['type' => TypePublication::Service, 'libelle' => 'Home service'],
-        ['type' => TypePublication::Formation, 'libelle' => 'Formations'],
+        ['type' => null, 'libelle' => 'Tout', 'icone' => '✨'],
+        ['type' => TypePublication::Emploi, 'libelle' => 'Emplois', 'icone' => '💼'],
+        ['type' => TypePublication::Service, 'libelle' => 'Home service', 'icone' => '🔧'],
+        ['type' => TypePublication::Formation, 'libelle' => 'Formations', 'icone' => '🎓'],
     ];
+    // Couleur de chaque type (tokens @theme) : classes écrites en entier pour que Tailwind les détecte.
+    $couleurs = [
+        'emploi' => ['puce' => 'bg-emploi', 'actif' => 'bg-emploi-clair font-semibold text-emploi', 'pastille' => 'bg-emploi-clair text-emploi'],
+        'service' => ['puce' => 'bg-service', 'actif' => 'bg-service-clair font-semibold text-service', 'pastille' => 'bg-service-clair text-service'],
+        'formation' => ['puce' => 'bg-formation', 'actif' => 'bg-formation-clair font-semibold text-formation', 'pastille' => 'bg-formation-clair text-formation'],
+    ];
+    $puce = 'inline-flex min-h-11 shrink-0 snap-start items-center gap-1 whitespace-nowrap rounded-full px-3 text-sm transition-colors';
+    $categoriesDuType = $filtres->type !== null ? $referentiels->categoriesPrincipales($filtres->type) : [];
+    $groupesCategories = collect($referentiels->categoriesPrincipales(null))->groupBy('type');
     $titrePage = $filtres->recherche !== null
         ? 'Résultats pour « '.$filtres->recherche.' »'
         : match ($filtres->type) {
@@ -25,75 +34,164 @@
 @section('titre', $titrePage)
 
 @section('contenu')
-    {{-- Onglets de type --}}
-    <nav aria-label="Catégories" class="-mx-4 overflow-x-auto px-4">
-        <ul class="flex gap-2">
-            @foreach ($onglets as $onglet)
-                @php($actif = $filtres->type === $onglet['type'])
-                <li>
-                    <a href="{{ $filtres->url([], $onglet['type'], true) }}" @if ($actif) aria-current="page" @endif
-                       class="inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-4 text-sm font-semibold {{ $actif ? 'bg-brand text-white' : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50' }}">
-                        {{ $onglet['libelle'] }}
-                    </a>
-                </li>
-            @endforeach
-        </ul>
-    </nav>
-
-    {{-- Puces de filtre --}}
-    <div class="-mx-4 mt-3 overflow-x-auto px-4" role="group" aria-label="Filtres">
-        <ul class="flex gap-2">
-            <li>
-                <a href="{{ $filtres->url(['aujourdhui' => $filtres->aujourdhui ? null : '1']) }}" @if ($filtres->aujourdhui) aria-current="true" @endif
-                   class="inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-3 text-sm {{ $filtres->aujourdhui ? 'bg-brand-clair font-semibold text-brand-fonce ring-1 ring-brand' : 'bg-white text-slate-700 ring-1 ring-slate-200' }}">
-                    Aujourd’hui
-                </a>
-            </li>
-            @if (in_array($filtres->type, [null, TypePublication::Emploi], true))
-                @foreach (TypeContrat::cases() as $contrat)
-                    @php($actif = $filtres->typeContrat === $contrat)
-                    <li>
-                        <a href="{{ $filtres->url(['contrat' => $actif ? null : $contrat->value]) }}" @if ($actif) aria-current="true" @endif
-                           class="inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-3 text-sm {{ $actif ? 'bg-emploi-clair font-semibold text-emploi ring-1 ring-emploi' : 'bg-white text-slate-700 ring-1 ring-slate-200' }}">
-                            {{ $contrat->libelle() }}
-                        </a>
-                    </li>
-                @endforeach
-            @endif
-            @foreach ($referentiels->communes() as $commune)
-                @php($actif = $filtres->communeId === $commune['id'])
-                <li>
-                    <a href="{{ $filtres->url(['commune' => $actif ? null : $commune['slug']]) }}" @if ($actif) aria-current="true" @endif
-                       class="inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-3 text-sm {{ $actif ? 'bg-brand-clair font-semibold text-brand-fonce ring-1 ring-brand' : 'bg-white text-slate-700 ring-1 ring-slate-200' }}">
-                        {{ $commune['nom'] }}
-                    </a>
-                </li>
-            @endforeach
-        </ul>
-    </div>
-
-    <div class="mt-4 grid gap-6 lg:grid-cols-[220px_minmax(0,640px)_260px] lg:justify-center">
+    <div class="grid gap-6 lg:grid-cols-[240px_minmax(0,640px)_260px] lg:justify-center">
         {{-- Colonne gauche (desktop) : catégories --}}
-        <aside class="hidden lg:block" aria-label="Catégories détaillées">
-            <div class="sticky top-20 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70">
-                <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-600">Catégories</h2>
-                <ul class="mt-2 space-y-1">
-                    @foreach ($referentiels->categoriesPrincipales($filtres->type) as $categorie)
-                        @php($actif = $filtres->categorieSlug === $categorie['slug'])
-                        <li>
-                            <a href="{{ $filtres->url(['categorie' => $actif ? null : $categorie['slug']], \App\Enums\TypePublication::from($categorie['type']), true) }}"
-                               @if ($actif) aria-current="true" @endif
-                               class="flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm {{ $actif ? 'bg-brand-clair font-semibold text-brand-fonce' : 'text-slate-700 hover:bg-slate-50' }}">
-                                <span aria-hidden="true">{{ $categorie['icone'] }}</span>{{ $categorie['nom'] }}
-                            </a>
-                        </li>
-                    @endforeach
-                </ul>
+        <aside class="hidden lg:block" aria-labelledby="titre-categories">
+            <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200/70">
+                <h2 id="titre-categories" class="px-2 pt-1 text-sm font-semibold uppercase tracking-wide text-slate-600">Catégories</h2>
+
+                @if ($filtres->type === null)
+                    {{-- Vue « Tout » : catégories regroupées par type, chaque groupe se déroule. --}}
+                    <div class="mt-2 space-y-1">
+                        @foreach ($onglets as $onglet)
+                            @continue($onglet['type'] === null)
+                            @php($cle = $onglet['type']->value)
+                            @php($categories = $groupesCategories->get($cle, collect()))
+                            @php($total = $categories->sum(fn (array $c): int => $nombresParCategorie[$c['id']] ?? 0))
+                            @php($contientActif = $categories->contains('slug', $filtres->categorieSlug))
+                            @continue($categories->isEmpty())
+                            <details class="group/groupe rounded-xl" @if ($contientActif) open @endif>
+                                <summary class="flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-lg px-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 [&::-webkit-details-marker]:hidden">
+                                    <span aria-hidden="true" class="size-2 shrink-0 rounded-full {{ $couleurs[$cle]['puce'] }}"></span>
+                                    <span aria-hidden="true">{{ $onglet['icone'] }}</span>
+                                    <span class="flex-1">{{ $onglet['libelle'] }}</span>
+                                    @if ($total > 0)
+                                        <span class="rounded-full px-2 text-xs font-semibold leading-5 {{ $couleurs[$cle]['pastille'] }}">{{ $total }}</span>
+                                    @endif
+                                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" class="size-4 shrink-0 text-slate-400 transition-transform group-open/groupe:rotate-180 motion-reduce:transition-none">
+                                        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd"/>
+                                    </svg>
+                                </summary>
+                                <ul class="mb-1 ml-3 mt-0.5 space-y-0.5 border-l border-slate-200 pl-2">
+                                    <li>
+                                        <a href="{{ $filtres->url([], $onglet['type'], true) }}" class="flex min-h-10 items-center rounded-lg px-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900">
+                                            Tout voir
+                                        </a>
+                                    </li>
+                                    @foreach ($categories as $categorie)
+                                        <li>
+                                            <a href="{{ $filtres->url(['categorie' => $categorie['slug']], $onglet['type'], true) }}"
+                                               class="flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm text-slate-700 hover:bg-slate-50">
+                                                <span aria-hidden="true">{{ $categorie['icone'] }}</span>
+                                                <span class="flex-1 truncate">{{ $categorie['nom'] }}</span>
+                                                @if (($nombresParCategorie[$categorie['id']] ?? 0) > 0)
+                                                    <span class="text-xs text-slate-500">{{ $nombresParCategorie[$categorie['id']] }}</span>
+                                                @endif
+                                            </a>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </details>
+                        @endforeach
+                    </div>
+                @else
+                    <ul class="mt-2 space-y-0.5">
+                        @foreach ($categoriesDuType as $categorie)
+                            @php($actif = $filtres->categorieSlug === $categorie['slug'])
+                            <li>
+                                <a href="{{ $filtres->url(['categorie' => $actif ? null : $categorie['slug']]) }}"
+                                   @if ($actif) aria-current="true" @endif
+                                   class="flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm transition-colors {{ $actif ? $couleurs[$categorie['type']]['actif'] : 'text-slate-700 hover:bg-slate-50' }}">
+                                    <span aria-hidden="true">{{ $categorie['icone'] }}</span>
+                                    <span class="flex-1 truncate">{{ $categorie['nom'] }}</span>
+                                    @if ($actif)
+                                        <span aria-hidden="true" class="text-xs">✕</span><span class="sr-only">(retirer ce filtre)</span>
+                                    @elseif (($nombresParCategorie[$categorie['id']] ?? 0) > 0)
+                                        <span class="text-xs text-slate-500">{{ $nombresParCategorie[$categorie['id']] }}</span>
+                                    @endif
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
             </div>
         </aside>
 
         {{-- Fil --}}
         <section aria-labelledby="titre-fil" class="min-w-0">
+            {{-- Onglets et filtres, alignés sur les cartes du fil --}}
+            <div class="mb-4 space-y-2">
+                <nav aria-label="Types de publication" class="-mx-4 px-4 sm:mx-0 sm:px-0">
+                    <ul class="sans-barre flex snap-x gap-2 overflow-x-auto py-1">
+                        @foreach ($onglets as $onglet)
+                            @php($actif = $filtres->type === $onglet['type'])
+                            <li class="shrink-0 snap-start">
+                                <a href="{{ $filtres->url([], $onglet['type'], true) }}" @if ($actif) aria-current="page" @endif
+                                   class="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-sm font-semibold transition-colors {{ $actif ? 'bg-brand text-white shadow-sm' : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50' }}">
+                                    <span aria-hidden="true">{{ $onglet['icone'] }}</span>{{ $onglet['libelle'] }}
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                </nav>
+
+                <div class="flex items-center gap-2">
+                    {{-- Commune : liste déroulante compacte plutôt qu'une rangée de 13 puces. --}}
+                    @php($communeActive = $filtres->communeId !== null ? $referentiels->nomCommune($filtres->communeId) : null)
+                    <div x-data="menuDeroulant" class="relative shrink-0" @keydown.escape.window="fermer()" @click.outside="fermer(false)"
+                         @focusout="$event.relatedTarget && !$el.contains($event.relatedTarget) && fermer(false)">
+                        <button type="button" x-ref="bouton" @click="basculer()" @keydown.arrow-down.prevent="ouvrir()"
+                                :aria-expanded="ouvert.toString()" aria-expanded="false" aria-haspopup="true" aria-controls="choix-commune"
+                                class="{{ $puce }} {{ $communeActive ? 'bg-brand-clair font-semibold text-brand-fonce ring-1 ring-brand' : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50' }}">
+                            <span aria-hidden="true">📍</span>
+                            <span class="max-w-28 truncate">{{ $communeActive ?? 'Commune' }}</span>
+                            <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" class="size-4 opacity-60"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd"/></svg>
+                            <span class="sr-only">: choisir une commune</span>
+                        </button>
+                        <div id="choix-commune" x-ref="panneau" x-cloak x-show="ouvert" x-transition.opacity.duration.100ms
+                             @keydown.arrow-down.prevent="deplacer(1)" @keydown.arrow-up.prevent="deplacer(-1)"
+                             class="absolute left-0 top-full z-40 mt-2 max-h-80 w-60 overflow-y-auto overscroll-contain rounded-2xl bg-white p-1 shadow-xl ring-1 ring-slate-200">
+                            <a href="{{ $filtres->url(['commune' => null]) }}" @if ($communeActive === null) aria-current="true" @endif
+                               class="flex min-h-11 items-center justify-between rounded-xl px-3 text-sm text-slate-700 hover:bg-slate-50 focus-visible:bg-slate-50 aria-[current=true]:font-semibold aria-[current=true]:text-brand-fonce">
+                                Toutes les communes @if ($communeActive === null)<span aria-hidden="true">✓</span>@endif
+                            </a>
+                            <hr class="my-1 border-slate-100">
+                            @foreach ($referentiels->communes() as $commune)
+                                @php($actif = $filtres->communeId === $commune['id'])
+                                <a href="{{ $filtres->url(['commune' => $commune['slug']]) }}" @if ($actif) aria-current="true" @endif
+                                   class="flex min-h-11 items-center justify-between rounded-xl px-3 text-sm text-slate-700 hover:bg-slate-50 focus-visible:bg-slate-50 aria-[current=true]:bg-brand-clair aria-[current=true]:font-semibold aria-[current=true]:text-brand-fonce">
+                                    {{ $commune['nom'] }} @if ($actif)<span aria-hidden="true">✓</span>@endif
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <x-rangee-defilante libelle="Filtrer par date et type de contrat" class="min-w-0 flex-1">
+                        <li class="shrink-0 snap-start">
+                            <a href="{{ $filtres->url(['aujourdhui' => $filtres->aujourdhui ? null : '1']) }}" @if ($filtres->aujourdhui) aria-current="true" @endif
+                               class="{{ $puce }} {{ $filtres->aujourdhui ? 'bg-brand-clair font-semibold text-brand-fonce ring-1 ring-brand' : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50' }}">
+                                <span aria-hidden="true">🕑</span>Aujourd’hui
+                            </a>
+                        </li>
+                        @if (in_array($filtres->type, [null, TypePublication::Emploi], true))
+                            @foreach (TypeContrat::cases() as $contrat)
+                                @php($actif = $filtres->typeContrat === $contrat)
+                                <li class="shrink-0 snap-start">
+                                    <a href="{{ $filtres->url(['contrat' => $actif ? null : $contrat->value]) }}" @if ($actif) aria-current="true" @endif
+                                       class="{{ $puce }} {{ $actif ? 'bg-emploi-clair font-semibold text-emploi ring-1 ring-emploi' : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50' }}">
+                                        {{ $contrat->libelle() }}@if ($actif)<span aria-hidden="true" class="ml-0.5">✕</span>@endif
+                                    </a>
+                                </li>
+                            @endforeach
+                        @endif
+                    </x-rangee-defilante>
+                </div>
+
+                @if ($categoriesDuType !== [])
+                    {{-- Sur mobile, la colonne des catégories n'existe pas : rangée dédiée. --}}
+                    <x-rangee-defilante libelle="Filtrer par catégorie" class="-mx-4 px-4 sm:mx-0 sm:px-0 lg:hidden">
+                        @foreach ($categoriesDuType as $categorie)
+                            @php($actif = $filtres->categorieSlug === $categorie['slug'])
+                            <li class="shrink-0 snap-start">
+                                <a href="{{ $filtres->url(['categorie' => $actif ? null : $categorie['slug']]) }}" @if ($actif) aria-current="true" @endif
+                                   class="{{ $puce }} {{ $actif ? $couleurs[$categorie['type']]['actif'].' ring-1 ring-current' : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50' }}">
+                                    <span aria-hidden="true">{{ $categorie['icone'] }}</span>{{ $categorie['nom'] }}@if ($actif)<span aria-hidden="true" class="ml-0.5">✕</span>@endif
+                                </a>
+                            </li>
+                        @endforeach
+                    </x-rangee-defilante>
+                @endif
+            </div>
             <h1 id="titre-fil" class="{{ $filtres->recherche !== null || $filtres->type !== null ? 'mb-3 text-xl font-bold' : 'sr-only' }}">{{ $titrePage }}</h1>
 
             @if (request()->routeIs('fil.recherche') && $filtres->recherche === null)
@@ -171,18 +269,35 @@
         {{-- Colonne droite (desktop) --}}
         <aside class="hidden space-y-4 lg:block" aria-label="À découvrir">
             @include('fil._bloc-alerte')
-            @if ($communesPopulaires !== [])
+            @if ($offresParContrat !== [])
+                @php($maxContrat = max(array_column($offresParContrat, 'nombre')))
                 <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70">
-                    <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-600">Communes populaires</h2>
-                    <ul class="mt-2 space-y-1">
-                        @foreach ($communesPopulaires as $commune)
+                    <h2 class="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-600">
+                        <span aria-hidden="true">💼</span>Emplois par contrat
+                    </h2>
+                    <ul class="mt-2 space-y-0.5">
+                        @foreach ($offresParContrat as $ligne)
+                            @php($actif = $filtres->typeContrat?->value === $ligne['contrat'])
                             <li>
-                                <a href="{{ $filtres->url(['commune' => $commune['slug']]) }}" class="flex min-h-11 items-center justify-between rounded-lg px-2 text-sm text-slate-700 hover:bg-slate-50">
-                                    <span>{{ $commune['nom'] }}</span><span class="text-slate-500">{{ $commune['nombre'] }}</span>
+                                <a href="{{ $filtres->url(['contrat' => $actif ? null : $ligne['contrat']], TypePublication::Emploi, true) }}"
+                                   @if ($actif) aria-current="true" @endif
+                                   class="group block rounded-lg px-2 py-2 text-sm transition-colors {{ $actif ? 'bg-emploi-clair' : 'hover:bg-slate-50' }}">
+                                    <span class="flex items-center justify-between gap-2">
+                                        <span class="{{ $actif ? 'font-semibold text-emploi' : 'text-slate-700' }}">{{ $ligne['libelle'] }}</span>
+                                        <span class="rounded-full bg-emploi-clair px-2 text-xs font-semibold leading-5 text-emploi">
+                                            {{ $ligne['nombre'] }}<span class="sr-only"> {{ $ligne['nombre'] > 1 ? 'offres disponibles' : 'offre disponible' }}</span>
+                                        </span>
+                                    </span>
+                                    <span aria-hidden="true" class="mt-1.5 block h-1 overflow-hidden rounded-full bg-slate-100">
+                                        <span class="block h-full rounded-full bg-emploi/70" style="width: {{ max(6, (int) round($ligne['nombre'] / $maxContrat * 100)) }}%"></span>
+                                    </span>
                                 </a>
                             </li>
                         @endforeach
                     </ul>
+                    <a href="{{ route('fil.emplois') }}" class="mt-2 inline-flex min-h-11 items-center px-2 text-sm font-semibold text-emploi hover:underline">
+                        Voir toutes les offres d’emploi →
+                    </a>
                 </div>
             @endif
             @if ($formationsRecentes !== [])

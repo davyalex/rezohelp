@@ -64,10 +64,9 @@
             <p class="mt-0.5 text-sm text-slate-600">{{ $categorie }}</p>
         @endif
         <p class="mt-2 line-clamp-4 text-slate-800">{{ $extrait }}</p>
-        <a href="{{ $lien }}" class="mt-1 inline-flex min-h-11 items-center text-sm font-semibold text-brand hover:underline">Voir plus<span class="sr-only"> : {{ $titre }}</span></a>
 
         @if ($faits !== [])
-            <ul class="mt-1 flex flex-wrap gap-2" aria-label="Informations clés">
+            <ul class="mt-3 flex flex-wrap gap-2" aria-label="Informations clés">
                 @foreach ($faits as $fait)
                     <li class="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-800">{{ $fait }}</li>
                 @endforeach
@@ -108,12 +107,13 @@
                class="flex min-h-11 flex-1 items-center justify-center gap-1 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50">
                 <span aria-hidden="true">↗</span> Partager<span class="sr-only"> sur WhatsApp</span>
             </a>
-            <a href="{{ $lien }}#repondre" @class([
-                'flex min-h-11 flex-1 items-center justify-center rounded-lg px-2 text-sm font-semibold text-white',
+            {{-- Les vraies actions (postuler, contacter, s'inscrire…) sont sur la page détail. --}}
+            <a href="{{ $lien }}" @class([
+                'flex min-h-11 flex-1 items-center justify-center gap-1 rounded-lg px-2 text-sm font-semibold text-white',
                 'bg-emploi hover:opacity-90' => $p->type === \App\Enums\TypePublication::Emploi,
                 'bg-service hover:opacity-90' => $p->type === \App\Enums\TypePublication::Service,
                 'bg-formation hover:opacity-90' => $p->type === \App\Enums\TypePublication::Formation,
-            ])>{{ $libelleAction }}</a>
+            ])>Voir plus<span aria-hidden="true">→</span><span class="sr-only"> : {{ $titre }}</span></a>
         </div>
     </footer>
 </article>

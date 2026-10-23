@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Administrateur;
 use App\Models\Entreprise;
 use App\Models\Plan;
 use App\Models\Produit;
@@ -13,10 +14,8 @@ use Database\Seeders\SourcesVeilleSeeder;
 beforeEach(function () {
     referentielsPublication();
     $this->seed([SourcesVeilleSeeder::class, DemoSeeder::class]);
-    $this->admin = Utilisateur::factory()->create();
-    $this->admin->assignRole('administrateur');
-    $this->moderateur = Utilisateur::factory()->create();
-    $this->moderateur->assignRole('moderateur');
+    $this->admin = Administrateur::factory()->administrateur()->create();
+    $this->moderateur = Administrateur::factory()->moderateur()->create();
 });
 
 /** Pages et listes du back-office, avec la permission qui les ouvre. */
@@ -42,18 +41,19 @@ dataset('pages', [
 ]);
 
 it('ouvre chaque page à l’administrateur, sans cache', function (string $route) {
-    $reponse = $this->actingAs($this->admin)->get(route($route))->assertOk();
+    $reponse = $this->actingAs($this->admin, 'admin')->get(route($route))->assertOk();
 
     expect($reponse->headers->get('Cache-Control'))->toContain('no-store');
 })->with('pages');
 
 it('réserve au modérateur les seuls modules de son rôle', function (string $route, bool $autorise) {
-    $this->actingAs($this->moderateur)->get(route($route))->assertStatus($autorise ? 200 : 403);
+    $this->actingAs($this->moderateur, 'admin')->get(route($route))->assertStatus($autorise ? 200 : 403);
 })->with('pages');
 
-it('refuse le back-office aux membres et aux visiteurs', function () {
-    $this->get(route('admin.tableau-de-bord'))->assertRedirect(route('login'));
-    $this->actingAs(Utilisateur::factory()->create())->get(route('admin.tableau-de-bord'))->assertForbidden();
+it('renvoie visiteurs et membres du site vers la connexion de l’équipe', function () {
+    $this->get(route('admin.tableau-de-bord'))->assertRedirect(route('admin.connexion'));
+    // Une session membre n'ouvre pas le back-office : les comptes sont séparés (D-066).
+    $this->actingAs(Utilisateur::factory()->create())->get(route('admin.tableau-de-bord'))->assertRedirect(route('admin.connexion'));
 });
 
 it('affiche les fiches de détail', function () {
@@ -61,7 +61,7 @@ it('affiche les fiches de détail', function () {
     $signalee = Signalement::query()->firstOrFail();
     $entreprise = Entreprise::query()->firstOrFail();
 
-    $this->actingAs($this->admin);
+    $this->actingAs($this->admin, 'admin');
     $this->get(route('admin.moderation.show', $enAttente))->assertOk()->assertSee($enAttente->titre)->assertSee('Raccourcis');
     $this->get(route('admin.publications.edit', $enAttente))->assertOk();
     $this->get(route('admin.signalements.show', $signalee->publication_id))->assertOk();
@@ -76,7 +76,7 @@ it('affiche les fiches de détail', function () {
 });
 
 it('sert les listes DataTables en JSON côté serveur', function (string $route) {
-    $reponse = $this->actingAs($this->admin)
+    $reponse = $this->actingAs($this->admin, 'admin')
         ->getJson(route($route, ['draw' => 1, 'start' => 0, 'length' => 10]), ['X-Requested-With' => 'XMLHttpRequest'])
         ->assertOk()
         ->assertJsonStructure(['draw', 'recordsTotal', 'recordsFiltered', 'data']);

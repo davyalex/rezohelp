@@ -11,8 +11,8 @@ it('propose les pays actifs avec la Côte d’Ivoire par défaut', function () {
 
     $html = (string) $this->withViewErrors([])->blade('<x-champ-telephone />');
 
-    expect($html)->toContain('<option value="CI" selected')
-        ->toContain('🇨🇮 +225')
+    expect($html)->toMatch('/<option value="CI"[^>]*\sselected>/')
+        ->toContain('CI +225')
         ->toContain('+221')
         ->not->toContain('value="FR"')
         ->toContain('inputmode="tel"')

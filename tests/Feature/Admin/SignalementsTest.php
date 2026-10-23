@@ -3,6 +3,7 @@
 use App\Enums\ConfianceUtilisateur;
 use App\Enums\MotifSignalement;
 use App\Enums\StatutPublication;
+use App\Models\Administrateur;
 use App\Models\JournalActivite;
 use App\Models\Publication;
 use App\Models\Signalement;
@@ -12,8 +13,7 @@ use Illuminate\Support\Facades\Notification;
 beforeEach(function () {
     referentielsPublication();
     Notification::fake();
-    $this->moderateur = Utilisateur::factory()->create();
-    $this->moderateur->assignRole('moderateur');
+    $this->moderateur = Administrateur::factory()->moderateur()->create();
     $this->auteur = Utilisateur::factory()->create();
     $this->publication = Publication::factory()->publiee()->create(['auteur_id' => $this->auteur->id]);
 
@@ -24,7 +24,7 @@ beforeEach(function () {
 });
 
 it('liste les signalements ouverts groupés par publication', function () {
-    $reponse = $this->actingAs($this->moderateur)
+    $reponse = $this->actingAs($this->moderateur, 'admin')
         ->getJson(route('admin.signalements.index', ['draw' => 1, 'start' => 0, 'length' => 10]), ['X-Requested-With' => 'XMLHttpRequest'])
         ->assertOk();
 
@@ -36,7 +36,7 @@ it('liste les signalements ouverts groupés par publication', function () {
 it('rétablit une publication masquée : signalements classés, non retenus', function () {
     expect($this->publication->refresh()->statut)->toBe(StatutPublication::EnAttente);
 
-    $this->actingAs($this->moderateur)->post(route('admin.signalements.decider', $this->publication->id), ['decision' => 'retablir'])
+    $this->actingAs($this->moderateur, 'admin')->post(route('admin.signalements.decider', $this->publication->id), ['decision' => 'retablir'])
         ->assertRedirect(route('admin.signalements.index'));
 
     expect($this->publication->refresh()->statut)->toBe(StatutPublication::Publiee)
@@ -47,7 +47,7 @@ it('rétablit une publication masquée : signalements classés, non retenus', fu
 });
 
 it('supprime la publication et retient les signalements : l’auteur devient restreint', function () {
-    $this->actingAs($this->moderateur)->post(route('admin.signalements.decider', $this->publication->id), ['decision' => 'supprimer']);
+    $this->actingAs($this->moderateur, 'admin')->post(route('admin.signalements.decider', $this->publication->id), ['decision' => 'supprimer']);
 
     expect($this->publication->refresh()->trashed())->toBeTrue()
         ->and(Signalement::query()->where('retenu', true)->count())->toBe(3)
@@ -59,7 +59,7 @@ it('supprime la publication et retient les signalements : l’auteur devient res
 it('supprime et suspend l’auteur définitivement', function () {
     $autre = Publication::factory()->publiee()->create(['auteur_id' => $this->auteur->id]);
 
-    $this->actingAs($this->moderateur)->post(route('admin.signalements.decider', $this->publication->id), ['decision' => 'supprimer_et_suspendre']);
+    $this->actingAs($this->moderateur, 'admin')->post(route('admin.signalements.decider', $this->publication->id), ['decision' => 'supprimer_et_suspendre']);
 
     $this->auteur->refresh();
     expect($this->auteur->estSuspendu())->toBeTrue()
@@ -69,6 +69,6 @@ it('supprime et suspend l’auteur définitivement', function () {
 });
 
 it('refuse une décision inconnue', function () {
-    $this->actingAs($this->moderateur)->post(route('admin.signalements.decider', $this->publication->id), ['decision' => 'ignorer'])
+    $this->actingAs($this->moderateur, 'admin')->post(route('admin.signalements.decider', $this->publication->id), ['decision' => 'ignorer'])
         ->assertSessionHasErrors('decision');
 });

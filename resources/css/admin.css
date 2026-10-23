@@ -34,7 +34,74 @@
 }
 
 /* DataTables et Select2 aux couleurs de la palette Tailwind */
+/* Barre de défilement fine et discrète (menu latéral, listes déroulantes). */
+@utility barre-fine {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-slate-300) transparent;
+    scrollbar-gutter: stable;
+
+    &::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        border-radius: 9999px;
+        background-color: var(--color-slate-300);
+    }
+
+    &:hover::-webkit-scrollbar-thumb {
+        background-color: var(--color-slate-400);
+    }
+}
+
 @layer components {
+    /* Menu « ⋯ » des lignes de tableau (x-admin.menu-actions) : popover positionné par admin.js. */
+    .menu-actions {
+        position: fixed;
+        inset: auto;
+        margin: 0;
+        width: 14rem;
+        max-height: min(24rem, calc(100vh - 2rem));
+        overflow-y: auto;
+        padding: 0.25rem;
+        border: 0;
+        border-radius: 0.75rem;
+        background: white;
+        text-align: left;
+        box-shadow:
+            0 20px 25px -5px rgb(15 23 42 / 0.15),
+            0 0 0 1px var(--color-slate-200);
+    }
+
+    .menu-actions:popover-open {
+        animation: menu-apparition 120ms ease-out;
+    }
+
+    @keyframes menu-apparition {
+        from {
+            opacity: 0;
+            transform: translateY(-4px) scale(0.98);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .menu-actions:popover-open {
+            animation: none;
+        }
+    }
+
+    /* Bouton d'envoi en cours (activerSpinners, resources/js/interface.js). */
+    button[data-chargement] {
+        cursor: wait;
+        pointer-events: none;
+        opacity: 0.85;
+    }
+
     table.dataTable thead th {
         @apply text-left text-xs font-semibold uppercase tracking-wide text-slate-600;
     }

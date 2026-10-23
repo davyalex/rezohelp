@@ -17,8 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
-        // Back-office (CONTEXTE §13) : jamais mis en cache.
-        then: fn () => Route::middleware(['web', 'auth', 'role:administrateur|moderateur', PasDeCache::class])
+        // Back-office (CONTEXTE §13, D-066) : comptes et connexion séparés (garde « admin »), jamais mis en cache.
+        then: fn () => Route::middleware(['web', PasDeCache::class])
             ->prefix('admin')
             ->name('admin.')
             ->group(base_path('routes/admin.php')),
@@ -35,10 +35,15 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => PermissionMiddleware::class,
         ]);
 
+        // Préférences d'affichage écrites par le JS du back-office (barre latérale réduite, groupes repliés) : non sensibles.
+        $middleware->encryptCookies(except: ['admin_menu_reduit', 'admin_menu_groupes']);
+
         // Webhook des passerelles de paiement : authentifié par sa signature, pas par un jeton CSRF.
         $middleware->preventRequestForgery(except: ['paiements/notification/*']);
 
-        $middleware->redirectUsersTo('/');
+        // Le back-office renvoie vers sa propre page de connexion, le site vers celle des membres.
+        $middleware->redirectGuestsTo(fn (Request $request): string => $request->is('admin', 'admin/*') ? route('admin.connexion') : route('login'));
+        $middleware->redirectUsersTo(fn (Request $request): string => $request->is('admin', 'admin/*') ? route('admin.tableau-de-bord') : '/');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

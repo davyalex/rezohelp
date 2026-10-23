@@ -8,10 +8,10 @@ use App\Enums\StatutAbonnement;
 use App\Enums\StatutCommande;
 use App\Exceptions\OperationImpossibleException;
 use App\Models\Abonnement;
+use App\Models\Administrateur;
 use App\Models\Commande;
 use App\Models\Credit;
 use App\Models\MiseEnAvant;
-use App\Models\Utilisateur;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -24,7 +24,7 @@ class GererCommande
 
     public function __construct(private readonly TraiterNotificationPaiement $traiter) {}
 
-    public function reverifier(Commande $commande, Utilisateur $admin): Commande
+    public function reverifier(Commande $commande, Administrateur $admin): Commande
     {
         $avant = $commande->statut;
         $resultat = $this->traiter->executer($commande->reference_passerelle ?? $commande->numero) ?? $commande;
@@ -38,7 +38,7 @@ class GererCommande
      * Remboursement manuel (fait hors plateforme auprès de l'opérateur) : la commande passe en
      * « remboursee », l'abonnement est résilié, les crédits restants et les mises en avant s'arrêtent.
      */
-    public function rembourser(Commande $commande, Utilisateur $admin, string $motif): void
+    public function rembourser(Commande $commande, Administrateur $admin, string $motif): void
     {
         if ($commande->statut !== StatutCommande::Payee) {
             throw new OperationImpossibleException('Seule une commande payée peut être remboursée.');

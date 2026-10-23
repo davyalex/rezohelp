@@ -9,6 +9,7 @@ use App\Enums\StatutAbonnement;
 use App\Enums\StatutCommande;
 use App\Enums\StatutPaiementPasserelle;
 use App\Models\Abonnement;
+use App\Models\Administrateur;
 use App\Models\Commande;
 use App\Models\Credit;
 use App\Models\Entreprise;
@@ -27,8 +28,7 @@ beforeEach(function () {
     Storage::fake('local');
     referentielsPublication();
     Notification::fake();
-    $this->admin = Utilisateur::factory()->create();
-    $this->admin->assignRole('administrateur');
+    $this->admin = Administrateur::factory()->administrateur()->create();
     $this->artisan = Utilisateur::factory()->create();
 });
 
@@ -63,7 +63,7 @@ it('modifie le prix et une limite : effet immédiat sur les droits et la page ta
 
     $donnees = formulairePlan($plan);
     $donnees['limites']['service__offres_actives'] = '7';
-    $this->actingAs($this->admin)->put(route('admin.plans.update', $plan), $donnees)->assertRedirect(route('admin.plans.edit', $plan));
+    $this->actingAs($this->admin, 'admin')->put(route('admin.plans.update', $plan), $donnees)->assertRedirect(route('admin.plans.edit', $plan));
 
     expect(Droits::pour($this->artisan)->limite(CleDroit::ServiceOffresActives))->toBe(7);
 
@@ -82,7 +82,7 @@ it('enregistre « illimité » et retire une limite laissée vide', function () 
     $donnees['illimite']['service__offres_actives'] = '1';
     unset($donnees['limites']['profil__badge']);
 
-    $this->actingAs($this->admin)->put(route('admin.plans.update', $plan), $donnees)->assertRedirect()->assertSessionHasNoErrors();
+    $this->actingAs($this->admin, 'admin')->put(route('admin.plans.update', $plan), $donnees)->assertRedirect()->assertSessionHasNoErrors();
 
     $limites = $plan->limites()->pluck('valeur', 'cle');
     expect($limites['service.offres_actives'])->toBe('-1')->and($limites->has('profil.badge'))->toBeFalse();
@@ -92,7 +92,7 @@ it('crée un plan et garde un seul plan par défaut par cible', function () {
     parametre('quotas_actifs', '1');
     $ancien = Plan::query()->where('code', 'membre_gratuit')->firstOrFail();
 
-    $this->actingAs($this->admin)->post(route('admin.plans.store'), [
+    $this->actingAs($this->admin, 'admin')->post(route('admin.plans.store'), [
         'code' => 'membre_gratuit_v2', 'nom' => 'Gratuit v2', 'cible' => 'membre', 'prix_fcfa' => 0, 'duree_jours' => 0, 'duree_essai_jours' => 0,
         'est_defaut' => '1', 'actif' => '1', 'visible' => '1', 'ordre' => 1, 'limites' => ['alertes__max' => '12'],
     ])->assertRedirect()->assertSessionHasNoErrors();
@@ -103,7 +103,7 @@ it('crée un plan et garde un seul plan par défaut par cible', function () {
 });
 
 it('refuse un plan par défaut payant ou un essai sans famille', function () {
-    $this->actingAs($this->admin)->post(route('admin.plans.store'), [
+    $this->actingAs($this->admin, 'admin')->post(route('admin.plans.store'), [
         'code' => 'incoherent', 'nom' => 'Incohérent', 'cible' => 'artisan', 'prix_fcfa' => 500, 'duree_jours' => 30, 'duree_essai_jours' => 7,
         'est_defaut' => '1', 'ordre' => 1,
     ])->assertSessionHasErrors(['prix_fcfa', 'famille']);
@@ -113,7 +113,7 @@ it('interdit de supprimer un plan souscrit ou par défaut, autorise un plan jama
     $souscrit = Plan::query()->where('code', 'alertes_sms_30j')->firstOrFail();
     Abonnement::factory()->create(['titulaire_id' => $this->artisan->id, 'plan_id' => $souscrit->id, 'statut' => StatutAbonnement::Expire]);
 
-    $this->actingAs($this->admin)->delete(route('admin.plans.destroy', $souscrit))
+    $this->actingAs($this->admin, 'admin')->delete(route('admin.plans.destroy', $souscrit))
         ->assertSessionHas('erreur', 'Ce plan a déjà été souscrit : désactivez-le plutôt que de le supprimer.');
     $this->delete(route('admin.plans.destroy', Plan::query()->where('code', 'membre_gratuit')->firstOrFail()))->assertSessionHas('erreur');
 
@@ -128,7 +128,7 @@ it('interdit de supprimer un plan souscrit ou par défaut, autorise un plan jama
 it('offre un abonnement à un artisan : droits immédiats, origine et motif conservés', function () {
     $plan = Plan::query()->where('code', 'artisan_pro_30j')->firstOrFail();
 
-    $this->actingAs($this->admin)->post(route('admin.abonnements.store'), [
+    $this->actingAs($this->admin, 'admin')->post(route('admin.abonnements.store'), [
         'titulaire' => 'utilisateur', 'utilisateur_id' => $this->artisan->id, 'plan_id' => $plan->id, 'jours' => 60, 'motif' => 'Partenaire de lancement',
     ])->assertSessionHas('statut');
 
@@ -143,7 +143,7 @@ it('offre un abonnement à un artisan : droits immédiats, origine et motif cons
 it('refuse d’offrir un plan d’une autre cible', function () {
     $entreprise = Entreprise::factory()->create();
 
-    $this->actingAs($this->admin)->post(route('admin.abonnements.store'), [
+    $this->actingAs($this->admin, 'admin')->post(route('admin.abonnements.store'), [
         'titulaire' => 'entreprise', 'entreprise_id' => $entreprise->id, 'plan_id' => Plan::query()->where('code', 'artisan_pro_30j')->value('id'), 'jours' => 30, 'motif' => 'Test',
     ])->assertSessionHas('erreur');
 
@@ -156,7 +156,7 @@ it('prolonge puis résilie un abonnement', function () {
         'statut' => StatutAbonnement::Grace, 'fin_le' => now()->subDay(), 'relances_envoyees' => ['j3', 'j1', 'j0'],
     ]);
 
-    $this->actingAs($this->admin)->post(route('admin.abonnements.prolonger', $abonnement), ['jours' => 15]);
+    $this->actingAs($this->admin, 'admin')->post(route('admin.abonnements.prolonger', $abonnement), ['jours' => 15]);
     $abonnement->refresh();
     expect($abonnement->statut)->toBe(StatutAbonnement::Actif)
         ->and($abonnement->fin_le?->toDateString())->toBe(now()->addDays(15)->toDateString())
@@ -175,7 +175,7 @@ it('revérifie une commande en attente auprès de la passerelle, de façon idemp
     assert($passerelle instanceof FakePasserelle);
     $passerelle->simuler($commande->numero, StatutPaiementPasserelle::Accepte, 1000);
 
-    $this->actingAs($this->admin)->post(route('admin.commandes.reverifier', $commande))->assertSessionHas('statut');
+    $this->actingAs($this->admin, 'admin')->post(route('admin.commandes.reverifier', $commande))->assertSessionHas('statut');
     $this->post(route('admin.commandes.reverifier', $commande));
 
     expect($commande->refresh()->statut)->toBe(StatutCommande::Payee)
@@ -193,7 +193,7 @@ it('rembourse une commande : abonnement résilié, crédits et mises en avant ar
     $offre = app(CreerCommande::class)->executer($this->artisan, $this->artisan, Produit::query()->where('code', 'offre_emploi_unite')->firstOrFail());
     app(ActiverCommande::class)->executer($offre, 'wave');
 
-    $this->actingAs($this->admin)->post(route('admin.commandes.rembourser', $commande), ['motif' => 'Erreur de plan'])->assertSessionHas('statut');
+    $this->actingAs($this->admin, 'admin')->post(route('admin.commandes.rembourser', $commande), ['motif' => 'Erreur de plan'])->assertSessionHas('statut');
     $this->post(route('admin.commandes.rembourser', $offre), ['motif' => 'Doublon de paiement']);
 
     expect($commande->refresh()->statut)->toBe(StatutCommande::Remboursee)
@@ -203,14 +203,14 @@ it('rembourse une commande : abonnement résilié, crédits et mises en avant ar
 
     // Une commande non payée ne se rembourse pas.
     $this->post(route('admin.commandes.rembourser', $commande), ['motif' => 'Encore'])->assertSessionHas('erreur');
-    // Le reçu reste consultable par l'équipe.
-    $this->get(route('espace.recu', $commande))->assertOk();
+    // Le reçu reste téléchargeable par l'équipe, depuis le back-office (D-066).
+    $this->get(route('admin.commandes.recu-pdf', $commande))->assertOk()->assertDownload('recu-'.$commande->numero_recu.'.pdf');
 });
 
 it('exporte les commandes filtrées en CSV', function () {
     $commande = app(CreerCommande::class)->executer($this->artisan, $this->artisan, Plan::query()->where('code', 'alertes_sms_30j')->firstOrFail());
 
-    $reponse = $this->actingAs($this->admin)->get(route('admin.commandes.export', ['statut' => 'en_attente']))->assertOk();
+    $reponse = $this->actingAs($this->admin, 'admin')->get(route('admin.commandes.export', ['statut' => 'en_attente']))->assertOk();
     $csv = $reponse->streamedContent();
 
     expect($csv)->toStartWith("\xEF\xBB\xBF")
@@ -232,5 +232,5 @@ it('calcule les revenus du mois et la conversion des essais', function () {
         ->and($revenus['essais_termines'])->toBe(1)
         ->and($revenus['essais_convertis'])->toBe(1)
         ->and($revenus['actifs_par_plan'])->toBe(['Alertes SMS 30 jours' => 1]);
-    $this->actingAs($this->admin)->get(route('admin.revenus'))->assertOk()->assertSee('100 %');
+    $this->actingAs($this->admin, 'admin')->get(route('admin.revenus'))->assertOk()->assertSee('100 %');
 });

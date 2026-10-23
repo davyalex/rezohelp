@@ -9,6 +9,7 @@ use App\Actions\Publication\SignalerPublication;
 use App\Actions\Publication\SupprimerCommentaire;
 use App\Http\Requests\CommentaireRequest;
 use App\Http\Requests\SignalementRequest;
+use App\Models\Administrateur;
 use App\Models\Commentaire;
 use App\Models\Publication;
 use App\Models\Utilisateur;
@@ -49,9 +50,13 @@ class InteractionController extends Controller
         return redirect()->to(route('publications.show', $publication->slug).'#commentaire-'.$commentaire->id);
     }
 
-    public function supprimerCommentaire(Commentaire $commentaire, SupprimerCommentaire $supprimer): RedirectResponse
+    public function supprimerCommentaire(Request $request, Commentaire $commentaire, SupprimerCommentaire $supprimer): RedirectResponse
     {
-        $this->authorize('delete', $commentaire);
+        // L'auteur (session membre) ou l'équipe (session back-office, D-066).
+        abort_unless(
+            (bool) $request->user('web')?->can('delete', $commentaire) || (bool) $request->user(Administrateur::GARDE)?->can('delete', $commentaire),
+            403,
+        );
 
         $supprimer->executer($commentaire);
 

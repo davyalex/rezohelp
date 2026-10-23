@@ -5,6 +5,7 @@ namespace App\Actions\Admin;
 use App\Actions\Admin\Concerns\JournaliseActivite;
 use App\Enums\CleDroit;
 use App\Exceptions\OperationImpossibleException;
+use App\Models\Administrateur;
 use App\Models\Plan;
 use App\Models\PlanLimite;
 use App\Models\Utilisateur;
@@ -23,7 +24,7 @@ class EnregistrerPlan
      * @param  array<string, mixed>  $attributs
      * @param  array<string, string>  $limites  clé de droit => valeur ('-1' illimité ; clé absente = non fixée)
      */
-    public function executer(Plan $plan, array $attributs, array $limites, Utilisateur $admin): Plan
+    public function executer(Plan $plan, array $attributs, array $limites, Administrateur $admin): Plan
     {
         $creation = ! $plan->exists;
 
@@ -54,7 +55,7 @@ class EnregistrerPlan
         });
     }
 
-    public function supprimer(Plan $plan, Utilisateur $admin): void
+    public function supprimer(Plan $plan, Administrateur $admin): void
     {
         if ($plan->abonnements()->exists()) {
             throw new OperationImpossibleException('Ce plan a déjà été souscrit : désactivez-le plutôt que de le supprimer.');

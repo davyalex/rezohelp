@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Donnees\FiltresFil;
 use App\Donnees\SalveFil;
+use App\Enums\TypeContrat;
 use App\Enums\TypePublication;
 use App\Models\Publication;
 use Carbon\CarbonInterface;
@@ -82,26 +83,61 @@ class FilService
     }
 
     /**
-     * Communes qui ont le plus de publications en ligne (colonne de droite).
+     * Offres d'emploi en ligne par type de contrat (colonne de droite), dans l'ordre de l'enum.
+     * Les types sans offre sont omis.
      *
-     * @return list<array{id: int, nom: string, slug: string, nombre: int}>
+     * @return list<array{contrat: string, libelle: string, nombre: int}>
      */
-    public function communesPopulaires(int $nombre = 6): array
+    public function offresParContrat(): array
     {
-        return $this->cache->compteurs('communes', function () use ($nombre): array {
-            $referentiel = app(Referentiels::class)->communes();
-
-            return Publication::query()->publiees()->whereNotNull('commune_id')
-                ->selectRaw('commune_id, count(*) as nombre')
-                ->groupBy('commune_id')
-                ->orderByDesc('nombre')
-                ->limit($nombre)
+        return $this->cache->compteurs('contrats', function (): array {
+            $nombres = Publication::query()->publiees()
+                ->where('type', TypePublication::Emploi->value)
+                ->whereNotNull('type_contrat')
+                ->selectRaw('type_contrat, count(*) as nombre')
+                ->groupBy('type_contrat')
                 ->toBase()
-                ->get()
-                ->filter(fn (object $ligne): bool => isset($referentiel[(int) $ligne->commune_id]))
-                ->map(fn (object $ligne): array => [...$referentiel[(int) $ligne->commune_id], 'nombre' => (int) $ligne->nombre])
-                ->values()
-                ->all();
+                ->pluck('nombre', 'type_contrat');
+
+            $resultat = [];
+            foreach (TypeContrat::cases() as $contrat) {
+                $nombre = (int) ($nombres[$contrat->value] ?? 0);
+                if ($nombre > 0) {
+                    $resultat[] = ['contrat' => $contrat->value, 'libelle' => $contrat->libelle(), 'nombre' => $nombre];
+                }
+            }
+
+            return $resultat;
+        });
+    }
+
+    /**
+     * Publications en ligne par catégorie principale (sous-catégories incluses), pour le menu des catégories.
+     *
+     * @return array<int, int> id de la catégorie principale => nombre
+     */
+    public function nombresParCategorie(): array
+    {
+        return $this->cache->compteurs('categories', function (): array {
+            $categories = app(Referentiels::class)->categories();
+            $nombres = Publication::query()->publiees()
+                ->whereNotNull('categorie_id')
+                ->selectRaw('categorie_id, count(*) as nombre')
+                ->groupBy('categorie_id')
+                ->toBase()
+                ->pluck('nombre', 'categorie_id');
+
+            $resultat = [];
+            foreach ($nombres as $categorieId => $nombre) {
+                $categorie = $categories[(int) $categorieId] ?? null;
+                if ($categorie === null) {
+                    continue;
+                }
+                $principale = $categorie['parent_id'] ?? $categorie['id'];
+                $resultat[$principale] = ($resultat[$principale] ?? 0) + (int) $nombre;
+            }
+
+            return $resultat;
         });
     }
 

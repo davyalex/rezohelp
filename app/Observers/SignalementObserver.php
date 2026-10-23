@@ -4,10 +4,10 @@ namespace App\Observers;
 
 use App\Enums\MotifSignalement;
 use App\Enums\StatutPublication;
+use App\Models\Administrateur;
 use App\Models\Parametre;
 use App\Models\Publication;
 use App\Models\Signalement;
-use App\Models\Utilisateur;
 use App\Notifications\PublicationMasquee;
 use Illuminate\Support\Facades\Notification;
 
@@ -44,7 +44,7 @@ class SignalementObserver
         $publication->save();
 
         Notification::send(
-            Utilisateur::permission('publications.moderer')->get(),
+            Administrateur::permission('publications.moderer')->whereNull('suspendu_le')->get(),
             new PublicationMasquee($publication, $nombre),
         );
     }

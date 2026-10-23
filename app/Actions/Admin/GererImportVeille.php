@@ -7,8 +7,8 @@ use App\Enums\StatutImportVeille;
 use App\Jobs\ImporterFichierVeille;
 use App\Jobs\LancerImportVeilleEnFile;
 use App\Jobs\ReevaluerAnnoncesVeilleEnFile;
+use App\Models\Administrateur;
 use App\Models\ImportVeille;
-use App\Models\Utilisateur;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -20,13 +20,13 @@ class GererImportVeille
 {
     use JournaliseActivite;
 
-    public function importerMaintenant(Utilisateur $admin): void
+    public function importerMaintenant(Administrateur $admin): void
     {
         LancerImportVeilleEnFile::dispatch();
         $this->journaliser($admin, 'veille.import_lance');
     }
 
-    public function reevaluer(Utilisateur $admin): void
+    public function reevaluer(Administrateur $admin): void
     {
         ReevaluerAnnoncesVeilleEnFile::dispatch();
         $this->journaliser($admin, 'veille.reevaluation_lancee');
@@ -36,7 +36,7 @@ class GererImportVeille
      * Rejoue un fichier (après une erreur, ou une source réactivée) : les annonces qu'il a déjà
      * créées restent comptées comme importées, celles d'autres fichiers comme doublons.
      */
-    public function relancer(ImportVeille $import, Utilisateur $admin): void
+    public function relancer(ImportVeille $import, Administrateur $admin): void
     {
         DB::transaction(function () use ($import, $admin): void {
             $import->forceFill([

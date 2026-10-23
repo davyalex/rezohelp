@@ -31,7 +31,7 @@
                        class="h-10 w-full rounded-full border-0 bg-fond pl-10 pr-4 text-base placeholder:text-slate-600 focus:ring-2 focus:ring-brand/40" maxlength="100">
             </form>
 
-            <nav aria-label="Compte" class="ml-auto flex shrink-0 items-center gap-2">
+            <nav aria-label="Compte" class="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
                 {{-- Lien à contour (et non x-bouton, dont les couleurs grises entreraient en conflit). --}}
                 <a href="{{ route('publier.choix') }}" @if (request()->routeIs('publier.*')) aria-current="page" @endif
                    class="hidden min-h-11 items-center gap-1.5 rounded-lg border border-brand bg-white px-3 text-sm font-semibold text-brand transition-colors hover:bg-brand-clair aria-[current=page]:bg-brand-clair lg:inline-flex">
@@ -39,25 +39,19 @@
                     Publier une annonce
                 </a>
                 <span aria-hidden="true" class="mx-1 hidden h-6 w-px bg-slate-200 lg:block"></span>
-                @auth
-                    @php($nbNonLues = auth()->user()->unreadNotifications()->count())
-                    <a href="{{ route('espace.notifications') }}" class="relative inline-flex size-10 items-center justify-center rounded-full text-xl hover:bg-slate-100">
+                @auth('web')
+                    @php($nbNonLues = auth('web')->user()->unreadNotifications()->count())
+                    <a href="{{ route('espace.notifications') }}" @if (request()->routeIs('espace.notifications*')) aria-current="page" @endif
+                       class="relative inline-flex size-11 items-center justify-center rounded-full text-xl hover:bg-slate-100 aria-[current=page]:bg-brand-clair">
                         <span aria-hidden="true">🔔</span>
                         <span class="sr-only">Notifications{{ $nbNonLues > 0 ? ' : '.$nbNonLues.' non lue(s)' : '' }}</span>
                         @if ($nbNonLues > 0)
                             <span aria-hidden="true" class="absolute right-0.5 top-0.5 min-w-5 rounded-full bg-red-600 px-1 text-center text-xs font-bold leading-5 text-white">{{ $nbNonLues > 9 ? '9+' : $nbNonLues }}</span>
                         @endif
                     </a>
-                    @can('tableau_de_bord.voir')
-                        <a href="{{ route('admin.tableau-de-bord') }}" class="hidden min-h-10 items-center text-sm font-semibold text-slate-700 hover:text-brand md:inline-flex">Administration</a>
-                    @endcan
-                    <a href="{{ route('espace.index') }}" class="hidden min-h-10 items-center text-sm font-semibold text-slate-700 hover:text-brand md:inline-flex">Mon espace</a>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <x-bouton variante="secondaire" class="min-h-10 px-3 text-sm">Se déconnecter</x-bouton>
-                    </form>
+                    <x-menu-utilisateur />
                 @else
-                    <x-bouton :href="route('login')" variante="primaire" class="min-h-10 px-3 text-sm">Se connecter</x-bouton>
+                    <x-menu-visiteur />
                 @endauth
             </nav>
         </div>

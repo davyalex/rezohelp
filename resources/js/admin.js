@@ -5,6 +5,7 @@ import DataTable from 'datatables.net-dt';
 import select2 from 'select2';
 import Swal from 'sweetalert2';
 import Alpine from 'alpinejs';
+import { activerSpinners, enregistrerComposants } from './interface';
 
 window.$ = window.jQuery = jQuery;
 select2(window, jQuery);
@@ -170,10 +171,125 @@ Alpine.data('raccourcisModeration', () => ({
     },
 }));
 
+/**
+ * Préférence d'affichage lue par le serveur au rendu suivant (pas de clignotement au chargement).
+ * Cookies non chiffrés, déclarés dans bootstrap/app.php (encryptCookies except).
+ */
+function ecrireCookie(nom, valeur) {
+    document.cookie = `${nom}=${encodeURIComponent(valeur)}; path=/admin; max-age=31536000; SameSite=Lax`;
+}
+
+function lireCookie(nom) {
+    const ligne = document.cookie.split('; ').find((morceau) => morceau.startsWith(`${nom}=`));
+    return ligne ? decodeURIComponent(ligne.slice(nom.length + 1)) : '';
+}
+
+/**
+ * Mise en page du back-office : menu mobile, barre latérale réduite, groupes repliés.
+ */
+Alpine.data('layoutAdmin', (reduit) => ({
+    menu: false,
+    reduit,
+    basculerReduit() {
+        this.reduit = !this.reduit;
+        ecrireCookie('admin_menu_reduit', this.reduit ? '1' : '0');
+    },
+    memoriserGroupe(cle, ouvert) {
+        const fermes = new Set(lireCookie('admin_menu_groupes').split('-').filter(Boolean));
+        ouvert ? fermes.delete(cle) : fermes.add(cle);
+        ecrireCookie('admin_menu_groupes', [...fermes].join('-'));
+    },
+}));
+
+/**
+ * Lien du menu : l'état actif suit le clic tout de suite, sans attendre le chargement de la page.
+ */
+function suivreMenuActif() {
+    const menu = document.getElementById('menu-admin');
+    menu?.addEventListener('click', (evenement) => {
+        const lien = evenement.target.closest('a[data-lien-menu]');
+        if (!lien || evenement.ctrlKey || evenement.metaKey || evenement.shiftKey || evenement.button !== 0) {
+            return;
+        }
+        menu.querySelectorAll('a[data-lien-menu][aria-current]').forEach((autre) => autre.removeAttribute('aria-current'));
+        lien.setAttribute('aria-current', 'page');
+    });
+}
+
+/**
+ * Menu latéral : le lien actif est ramené au milieu de la zone défilante au chargement.
+ */
+function centrerLienActif() {
+    const zone = document.querySelector('#menu-admin [data-menu-defilant]');
+    const actif = zone?.querySelector('a[aria-current="page"]');
+    if (!zone || !actif) {
+        return;
+    }
+    const haut = actif.getBoundingClientRect().top - zone.getBoundingClientRect().top + zone.scrollTop;
+    zone.scrollTop = Math.max(0, haut - zone.clientHeight / 2 + actif.offsetHeight / 2);
+}
+
+/**
+ * Menus « ⋯ » des tableaux (x-admin.menu-actions, API popover) : placés sous leur bouton
+ * (ou au-dessus s'il n'y a pas la place), fermés après un choix ou au défilement.
+ * Délégués au document : les lignes DataTables sont recréées à chaque rechargement.
+ */
+function demarrerMenusActions() {
+    const MARGE = 8;
+
+    const placer = (menu) => {
+        const bouton = document.querySelector(`[popovertarget="${menu.id}"]`);
+        if (!bouton) {
+            return;
+        }
+        const zone = bouton.getBoundingClientRect();
+        const largeur = menu.offsetWidth || 224;
+        const hauteur = menu.offsetHeight || 0;
+        const gauche = Math.min(Math.max(MARGE, zone.right - largeur), window.innerWidth - largeur - MARGE);
+        const enDessous = zone.bottom + 4 + hauteur <= window.innerHeight - MARGE || zone.top < hauteur + MARGE;
+        menu.style.left = `${gauche}px`;
+        menu.style.top = `${enDessous ? zone.bottom + 4 : zone.top - hauteur - 4}px`;
+        bouton.setAttribute('aria-expanded', 'true');
+    };
+
+    // « toggle » ne remonte pas : écoute en phase de capture.
+    document.addEventListener('toggle', (evenement) => {
+        const menu = evenement.target;
+        if (!(menu instanceof HTMLElement) || !menu.classList.contains('menu-actions')) {
+            return;
+        }
+        if (evenement.newState === 'open') {
+            placer(menu);
+            menu.querySelector('a[href], button:not([disabled]), input')?.focus();
+        } else {
+            document.querySelector(`[popovertarget="${menu.id}"]`)?.setAttribute('aria-expanded', 'false');
+        }
+    }, true);
+
+    // Un choix ferme le menu (sinon il resterait au-dessus de la confirmation SweetAlert2).
+    document.addEventListener('click', (evenement) => {
+        const choix = evenement.target.closest('.menu-actions a, .menu-actions button');
+        choix?.closest('.menu-actions')?.hidePopover?.();
+    });
+
+    const toutFermer = () => document.querySelectorAll('.menu-actions:popover-open').forEach((menu) => menu.hidePopover());
+    window.addEventListener('resize', toutFermer);
+    document.addEventListener('scroll', (evenement) => {
+        if (!(evenement.target instanceof Element && evenement.target.closest('.menu-actions'))) {
+            toutFermer();
+        }
+    }, true);
+}
+
+enregistrerComposants(Alpine);
 window.Alpine = Alpine;
 Alpine.start();
 
+centrerLienActif();
+suivreMenuActif();
+demarrerMenusActions();
 demarrerListes();
 demarrerConfirmations();
+activerSpinners(); // après les confirmations : un envoi annulé n'affiche pas de spinner
 demarrerSelections();
 afficherMessages();

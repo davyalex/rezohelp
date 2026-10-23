@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Administrateur;
 use App\Models\Commentaire;
 use App\Models\Publication;
 use App\Models\Utilisateur;
@@ -104,10 +105,9 @@ it('supprime ses propres commentaires, pas ceux des autres', function () {
 
 it('laisse la modération supprimer un commentaire', function () {
     $commentaire = Commentaire::factory()->create(['publication_id' => $this->publication->id]);
-    $moderateur = Utilisateur::factory()->create();
-    $moderateur->assignRole('moderateur');
+    $moderateur = Administrateur::factory()->moderateur()->create();
 
-    $this->actingAs($moderateur)->delete('/commentaires/'.$commentaire->id)->assertRedirect();
+    $this->actingAs($moderateur, 'admin')->delete('/commentaires/'.$commentaire->id)->assertRedirect();
 
     expect(Commentaire::query()->count())->toBe(0);
 });

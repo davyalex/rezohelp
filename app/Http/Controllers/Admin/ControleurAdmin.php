@@ -4,19 +4,20 @@ namespace App\Http\Controllers\Admin;
 
 use App\Exceptions\OperationImpossibleException;
 use App\Http\Controllers\Controller;
-use App\Models\Utilisateur;
+use App\Models\Administrateur;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 /**
- * Base des contrôleurs du back-office : l'auteur des actions est toujours le membre connecté.
+ * Base des contrôleurs du back-office : l'auteur des actions est toujours l'administrateur connecté
+ * (garde « admin », D-066).
  */
 abstract class ControleurAdmin extends Controller
 {
-    protected function admin(Request $requete): Utilisateur
+    protected function admin(Request $requete): Administrateur
     {
-        $utilisateur = $requete->user();
-        abort_unless($utilisateur instanceof Utilisateur, 403);
+        $utilisateur = $requete->user(Administrateur::GARDE);
+        abort_unless($utilisateur instanceof Administrateur, 403);
 
         return $utilisateur;
     }

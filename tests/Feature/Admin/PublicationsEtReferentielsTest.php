@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\StatutPublication;
+use App\Models\Administrateur;
 use App\Models\Categorie;
 use App\Models\Commune;
 use App\Models\JournalActivite;
@@ -20,8 +21,7 @@ use Illuminate\Support\Facades\Notification;
 beforeEach(function () {
     referentielsPublication();
     Notification::fake();
-    $this->admin = Utilisateur::factory()->create();
-    $this->admin->assignRole('administrateur');
+    $this->admin = Administrateur::factory()->administrateur()->create();
     $this->auteur = Utilisateur::factory()->create();
 });
 
@@ -31,7 +31,7 @@ it('filtre la liste des publications côté serveur', function () {
     Publication::factory()->emploi()->publiee()->create(['commune_id' => $cocody->id]);
     Publication::factory()->formation()->enAttente()->create(['commune_id' => $cocody->id]);
 
-    $reponse = $this->actingAs($this->admin)->getJson(route('admin.publications.index', [
+    $reponse = $this->actingAs($this->admin, 'admin')->getJson(route('admin.publications.index', [
         'draw' => 1, 'start' => 0, 'length' => 25, 'type' => 'formation', 'statut' => 'publiee', 'commune_id' => $cocody->id, 'auteur_id' => $this->auteur->id,
     ]), ['X-Requested-With' => 'XMLHttpRequest'])->assertOk();
 
@@ -43,7 +43,7 @@ it('modifie une publication en journalisant l’avant / après, sans toucher au 
     $publication = Publication::factory()->publiee()->create(['auteur_id' => $this->auteur->id]);
     $categorie = Categorie::query()->where('type', 'emploi')->firstOrFail();
 
-    $this->actingAs($this->admin)->put(route('admin.publications.update', $publication), [
+    $this->actingAs($this->admin, 'admin')->put(route('admin.publications.update', $publication), [
         'titre' => 'Comptable confirmé pour PME', 'contenu' => contenuValide('Poste de comptable confirmé, maîtrise du SYSCOHADA exigée.'),
         'categorie_id' => $categorie->id, 'commune_id' => null, 'expire_le' => now()->addDays(10)->toDateString(),
     ])->assertRedirect(route('admin.publications.index'));
@@ -59,7 +59,7 @@ it('dépublie (retour en modération, auteur prévenu, mise en avant suspendue),
     $publication = Publication::factory()->publiee()->create(['auteur_id' => $this->auteur->id, 'expire_le' => now()->addDays(2)]);
     $mise = MiseEnAvant::factory()->create(['publication_id' => $publication->id]);
 
-    $this->actingAs($this->admin)->post(route('admin.publications.depublier', $publication))->assertSessionHas('statut');
+    $this->actingAs($this->admin, 'admin')->post(route('admin.publications.depublier', $publication))->assertSessionHas('statut');
     expect($publication->refresh()->statut)->toBe(StatutPublication::EnAttente)
         ->and($mise->refresh()->suspendue_le)->not->toBeNull();
     Notification::assertSentTo($this->auteur, PublicationRemiseEnAttente::class);
@@ -105,7 +105,7 @@ it('purge définitivement les publications supprimées depuis jours_purge_public
 });
 
 it('crée une catégorie, l’ajoute au cache des référentiels et la déplace avec les flèches', function () {
-    $this->actingAs($this->admin)->post(route('admin.categories.store'), ['type' => 'service', 'nom' => 'Entretien de piscines', 'icone' => '❄️', 'actif' => '1'])
+    $this->actingAs($this->admin, 'admin')->post(route('admin.categories.store'), ['type' => 'service', 'nom' => 'Entretien de piscines', 'icone' => '❄️', 'actif' => '1'])
         ->assertRedirect(route('admin.categories.index'));
 
     $nouvelle = Categorie::query()->where('nom', 'Entretien de piscines')->firstOrFail();
@@ -122,7 +122,7 @@ it('crée une catégorie, l’ajoute au cache des référentiels et la déplace 
 it('refuse une sous-catégorie rattachée à une catégorie d’un autre type', function () {
     $parentEmploi = Categorie::query()->where('type', 'emploi')->whereNull('parent_id')->firstOrFail();
 
-    $this->actingAs($this->admin)->post(route('admin.categories.store'), ['type' => 'service', 'nom' => 'Mauvais rattachement', 'parent_id' => $parentEmploi->id])
+    $this->actingAs($this->admin, 'admin')->post(route('admin.categories.store'), ['type' => 'service', 'nom' => 'Mauvais rattachement', 'parent_id' => $parentEmploi->id])
         ->assertSessionHasErrors('parent_id');
 });
 
@@ -130,7 +130,7 @@ it('désactive une commune et un pays : ils disparaissent des listes publiques',
     $cocody = Commune::query()->where('slug', 'cocody')->firstOrFail();
     $senegal = Pays::query()->where('code', 'SN')->firstOrFail();
 
-    $this->actingAs($this->admin)->put(route('admin.communes.update', $cocody), ['pays_code' => 'CI', 'ville' => 'Abidjan', 'nom' => 'Cocody', 'actif' => '0'])->assertRedirect();
+    $this->actingAs($this->admin, 'admin')->put(route('admin.communes.update', $cocody), ['pays_code' => 'CI', 'ville' => 'Abidjan', 'nom' => 'Cocody', 'actif' => '0'])->assertRedirect();
     $this->put(route('admin.pays.update', $senegal), ['code' => 'sn', 'nom' => 'Sénégal', 'indicatif' => '+221', 'actif' => '0'])->assertRedirect();
 
     expect(app(Referentiels::class)->communeParSlug('cocody'))->toBeNull()
@@ -140,7 +140,7 @@ it('désactive une commune et un pays : ils disparaissent des listes publiques',
 });
 
 it('enregistre les paramètres typés, avec leur auteur et une ligne de journal par changement', function () {
-    $this->actingAs($this->admin)->put(route('admin.parametres.update'), [
+    $this->actingAs($this->admin, 'admin')->put(route('admin.parametres.update'), [
         'parametres' => [
             ...Parametre::query()->pluck('valeur', 'cle')->all(),
             'quotas_actifs' => '1',
@@ -157,7 +157,7 @@ it('enregistre les paramètres typés, avec leur auteur et une ligne de journal 
 });
 
 it('refuse un JSON invalide ou un entier négatif', function () {
-    $this->actingAs($this->admin)->put(route('admin.parametres.update'), [
+    $this->actingAs($this->admin, 'admin')->put(route('admin.parametres.update'), [
         'parametres' => [...Parametre::query()->pluck('valeur', 'cle')->all(), 'mots_a_risque' => '[non', 'jours_grace' => '-2'],
     ])->assertSessionHasErrors(['parametres.mots_a_risque', 'parametres.jours_grace']);
 });
@@ -165,7 +165,7 @@ it('refuse un JSON invalide ou un entier négatif', function () {
 it('vide le cache du fil et des référentiels depuis les boutons', function () {
     $version = app(CacheFil::class)->versionFil();
 
-    $this->actingAs($this->admin)->post(route('admin.cache.vider-fil'))->assertSessionHas('statut');
+    $this->actingAs($this->admin, 'admin')->post(route('admin.cache.vider-fil'))->assertSessionHas('statut');
     $this->post(route('admin.cache.vider-referentiels'))->assertSessionHas('statut');
 
     expect(app(CacheFil::class)->versionFil())->toBe($version + 1)
@@ -175,7 +175,7 @@ it('vide le cache du fil et des référentiels depuis les boutons', function () 
 it('ajoute une source de veille en normalisant son domaine', function () {
     $this->seed(SourcesVeilleSeeder::class);
 
-    $this->actingAs($this->admin)->post(route('admin.veille.sources.store'), [
+    $this->actingAs($this->admin, 'admin')->post(route('admin.veille.sources.store'), [
         'nom' => 'Novojob Test', 'domaine' => 'https://www.Novojob-Test.ci/offres', 'niveau_confiance' => 'moyen', 'publication_auto' => '0', 'actif' => '1',
     ])->assertRedirect(route('admin.veille.sources.index'));
 
@@ -186,7 +186,7 @@ it('ajoute une source de veille en normalisant son domaine', function () {
 it('affiche le tableau de bord avec ses compteurs et le bandeau d’import en retard', function () {
     Publication::factory()->enAttente()->count(2)->create();
 
-    $this->actingAs($this->admin)->get(route('admin.tableau-de-bord'))
+    $this->actingAs($this->admin, 'admin')->get(route('admin.tableau-de-bord'))
         ->assertOk()
         ->assertSee('En attente de modération')
         ->assertSee('Aucun import de la veille réussi depuis plus de 9 heures.')

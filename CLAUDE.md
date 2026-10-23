@@ -96,7 +96,9 @@ php artisan abonnements:traiter      # relances J-3/J-1/J0, grâce, expirations 
 Spécification complète : CONTEXTE.md §13.
 
 - Contrôleurs dans `App\Http\Controllers\Admin\*`, Actions dans `app/Actions/Admin/*`, vues dans `resources/views/admin/*`, composants `x-admin.*`.
-- Middleware `role:administrateur|moderateur` sur le groupe, puis `can:<permission>` par module (liste des permissions au §13.2). Vues : `@can`, jamais `@role`.
+- Comptes de l'équipe **séparés des membres** : modèle `App\Models\Administrateur` (table `administrateurs`, garde `admin`), connexion `/admin/connexion` (nom d'utilisateur + mot de passe). Ne jamais donner de rôle d'équipe à un `Utilisateur` (D-066).
+- Groupe protégé par `auth:admin`, puis `can:<permission>` par module. Catalogue des permissions et rôles livrés dans `config/admin.php` (lu via `App\Support\PermissionsAdmin`) ; super administrateur initial dans `.env` (`ADMIN_*`). Vues : `@can`, jamais `@role`.
+- Dans le code admin, l'auteur des actions vient de `ControleurAdmin::admin()` (type `Administrateur`).
 - Listes : **Yajra DataTables, toujours `serverSide`**, une classe par liste dans `App\DataTables\*`. Pas de chargement de toute une table côté client.
 - Sélections avec recherche ou multiples : **Select2** (Ajax pour les grandes listes).
 - Confirmations d'actions destructives et toasts : **SweetAlert2**.

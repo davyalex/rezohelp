@@ -53,7 +53,8 @@ class FilController extends Controller
             'sponsorisees' => $sponsorisees,
             'deja' => $request->deja(),
             'rendu' => $this->chargerEtat($request, $salve, [...$aLaUne->all(), ...$sponsorisees]),
-            'communesPopulaires' => $this->fil->communesPopulaires(),
+            'offresParContrat' => $this->fil->offresParContrat(),
+            'nombresParCategorie' => $this->fil->nombresParCategorie(),
             'formationsRecentes' => $this->fil->formationsRecentes(),
         ]);
     }

@@ -36,17 +36,6 @@ return [
         'driver' => env('IA_DRIVER', 'fake'),
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Compte administrateur initial (seeder)
-    |--------------------------------------------------------------------------
-    */
-
-    'admin' => [
-        'telephone' => env('ADMIN_TELEPHONE'),
-        'pays_code' => env('ADMIN_PAYS_CODE', 'CI'),
-        'mot_de_passe' => env('ADMIN_MOT_DE_PASSE'),
-        'nom' => env('ADMIN_NOM', 'Administrateur'),
-    ],
+    // Super administrateur, rôles et permissions du back-office : config/admin.php.
 
 ];

@@ -8,10 +8,12 @@ use App\Enums\StatutAbonnement;
 use App\Models\Abonnement;
 use App\Models\Commande;
 use App\Models\NotificationPaiement;
+use App\Services\RecuCommande;
 use App\Services\StatistiquesService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -94,6 +96,16 @@ class CommandeController extends ControleurAdmin
 
             fclose($sortie);
         }, $nom, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    /**
+     * Reçu PDF d'une commande payée ou remboursée, pour l'équipe (paiements.voir).
+     */
+    public function recuPdf(Commande $commande, RecuCommande $recus): Response
+    {
+        abort_unless($recus->disponible($commande), 404);
+
+        return $recus->pdf($commande);
     }
 
     public function revenus(StatistiquesService $statistiques): View

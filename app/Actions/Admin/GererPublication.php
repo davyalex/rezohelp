@@ -6,6 +6,7 @@ use App\Actions\Admin\Concerns\JournaliseActivite;
 use App\Enums\SourcePublication;
 use App\Enums\StatutPublication;
 use App\Exceptions\OperationImpossibleException;
+use App\Models\Administrateur;
 use App\Models\Parametre;
 use App\Models\Publication;
 use App\Models\Utilisateur;
@@ -25,7 +26,7 @@ class GererPublication
     /**
      * @param  array{titre: string, contenu: string, categorie_id: int, commune_id: ?int, expire_le: ?string}  $donnees
      */
-    public function modifier(Publication $publication, Utilisateur $admin, array $donnees): void
+    public function modifier(Publication $publication, Administrateur $admin, array $donnees): void
     {
         $contenu = trim($donnees['contenu']);
 
@@ -52,7 +53,7 @@ class GererPublication
     /**
      * Retire une publication du fil : elle repasse en modération, l'auteur est prévenu (D-055).
      */
-    public function depublier(Publication $publication, Utilisateur $admin): void
+    public function depublier(Publication $publication, Administrateur $admin): void
     {
         if ($publication->statut !== StatutPublication::Publiee) {
             throw new OperationImpossibleException('Seule une publication en ligne peut être dépubliée.');
@@ -72,7 +73,7 @@ class GererPublication
     /**
      * +jours_prolongation jours ; une publication expirée revient en ligne (décision de l'équipe).
      */
-    public function prolonger(Publication $publication, Utilisateur $admin): void
+    public function prolonger(Publication $publication, Administrateur $admin): void
     {
         if (! in_array($publication->statut, [StatutPublication::Publiee, StatutPublication::Expiree], true)) {
             throw new OperationImpossibleException('Seule une publication en ligne ou expirée peut être prolongée.');
@@ -89,7 +90,7 @@ class GererPublication
         });
     }
 
-    public function supprimer(Publication $publication, Utilisateur $admin): void
+    public function supprimer(Publication $publication, Administrateur $admin): void
     {
         DB::transaction(function () use ($publication, $admin): void {
             $publication->delete();

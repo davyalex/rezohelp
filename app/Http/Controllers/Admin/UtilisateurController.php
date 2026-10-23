@@ -14,11 +14,12 @@ use App\Models\Utilisateur;
 use App\Services\Droits;
 use App\Services\Referentiels;
 use App\Services\TelephoneService;
+use Database\Seeders\RolesEtPermissionsSeeder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
-use Spatie\Permission\Models\Role;
 
 /**
  * F — Utilisateurs (CONTEXTE §13.3.F).
@@ -31,7 +32,7 @@ class UtilisateurController extends ControleurAdmin
     {
         return $requete->ajax() ? $table->reponse($requete) : view('admin.utilisateurs.index', [
             'table' => $table,
-            'roles' => Role::query()->orderBy('name')->pluck('name', 'name')->all(),
+            'roles' => array_combine(RolesEtPermissionsSeeder::ROLES_MEMBRES, RolesEtPermissionsSeeder::ROLES_MEMBRES),
         ]);
     }
 
@@ -52,10 +53,10 @@ class UtilisateurController extends ControleurAdmin
                 ->latest('cree_le')->limit(10)->get(),
             'sanctions' => JournalActivite::query()
                 ->where('sujet_type', $utilisateur->getMorphClass())->where('sujet_id', $utilisateur->id)
-                ->with('utilisateur:id,nom,prenoms')
+                ->with('administrateur:id,nom,prenoms')
                 ->latest('cree_le')->limit(20)->get(),
             'abonnements' => $utilisateur->abonnements()->whereIn('statut', array_map(fn ($s) => $s->value, Droits::STATUTS_EN_COURS))->with('plan:id,nom')->get(),
-            'roles' => Role::query()->orderBy('name')->pluck('name')->all(),
+            'roles' => RolesEtPermissionsSeeder::ROLES_MEMBRES,
         ]);
     }
 
@@ -97,7 +98,7 @@ class UtilisateurController extends ControleurAdmin
 
     public function roles(Request $requete, Utilisateur $utilisateur): RedirectResponse
     {
-        $roles = $requete->validate(['roles' => ['array'], 'roles.*' => ['string', 'exists:roles,name']])['roles'] ?? [];
+        $roles = $requete->validate(['roles' => ['array'], 'roles.*' => ['string', Rule::in(RolesEtPermissionsSeeder::ROLES_MEMBRES)]])['roles'] ?? [];
 
         return $this->appliquer(fn () => $this->gerer->roles($utilisateur, $this->admin($requete), array_values($roles)), 'Rôles mis à jour.');
     }

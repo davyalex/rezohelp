@@ -7,6 +7,7 @@ use App\Enums\OrigineAbonnement;
 use App\Enums\StatutAbonnement;
 use App\Exceptions\OperationImpossibleException;
 use App\Models\Abonnement;
+use App\Models\Administrateur;
 use App\Models\Entreprise;
 use App\Models\Plan;
 use App\Models\Utilisateur;
@@ -21,7 +22,7 @@ class GererAbonnement
 {
     use JournaliseActivite;
 
-    public function offrir(Utilisateur|Entreprise $titulaire, Plan $plan, int $jours, string $motif, Utilisateur $admin): Abonnement
+    public function offrir(Utilisateur|Entreprise $titulaire, Plan $plan, int $jours, string $motif, Administrateur $admin): Abonnement
     {
         if (! in_array($plan->cible, Droits::cibles($titulaire), true)) {
             throw new OperationImpossibleException('Ce plan ne correspond pas à ce titulaire (cible '.$plan->cible->libelle().').');
@@ -45,7 +46,7 @@ class GererAbonnement
         });
     }
 
-    public function prolonger(Abonnement $abonnement, int $jours, Utilisateur $admin): void
+    public function prolonger(Abonnement $abonnement, int $jours, Administrateur $admin): void
     {
         if (! in_array($abonnement->statut, Droits::STATUTS_EN_COURS, true)) {
             throw new OperationImpossibleException('Seul un abonnement en cours peut être prolongé.');
@@ -67,7 +68,7 @@ class GererAbonnement
         });
     }
 
-    public function resilier(Abonnement $abonnement, Utilisateur $admin, ?string $motif = null): void
+    public function resilier(Abonnement $abonnement, Administrateur $admin, ?string $motif = null): void
     {
         if (! in_array($abonnement->statut, Droits::STATUTS_EN_COURS, true)) {
             throw new OperationImpossibleException('Cet abonnement n’est plus en cours.');

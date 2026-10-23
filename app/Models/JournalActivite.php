@@ -22,7 +22,7 @@ class JournalActivite extends Model
     /**
      * @var list<string>
      */
-    protected $fillable = ['utilisateur_id', 'action', 'sujet_type', 'sujet_id', 'donnees', 'ip'];
+    protected $fillable = ['administrateur_id', 'action', 'sujet_type', 'sujet_id', 'donnees', 'ip'];
 
     /**
      * @return array<string, string>
@@ -35,11 +35,11 @@ class JournalActivite extends Model
     }
 
     /**
-     * @return BelongsTo<Utilisateur, $this>
+     * @return BelongsTo<Administrateur, $this>
      */
-    public function utilisateur(): BelongsTo
+    public function administrateur(): BelongsTo
     {
-        return $this->belongsTo(Utilisateur::class);
+        return $this->belongsTo(Administrateur::class);
     }
 
     /**

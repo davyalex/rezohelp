@@ -5,9 +5,9 @@ use App\Enums\StatutImportVeille;
 use App\Jobs\ImporterFichierVeille;
 use App\Jobs\LancerImportVeilleEnFile;
 use App\Jobs\ReevaluerAnnoncesVeilleEnFile;
+use App\Models\Administrateur;
 use App\Models\ImportVeille;
 use App\Models\JournalActivite;
-use App\Models\Utilisateur;
 use App\Services\Veille\FakeSourceVeille;
 use Database\Seeders\SourcesVeilleSeeder;
 use Illuminate\Support\Facades\Queue;
@@ -15,14 +15,13 @@ use Illuminate\Support\Facades\Queue;
 beforeEach(function () {
     referentielsPublication();
     $this->seed(SourcesVeilleSeeder::class);
-    $this->admin = Utilisateur::factory()->create();
-    $this->admin->assignRole('administrateur');
+    $this->admin = Administrateur::factory()->administrateur()->create();
 });
 
 it('lance la recherche de nouveaux fichiers en file, sans attendre Drive dans la requête', function () {
     Queue::fake();
 
-    $this->actingAs($this->admin)->post(route('admin.veille.importer-maintenant'))->assertSessionHas('statut');
+    $this->actingAs($this->admin, 'admin')->post(route('admin.veille.importer-maintenant'))->assertSessionHas('statut');
 
     Queue::assertPushed(LancerImportVeilleEnFile::class);
     expect(JournalActivite::query()->where('action', 'veille.import_lance')->exists())->toBeTrue();
@@ -33,7 +32,7 @@ it('relance un import en remettant ses compteurs à zéro', function () {
     $import = ImportVeille::factory()->create(['nb_lignes' => 3, 'nb_importees' => 1, 'nb_rejetees' => 2]);
     $import->forceFill(['statut' => StatutImportVeille::Erreur, 'erreur' => 'Délai dépassé'])->save();
 
-    $this->actingAs($this->admin)->post(route('admin.veille.imports.relancer', $import))->assertSessionHas('statut');
+    $this->actingAs($this->admin, 'admin')->post(route('admin.veille.imports.relancer', $import))->assertSessionHas('statut');
 
     $import->refresh();
     expect($import->statut)->toBe(StatutImportVeille::EnCours)
@@ -47,7 +46,7 @@ it('montre le sort de chaque ligne dans le détail d’un import', function () {
     $this->artisan('veille:importer');
     $import = ImportVeille::query()->sole();
 
-    $this->actingAs($this->admin)->get(route('admin.veille.imports.show', $import))
+    $this->actingAs($this->admin, 'admin')->get(route('admin.veille.imports.show', $import))
         ->assertOk()
         ->assertSee('Lignes du fichier')
         ->assertSee('Comptable confirmé')
@@ -56,17 +55,16 @@ it('montre le sort de chaque ligne dans le détail d’un import', function () {
 });
 
 it('réserve la veille à l’administrateur', function () {
-    $moderateur = Utilisateur::factory()->create();
-    $moderateur->assignRole('moderateur');
+    $moderateur = Administrateur::factory()->moderateur()->create();
 
-    $this->actingAs($moderateur)->post(route('admin.veille.importer-maintenant'))->assertForbidden();
+    $this->actingAs($moderateur, 'admin')->post(route('admin.veille.importer-maintenant'))->assertForbidden();
 });
 
 it('lance en file la réévaluation des annonces en attente depuis le bouton', function () {
     Queue::fake();
 
-    $this->actingAs($this->admin)->get(route('admin.veille.imports.index'))->assertSee('Réévaluer les annonces en attente');
-    $this->actingAs($this->admin)->post(route('admin.veille.reevaluer'))->assertSessionHas('statut');
+    $this->actingAs($this->admin, 'admin')->get(route('admin.veille.imports.index'))->assertSee('Réévaluer les annonces en attente');
+    $this->actingAs($this->admin, 'admin')->post(route('admin.veille.reevaluer'))->assertSessionHas('statut');
 
     Queue::assertPushed(ReevaluerAnnoncesVeilleEnFile::class, 1);
     expect(JournalActivite::query()->where('action', 'veille.reevaluation_lancee')->exists())->toBeTrue();
@@ -75,7 +73,7 @@ it('lance en file la réévaluation des annonces en attente depuis le bouton', f
 it('réévalue les annonces en attente après l’ajout d’une source', function () {
     Queue::fake();
 
-    $this->actingAs($this->admin)->post(route('admin.veille.sources.store'), [
+    $this->actingAs($this->admin, 'admin')->post(route('admin.veille.sources.store'), [
         'nom' => 'Projob Ivoire', 'domaine' => 'https://www.projobivoire.com/', 'niveau_confiance' => 'haut', 'publication_auto' => '1', 'actif' => '1',
     ])->assertRedirect(route('admin.veille.sources.index'));
 

@@ -4,8 +4,8 @@ namespace App\Actions\Admin;
 
 use App\Enums\MotifRejet;
 use App\Enums\StatutPublication;
+use App\Models\Administrateur;
 use App\Models\Publication;
-use App\Models\Utilisateur;
 
 /**
  * Actions groupées de la modération (CONTEXTE §13.3.B) : chaque publication passe par la même
@@ -23,7 +23,7 @@ class ModererLot
      * @param  list<int>  $ids
      * @return int nombre de publications traitées
      */
-    public function executer(array $ids, string $action, Utilisateur $moderateur, ?MotifRejet $motif = null, ?string $detail = null): int
+    public function executer(array $ids, string $action, Administrateur $moderateur, ?MotifRejet $motif = null, ?string $detail = null): int
     {
         $traitees = 0;
 

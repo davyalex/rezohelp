@@ -5,11 +5,11 @@ namespace App\Actions\Admin;
 use App\Actions\Admin\Concerns\JournaliseActivite;
 use App\Exceptions\OperationImpossibleException;
 use App\Models\Abonnement;
+use App\Models\Administrateur;
 use App\Models\Commande;
 use App\Models\Credit;
 use App\Models\Entreprise;
 use App\Models\Publication;
-use App\Models\Utilisateur;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -22,7 +22,7 @@ class GererEntreprise
 {
     use JournaliseActivite;
 
-    public function basculerVerification(Entreprise $entreprise, Utilisateur $admin): void
+    public function basculerVerification(Entreprise $entreprise, Administrateur $admin): void
     {
         DB::transaction(function () use ($entreprise, $admin): void {
             $entreprise->verifiee = ! $entreprise->verifiee;
@@ -42,7 +42,7 @@ class GererEntreprise
      * Rattache à $conservee tout ce qui appartenait à $doublon (publications, abonnements,
      * crédits, commandes), puis supprime $doublon.
      */
-    public function fusionner(Entreprise $doublon, Entreprise $conservee, Utilisateur $admin): void
+    public function fusionner(Entreprise $doublon, Entreprise $conservee, Administrateur $admin): void
     {
         if ($doublon->is($conservee)) {
             throw new OperationImpossibleException('Choisissez deux fiches différentes.');

@@ -5,6 +5,7 @@ namespace App\Actions\Admin;
 use App\Actions\Admin\Concerns\JournaliseActivite;
 use App\Actions\Publication\MettreAJourConfiance;
 use App\Enums\StatutPublication;
+use App\Models\Administrateur;
 use App\Models\Publication;
 use App\Models\Signalement;
 use App\Models\Utilisateur;
@@ -28,7 +29,7 @@ class TraiterSignalements
         private readonly MettreAJourConfiance $mettreAJourConfiance,
     ) {}
 
-    public function executer(Publication $publication, Utilisateur $admin, string $decision): int
+    public function executer(Publication $publication, Administrateur $admin, string $decision): int
     {
         $retenu = $decision !== 'retablir';
 

@@ -42,9 +42,12 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {
     Route::post('/publication/{publication}/jaime', [InteractionController::class, 'jaime'])->name('publications.jaime');
     Route::post('/publication/{publication}/enregistrer', [InteractionController::class, 'enregistrer'])->name('publications.enregistrer');
     Route::post('/publication/{publication}/commentaires', [InteractionController::class, 'commenter'])->name('publications.commenter');
-    Route::delete('/commentaires/{commentaire}', [InteractionController::class, 'supprimerCommentaire'])->name('commentaires.destroy');
     Route::post('/publication/{publication}/signaler', [InteractionController::class, 'signaler'])->name('publications.signaler');
 });
+
+// Suppression d'un commentaire : son auteur (membre) ou l'équipe connectée au back-office (D-066).
+Route::delete('/commentaires/{commentaire}', [InteractionController::class, 'supprimerCommentaire'])
+    ->middleware(['auth:web,admin', 'throttle:60,1'])->name('commentaires.destroy');
 
 // « Créer une alerte » depuis le fil : un visiteur passe d'abord par l'inscription.
 Route::get('/alertes/nouvelle', [AlerteController::class, 'depuisFil'])->name('alertes.depuis-fil');

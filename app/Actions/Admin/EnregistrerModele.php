@@ -3,7 +3,7 @@
 namespace App\Actions\Admin;
 
 use App\Actions\Admin\Concerns\JournaliseActivite;
-use App\Models\Utilisateur;
+use App\Models\Administrateur;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
@@ -23,7 +23,7 @@ class EnregistrerModele
      * @param  array<string, mixed>  $donnees
      * @return T
      */
-    public function executer(Model $modele, array $donnees, Utilisateur $admin, string $prefixe): Model
+    public function executer(Model $modele, array $donnees, Administrateur $admin, string $prefixe): Model
     {
         $creation = ! $modele->exists;
         $modele->fill($donnees);
