@@ -590,3 +590,11 @@
 - [ ] Cocher `docs/RECETTE.md` en préproduction (critère d'acceptation du lot 10).
 - [ ] Choisir l'hébergement (VPS recommandé), le domaine, le fournisseur SMS, et finaliser le compte CinetPay (CONTEXTE §18), puis suivre `docs/DEPLOIEMENT.md`.
 - [ ] Après le prochain `git push`, vérifier que la CI GitHub passe, tests de bout en bout compris.
+
+### Compléments du 23/10/2026 (suite)
+
+- Onglets du fil en rangée défilante : flèches sur ordinateur, fondu sur les bords, molette (commit `b00493e`).
+- Contact de l'auteur d'une demande pour le prestataire qui a répondu (D-071). Demandes dans les deux colonnes latérales, sur tous les onglets.
+- Tests : `tests/Feature/Publication/ContactDemandeTest.php` (6) et `DemandesFilTest` (colonnes latérales). Total : 855 tests verts.
+- [ ] À vérifier par Alex : avec un second compte, ouvrir une demande, répondre « Je suis disponible », puis vérifier que « Appeler le … » et WhatsApp apparaissent ; sans réponse, aucun numéro n'est visible.
+- [ ] À vérifier par Alex : les demandes publiées avant ce changement n'ont pas de numéro enregistré. L'auteur peut l'ajouter en modifiant sa demande dans « Mes publications ».

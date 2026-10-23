@@ -60,6 +60,24 @@
                     <a href="{{ route('espace.reponses.index', $p->id) }}" class="font-semibold text-brand hover:underline">Voir les réponses</a></p>
             @elseif ($dejaRepondu)
                 <x-message>Vous avez déjà répondu à cette publication. L’auteur a été prévenu.</x-message>
+                {{-- Demande : le prestataire qui a répondu peut appeler l'auteur, si celui-ci l'accepte (D-071). --}}
+                @if ($service && $p->sous_type === SousTypeService::Demande)
+                    @if ($service->afficher_telephone && $service->telephone_contact)
+                        <div class="rounded-xl bg-service-clair p-4 ring-1 ring-service/30">
+                            <p class="font-semibold text-slate-900">Contactez l’auteur de la demande</p>
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                <a href="tel:{{ $service->telephone_contact }}" class="inline-flex min-h-11 items-center gap-2 rounded-lg bg-service px-4 font-semibold text-white hover:opacity-90">
+                                    <span aria-hidden="true">📞</span>Appeler le {{ app(\App\Services\TelephoneService::class)->afficher($service->telephone_contact, auth()->user()?->pays_code) }}
+                                </a>
+                                @if ($service->whatsapp)
+                                    <a href="https://wa.me/{{ ltrim($service->whatsapp, '+') }}" target="_blank" rel="noopener" class="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-50">WhatsApp</a>
+                                @endif
+                            </div>
+                        </div>
+                    @else
+                        <p class="text-sm text-slate-600">L’auteur a préféré ne pas partager son numéro : il vous contactera avec les coordonnées de votre réponse.</p>
+                    @endif
+                @endif
             @else
                 <form method="POST" action="{{ route('publications.repondre', $p->slug) }}" class="space-y-3">
                     @csrf

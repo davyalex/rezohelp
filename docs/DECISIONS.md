@@ -300,3 +300,12 @@
   4. **Envois multipart** : le serveur de test du plugin ne lit pas encore ces envois (« @TODO files »). Dans les parcours sans photo, le formulaire de publication est passé en urlencoded par un script ; les photos restent couvertes par les tests Feature.
   5. **Clics** : sur un bouton ambigu, cibler un sélecteur précis (`form[action$="/valider"] button`) plutôt qu'un texte : un clic par texte peut attendre indéfiniment un élément masqué.
 - **Raison** : lot 10 du plan, avec les 5 parcours clés à tester dans un vrai navigateur.
+
+### D-071 · 2026-10-23 · Contact de l'auteur d'une demande de prestation
+- **Choix** (option retenue par Alex) :
+  - le prestataire connecté qui a répondu « Je suis disponible » voit le numéro de l'auteur de la demande (boutons « Appeler » et WhatsApp) ;
+  - l'auteur saisit ce numéro dans le formulaire (prérempli avec celui de son compte) et peut refuser de le donner (case cochée par défaut). S'il refuse, le prestataire est prévenu que l'auteur le contactera ;
+  - le numéro n'est jamais public, ni pour un visiteur, ni pour un membre qui n'a pas répondu ;
+  - les demandes de prestation sont aussi accessibles depuis les deux colonnes latérales sur tous les onglets : un lien avec le nombre de demandes à gauche, l'encadré « Ils cherchent un prestataire » à droite.
+- **Raison** : demande d'Alex. Pour un besoin urgent (fuite, panne), l'artisan doit pouvoir appeler. Réserver le numéro aux prestataires qui ont répondu garde une trace de qui l'a vu, et le protège des robots et des arnaqueurs.
+- **Écart** : CLAUDE.md (« Le téléphone d'un demandeur de service n'est jamais affiché ») et CONTEXTE §11.4 / §11.8 décrivent l'ancienne règle. Ces deux fichiers sont à mettre à jour avec l'accord d'Alex.

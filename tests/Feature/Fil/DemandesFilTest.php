@@ -54,13 +54,23 @@ it('met en avant les dernières demandes sur le fil général, avec le bouton «
         ->assertSee('Je suis disponible');
 });
 
-it('n’affiche pas le bloc des demandes quand il n’y en a aucune, ni sur les emplois', function () {
+it('n’affiche pas le bloc des demandes quand il n’y en a aucune', function () {
     Publication::factory()->count(3)->emploi()->publiee()->create();
 
     $this->get('/')->assertDontSee('Ils cherchent un prestataire');
+});
 
-    demande();
-    $this->get('/emplois')->assertDontSee('Ils cherchent un prestataire');
+it('montre les demandes dans les colonnes latérales sur tous les onglets, sauf celui des demandes', function () {
+    demande(['titre' => 'Cherche couturière à Abobo']);
+    Publication::factory()->count(3)->emploi()->publiee()->create();
+
+    // Colonne de droite (bloc) et colonne de gauche (lien avec le nombre de demandes en cours).
+    $this->get('/emplois')
+        ->assertSee('Ils cherchent un prestataire')
+        ->assertSee('Cherche couturière à Abobo')
+        ->assertSee('Demandes de prestation');
+    $this->get('/formations')->assertSee('Ils cherchent un prestataire');
+    $this->get('/demandes')->assertDontSee('Ils cherchent un prestataire');
 });
 
 it('invite à publier son besoin quand aucune demande n’est en ligne', function () {

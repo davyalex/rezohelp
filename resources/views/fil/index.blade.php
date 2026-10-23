@@ -34,6 +34,8 @@
     $premiere = $salve->publications->first();
     // Demandes mises en avant sur « Tout » et « Home service » (pas sur leur propre onglet ni hors des services).
     $afficherDemandes = $demandesRecentes['demandes'] !== [] && $filtres->sousType === null && in_array($filtres->type, [null, TypePublication::Service], true);
+    // Colonne de droite (ordinateur) : sur tous les onglets, sauf celui des demandes.
+    $demandesColonne = $demandesRecentes['demandes'] !== [] && $filtres->sousType !== SousTypeService::Demande;
 @endphp
 
 @section('titre', $titrePage)
@@ -43,6 +45,13 @@
         {{-- Colonne gauche (desktop) : catégories --}}
         <aside class="hidden lg:block" aria-labelledby="titre-categories">
             <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200/70">
+                {{-- Accès direct aux demandes de prestation (D-069), quel que soit l'onglet. --}}
+                <a href="{{ route('fil.demandes') }}" @if ($filtres->sousType === SousTypeService::Demande) aria-current="page" @endif
+                   class="mb-3 flex min-h-11 items-center gap-2 rounded-xl bg-service-clair px-3 text-sm font-semibold text-slate-900 ring-1 ring-service/30 hover:ring-service aria-[current=page]:ring-2 aria-[current=page]:ring-service">
+                    <span aria-hidden="true">🙋</span>
+                    <span class="flex-1">Demandes de prestation</span>
+                    <span class="rounded-full bg-service px-2 text-xs font-bold leading-5 text-white">{{ $demandesRecentes['nombre'] }}<span class="sr-only"> en cours</span></span>
+                </a>
                 <h2 id="titre-categories" class="px-2 pt-1 text-sm font-semibold uppercase tracking-wide text-slate-600">Catégories</h2>
 
                 @if ($filtres->type === null)
@@ -109,6 +118,7 @@
                         @endforeach
                     </ul>
                 @endif
+
             </div>
         </aside>
 
@@ -291,7 +301,7 @@
 
         {{-- Colonne droite (desktop) --}}
         <aside class="hidden space-y-4 lg:block" aria-label="À découvrir">
-            @if ($afficherDemandes)
+            @if ($demandesColonne)
                 @include('fil._bloc-demandes', ['contexte' => 'colonne'])
             @endif
             @include('fil._bloc-alerte')

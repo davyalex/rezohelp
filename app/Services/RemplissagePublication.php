@@ -143,11 +143,12 @@ class RemplissagePublication
                     ? $this->telephones->normaliser((string) $donnees['telephone_contact'], $pays)
                     : $this->telephones->normaliser($donnees['whatsapp'] ?? null, $pays),
             ]),
+            // Demande : numéro réservé aux prestataires qui ont répondu (D-071), même numéro pour WhatsApp.
             ParcoursPublication::ServiceDemande => $publication->detailService()->updateOrCreate(['publication_id' => $publication->id], [
                 'metier' => $this->metier((int) $donnees['categorie_id']),
-                'afficher_telephone' => false,
-                'telephone_contact' => null,
-                'whatsapp' => null,
+                'afficher_telephone' => $partage = ! empty($donnees['afficher_telephone']) && ! empty($donnees['telephone_contact']),
+                'telephone_contact' => $partage ? $this->telephones->normaliser((string) $donnees['telephone_contact'], $pays) : null,
+                'whatsapp' => $partage ? $this->telephones->normaliser((string) $donnees['telephone_contact'], $pays) : null,
                 'date_souhaitee' => $this->dateSouhaitee($donnees),
                 'budget' => $donnees['budget'] ?? null,
             ]),
