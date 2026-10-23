@@ -2,7 +2,6 @@
 
 @php
     use App\Enums\StatutPublication;
-    use App\Http\Requests\Espace\CloturerPublicationRequest;
 
     $maxProlongations = \App\Models\Parametre::entier('max_prolongations');
 @endphp
@@ -98,76 +97,7 @@
                             </p>
                         @endforeach
 
-                        @if ($publication->statut === StatutPublication::Publiee)
-                            @can('mettreEnAvant', $publication)
-                                <div class="mt-3 flex flex-wrap gap-2" aria-label="Visibilité">
-                                    @if ($droitsTitulaire['remontees'] !== 0)
-                                        <form method="POST" action="{{ route('espace.publications.remonter', $publication->id) }}">
-                                            @csrf
-                                            <x-bouton variante="secondaire" class="min-h-11 text-sm">
-                                                ⬆ Remonter en tête du fil{{ $droitsTitulaire['remontees'] > 0 ? ' (incluse, '.$droitsTitulaire['remontees'].' restante(s))' : '' }}
-                                            </x-bouton>
-                                        </form>
-                                    @elseif ($produits->has('remontee'))
-                                        <x-formulaire-achat type="produit" :code="$produits['remontee']->code" :publication="$publication->id" :entreprise="$publication->entreprise_id" variante="secondaire">
-                                            ⬆ Remonter en tête du fil · {{ \App\Support\Montant::fcfa($produits['remontee']->prix_fcfa) }}
-                                        </x-formulaire-achat>
-                                    @endif
-                                    @foreach (['une_commune' => '⭐ À la une', 'sponsorise_fil' => '📣 Sponsoriser'] as $type => $libelle)
-                                        @if ($produits->has($type))
-                                            <x-formulaire-achat type="produit" :code="$produits[$type]->code" :publication="$publication->id" :entreprise="$publication->entreprise_id" variante="secondaire">
-                                                {{ $libelle }} {{ $produits[$type]->duree_jours }} j · {{ \App\Support\Montant::fcfa($produits[$type]->prix_fcfa) }}
-                                            </x-formulaire-achat>
-                                        @endif
-                                    @endforeach
-                                </div>
-                            @endcan
-                        @endif
-
-                        <div class="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
-                            @can('update', $publication)
-                                <x-bouton :href="route('espace.publications.edit', $publication->id)" variante="secondaire" class="min-h-11 text-sm">
-                                    {{ match ($publication->statut) { StatutPublication::Brouillon => 'Compléter et publier', StatutPublication::Rejetee => 'Corriger et renvoyer', default => 'Modifier' } }}
-                                </x-bouton>
-                            @endcan
-                            @if ($publication->nb_reponses > 0 || $publication->statut === StatutPublication::Publiee)
-                                <x-bouton :href="route('espace.reponses.index', $publication->id)" variante="secondaire" class="min-h-11 text-sm">Réponses</x-bouton>
-                            @endif
-                            @if ($publication->statut === StatutPublication::Publiee)
-                                <x-bouton :href="route('publications.partager', $publication->slug)" target="_blank" rel="noopener" variante="secondaire" class="min-h-11 text-sm">Partager</x-bouton>
-                                @if ($publication->nb_prolongations < $maxProlongations)
-                                    <form method="POST" action="{{ route('espace.publications.prolonger', $publication->id) }}">
-                                        @csrf
-                                        <x-bouton variante="secondaire" class="min-h-11 text-sm">Prolonger</x-bouton>
-                                    </form>
-                                @endif
-                            @endif
-                            <form method="POST" action="{{ route('espace.publications.dupliquer', $publication->id) }}">
-                                @csrf
-                                <x-bouton variante="secondaire" class="min-h-11 text-sm">Dupliquer</x-bouton>
-                            </form>
-                            @if (in_array($publication->statut, [StatutPublication::Publiee, StatutPublication::EnAttente], true))
-                                <details class="w-full sm:w-auto">
-                                    <summary class="inline-flex min-h-11 cursor-pointer items-center rounded-lg border border-slate-300 px-4 text-sm font-semibold">Clôturer</summary>
-                                    <form method="POST" action="{{ route('espace.publications.cloturer', $publication->id) }}" class="mt-2 flex flex-wrap gap-2">
-                                        @csrf
-                                        <label for="motif-{{ $publication->id }}" class="sr-only">Motif de clôture</label>
-                                        <select id="motif-{{ $publication->id }}" name="motif_cloture" class="min-h-11 rounded-lg border border-slate-300 px-3 text-sm">
-                                            @foreach (CloturerPublicationRequest::MOTIFS as $motif)
-                                                <option value="{{ $motif }}">{{ $motif }}</option>
-                                            @endforeach
-                                        </select>
-                                        <x-bouton class="min-h-11 text-sm">Confirmer</x-bouton>
-                                    </form>
-                                </details>
-                            @endif
-                            <form method="POST" action="{{ route('espace.publications.destroy', $publication->id) }}"
-                                  data-confirmer="Supprimer cette publication ?" data-detail="Elle disparaîtra du fil et de vos publications. Les réponses reçues ne seront plus accessibles." data-bouton="Supprimer" data-danger>
-                                @csrf
-                                @method('DELETE')
-                                <x-bouton variante="lien" class="min-h-11 text-sm text-red-700">Supprimer</x-bouton>
-                            </form>
-                        </div>
+                        @include('espace.publications._actions')
                     </li>
                 @endforeach
             </ul>
