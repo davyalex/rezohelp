@@ -85,7 +85,7 @@
 
                         @foreach ($publication->misesEnAvant as $miseEnAvant)
                             <p class="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                                <strong>{{ $miseEnAvant->type === \App\Enums\TypeMiseEnAvant::UneCommune ? 'À la une' : 'Sponsorisé' }}</strong>
+                                <strong>{{ $miseEnAvant->type === \App\Enums\TypeMiseEnAvant::UneCommune ? 'À la une' : 'Annonce sponsorisée' }}</strong>
                                 @if ($miseEnAvant->suspendue_le)
                                     · en pause tant que la publication n’est pas en ligne
                                 @elseif ($miseEnAvant->fin_le?->isFuture())

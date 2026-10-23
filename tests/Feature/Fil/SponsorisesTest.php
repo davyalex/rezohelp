@@ -41,7 +41,7 @@ it('injecte une carte sponsorisée en tête puis toutes les frequence_sponsorise
     $organiquesSans = array_column(cartesDuFil($sans), 'slug');
 
     collect(range(1, 3))->each(fn () => sponsoriser());
-    $avec = $this->get(route('fil.index'))->assertOk()->assertSee('Sponsorisé');
+    $avec = $this->get(route('fil.index'))->assertOk()->assertSee('Annonce sponsorisée');
     $cartes = cartesDuFil($avec);
 
     // Positions 0 et 8 de la salve de 12 (fréquence 8 par défaut).
@@ -98,16 +98,16 @@ it('ne met jamais en avant une publication hors ligne, une mise en avant suspend
         'terminée' => $mise->update(['fin_le' => now()->subMinute()]),
     };
 
-    $this->get(route('fil.index'))->assertOk()->assertDontSee('Sponsorisé');
+    $this->get(route('fil.index'))->assertOk()->assertDontSee('Annonce sponsorisée');
 })->with(['en attente', 'rejetée', 'expirée', 'supprimée', 'suspendue', 'terminée']);
 
 it('réserve les cartes sponsorisées au fil général', function () {
     sponsoriser();
     $cocody = Commune::query()->where('slug', 'cocody')->firstOrFail();
 
-    $this->get(route('fil.index', ['commune' => $cocody->slug]))->assertDontSee('Sponsorisé');
-    $this->get(route('fil.index', ['q' => 'comptable']))->assertDontSee('Sponsorisé');
-    $this->get(route('fil.emplois'))->assertSee('Sponsorisé');
+    $this->get(route('fil.index', ['commune' => $cocody->slug]))->assertDontSee('Annonce sponsorisée');
+    $this->get(route('fil.index', ['q' => 'comptable']))->assertDontSee('Annonce sponsorisée');
+    $this->get(route('fil.emplois'))->assertSee('Annonce sponsorisée');
 });
 
 it('affiche le bloc « À la une » au-dessus d’un fil filtré sur la commune, sans répéter la carte', function () {

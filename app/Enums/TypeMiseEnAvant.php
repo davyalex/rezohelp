@@ -20,7 +20,7 @@ enum TypeMiseEnAvant: string
         return match ($this) {
             self::Remontee => 'Remontée',
             self::UneCommune => 'À la une',
-            self::SponsoriseFil => 'Sponsorisé',
+            self::SponsoriseFil => 'Annonce sponsorisée',
         };
     }
 }

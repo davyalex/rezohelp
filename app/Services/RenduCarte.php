@@ -94,7 +94,7 @@ class RenduCarte
      */
     public function rendreMiseEnAvant(MiseEnAvant $mise): string
     {
-        $etiquette = $mise->type === TypeMiseEnAvant::UneCommune ? 'À la une' : 'Sponsorisé';
+        $etiquette = $mise->type === TypeMiseEnAvant::UneCommune ? 'À la une' : 'Annonce sponsorisée';
 
         return '<li data-mise-en-avant="'.route('mises-en-avant.clic', $mise->id).'">'
             .$this->rendre($mise->publication, $etiquette)

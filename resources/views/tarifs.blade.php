@@ -55,7 +55,7 @@
         @if ($produits->isNotEmpty())
             <section class="mt-8" aria-labelledby="titre-produits">
                 <h2 id="titre-produits" class="text-xl font-bold">À l’unité</h2>
-                <p class="mt-1 text-sm text-slate-600">Depuis « Mes publications », pour une publication déjà en ligne. Toute publication mise en avant porte la mention « Sponsorisé » ou « À la une ».</p>
+                <p class="mt-1 text-sm text-slate-600">Depuis « Mes publications », pour une publication déjà en ligne. Toute publication mise en avant porte la mention « Annonce sponsorisée » ou « À la une ».</p>
                 <ul class="mt-3 divide-y divide-slate-200 rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/70">
                     @foreach ($produits as $produit)
                         <li class="flex flex-wrap items-baseline justify-between gap-2 px-4 py-3">
