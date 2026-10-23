@@ -6,6 +6,7 @@ import { envoyerFormulaire } from './requetes';
 import { formulairePublication } from './publication';
 import { demarrerPwa } from './pwa';
 import { activerSpinners, enregistrerComposants } from './interface';
+import { demarrerConfirmations } from './confirmation';
 
 enregistrerComposants(Alpine);
 Alpine.data('formulairePublication', formulairePublication);
@@ -62,6 +63,8 @@ Alpine.data('incitation', (cle) => ({
 window.Alpine = Alpine;
 Alpine.start();
 
+// Avant les spinners : un envoi suspendu par la confirmation n'active pas le spinner.
+demarrerConfirmations();
 activerSpinners();
 demarrerFil();
 suivreMisesEnAvant();

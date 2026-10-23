@@ -534,3 +534,22 @@
 - [ ] En mode avion, rouvrir l'application : la page « Vous êtes hors connexion » s'affiche ; « Mon espace » n'est jamais servi depuis le cache.
 - [ ] Lighthouse mobile sur `/` et sur une page détail en préproduction (HTTPS, Memcached) : Performance ≥ 90, Accessibilité ≥ 95, Bonnes pratiques ≥ 95, SEO ≥ 95.
 - [ ] `npm run build && npm run budget-js` : moins de 50 Ko gzip.
+
+---
+
+## Compléments après le lot 9 (23/10/2026)
+
+- **Comptes de l'équipe séparés et refonte de l'interface** : le travail d'une session précédente (D-065, D-066) a été relu, vérifié et commité. Deux durcissements y ont été ajoutés : la connexion admin est limitée à 20 essais par minute et par IP, quel que soit le nom d'utilisateur, et le mot de passe d'un membre de l'équipe est vérifié contre les fuites connues. La note de la veille s'affiche dans l'écran de modération.
+- **Demandes de prestation, longueurs libres, confirmations, source en lien** (D-069) : onglet et page `/demandes`, encadré « Ils cherchent un prestataire », carte d'une demande mise en avant ; titre et description sans minimum ; boîte de confirmation du site ; « Voir l'offre sur … » vers l'annonce source.
+- Tests ajoutés :
+  - `tests/Feature/Fil/DemandesFilTest.php` (5) ;
+  - `tests/Feature/Composants/ConfirmationTest.php` (4) ;
+  - `PublierTest` (+2 : longueurs libres, plafond technique) ;
+  - `FiltresFilTest` (+1 : lien vers la source) ;
+  - `EquipeTest` (+2 : limite par IP, mot de passe compromis) ;
+  - `ModerationTest` (+1 : note de la veille).
+- Total : 842 tests verts. Lighthouse mobile sur `/` : 93 / 100 / 100 / 100.
+- [ ] À vérifier par Alex : onglet « Demandes » et page `/demandes`. L'encadré « Ils cherchent un prestataire » n'apparaît que lorsqu'une demande est en ligne ; la seule demande actuelle est en attente de modération.
+- [ ] À vérifier par Alex : supprimer une alerte depuis « Mon espace » ouvre la boîte de confirmation du site (Annuler / Supprimer).
+- [ ] À vérifier par Alex : sur le fil, « Voir l'offre sur Educarrière » ouvre l'annonce d'origine dans un nouvel onglet.
+- Après déploiement : `php artisan migrate --force`, puis vider le cache applicatif. Les cartes déjà en cache garderaient sinon l'ancien gabarit pendant 24 h.

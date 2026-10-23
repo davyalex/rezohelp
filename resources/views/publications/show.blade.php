@@ -55,7 +55,9 @@
                     </p>
                     <p class="text-sm text-slate-600">
                         Publiée {{ ($p->publiee_le ?? $p->cree_le)?->diffForHumans() }}@if ($commune) · {{ $commune }}@endif
-                        @if ($p->source === \App\Enums\SourcePublication::VeilleIa && $p->source_nom) · via {{ $p->source_nom }}@endif
+                        @if ($p->source === \App\Enums\SourcePublication::VeilleIa && $p->source_nom)
+                            · via @if ($p->source_url)<a href="{{ $p->source_url }}" target="_blank" rel="noopener nofollow" class="font-semibold text-brand underline underline-offset-2 hover:text-brand-fonce">{{ $p->source_nom }}<span aria-hidden="true"> ↗</span><span class="sr-only"> (nouvel onglet)</span></a>@else{{ $p->source_nom }}@endif
+                        @endif
                     </p>
                 </div>
                 <x-badge-type :type="$p->type" :sous-type="$p->sous_type" />

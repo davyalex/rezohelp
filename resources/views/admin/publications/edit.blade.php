@@ -14,8 +14,8 @@
     <form method="POST" action="{{ route('admin.publications.update', $publication) }}" class="mt-4 max-w-3xl space-y-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
         @csrf
         @method('PUT')
-        <x-champ name="titre" label="Titre" :valeur="$publication->titre" maxlength="100" required />
-        <x-zone-texte name="contenu" label="Texte" :valeur="$publication->contenu" :min="80" :max="3000" :lignes="10" required />
+        <x-champ name="titre" label="Titre" :valeur="$publication->titre" :maxlength="\App\Http\Requests\Publication\PublierPublicationRequest::TITRE_MAX" required />
+        <x-zone-texte name="contenu" label="Texte" :valeur="$publication->contenu" :lignes="10" required />
         <div class="grid gap-4 sm:grid-cols-3">
             <x-liste name="categorie_id" label="Catégorie" :options="$categories" :valeur="$publication->categorie_id" required />
             <x-liste name="commune_id" label="Commune" :options="$communes" :valeur="$publication->commune_id" vide="Aucune" />

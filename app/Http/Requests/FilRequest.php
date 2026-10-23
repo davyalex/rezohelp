@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Donnees\FiltresFil;
+use App\Enums\SousTypeService;
 use App\Enums\TypeContrat;
 use App\Enums\TypePublication;
 use App\Services\Referentiels;
@@ -30,6 +31,7 @@ class FilRequest extends FormRequest
             'commune' => ['nullable', 'string', 'max:120'],
             'categorie' => ['nullable', 'string', 'max:120'],
             'contrat' => ['nullable', 'string', 'max:20'],
+            'sous_type' => ['nullable', 'string', 'max:20'],
             'aujourdhui' => ['nullable', 'boolean'],
             'q' => ['nullable', 'string', 'max:100'],
             'curseur' => ['nullable', 'string', 'max:500'],
@@ -46,11 +48,18 @@ class FilRequest extends FormRequest
         return max(0, min(100000, $this->integer('deja')));
     }
 
-    public function filtres(?TypePublication $type = null): FiltresFil
+    public function filtres(?TypePublication $type = null, ?SousTypeService $sousType = null): FiltresFil
     {
         $referentiels = app(Referentiels::class);
 
         $type ??= TypePublication::tryFrom($this->string('type')->toString());
+        // Offres ou demandes : seulement pour les services (une demande est toujours un service).
+        $sousType ??= SousTypeService::tryFrom($this->string('sous_type')->toString());
+        if ($sousType !== null && $type !== TypePublication::Formation && $type !== TypePublication::Emploi) {
+            $type = TypePublication::Service;
+        } else {
+            $sousType = null;
+        }
         $commune = $this->filled('commune') ? $referentiels->communeParSlug($this->string('commune')->toString()) : null;
         $categorie = $this->filled('categorie') ? $referentiels->categorieParSlug($this->string('categorie')->toString()) : null;
 
@@ -72,6 +81,7 @@ class FilRequest extends FormRequest
             typeContrat: in_array($type, [null, TypePublication::Emploi], true) ? $contrat : null,
             aujourdhui: $this->boolean('aujourdhui'),
             recherche: $recherche !== '' ? $recherche : null,
+            sousType: $sousType,
         );
     }
 

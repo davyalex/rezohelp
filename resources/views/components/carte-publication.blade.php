@@ -4,7 +4,8 @@
     $lien = $p->exists ? route('publications.show', $p->slug) : '#';
     $idTitre = 'carte-'.($p->id ?? 'apercu').'-titre';
 @endphp
-<article class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/70" aria-labelledby="{{ $idTitre }}">
+@php($estDemande = $p->sous_type === \App\Enums\SousTypeService::Demande)
+<article @class(['rounded-2xl bg-white shadow-sm', 'ring-1 ring-slate-200/70' => ! $estDemande, 'border-l-4 border-service ring-1 ring-service/30' => $estDemande]) aria-labelledby="{{ $idTitre }}">
     {{-- En-tête : avatar, auteur, date relative, commune, badge, menu --}}
     <header class="flex items-start gap-3 px-4 pt-4">
         @if ($p->auteur_avatar_url)
@@ -58,7 +59,7 @@
     {{-- Corps --}}
     <div class="px-4 pt-3">
         <h2 id="{{ $idTitre }}" class="text-lg font-bold leading-snug text-slate-900">
-            <a href="{{ $lien }}" class="hover:underline">{{ $titre }}</a>
+            <a href="{{ $lien }}" class="line-clamp-3 break-words hover:underline">{{ $titre }}</a>
         </h2>
         @if ($categorie)
             <p class="mt-0.5 text-sm text-slate-600">{{ $categorie }}</p>
@@ -74,7 +75,16 @@
         @endif
 
         @if ($estVeille() && $p->source_nom)
-            <p class="mt-3 text-sm text-slate-600">via {{ \App\Support\JetonsCarte::neutraliser($p->source_nom) }}</p>
+            {{-- Origine de l'annonce mise en avant : un clic ouvre directement l'offre sur le site source. --}}
+            @if ($p->source_url)
+                <a href="{{ \App\Support\JetonsCarte::neutraliser($p->source_url) }}" target="_blank" rel="noopener nofollow"
+                   class="mt-3 inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-brand-clair px-3 text-sm font-semibold text-brand-fonce ring-1 ring-brand/30 hover:bg-brand hover:text-white">
+                    Voir l’offre sur {{ \App\Support\JetonsCarte::neutraliser($p->source_nom) }}
+                    <span aria-hidden="true">↗</span><span class="sr-only">(nouvel onglet)</span>
+                </a>
+            @else
+                <p class="mt-3 text-sm text-slate-600">via {{ \App\Support\JetonsCarte::neutraliser($p->source_nom) }}</p>
+            @endif
         @endif
 
         {{ JetonsCarte::PREVENTION }}
@@ -107,13 +117,13 @@
                class="flex min-h-11 flex-1 items-center justify-center gap-1 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50">
                 <span aria-hidden="true">↗</span> Partager<span class="sr-only"> sur WhatsApp</span>
             </a>
-            {{-- Les vraies actions (postuler, contacter, s'inscrire…) sont sur la page détail. --}}
-            <a href="{{ $lien }}" @class([
+            {{-- Les vraies actions (postuler, contacter, s'inscrire…) sont sur la page détail ; une demande y ouvre la réponse. --}}
+            <a href="{{ $estDemande ? $lien.'#repondre' : $lien }}" @class([
                 'flex min-h-11 flex-1 items-center justify-center gap-1 rounded-lg px-2 text-sm font-semibold text-white',
                 'bg-emploi hover:opacity-90' => $p->type === \App\Enums\TypePublication::Emploi,
                 'bg-service hover:opacity-90' => $p->type === \App\Enums\TypePublication::Service,
                 'bg-formation hover:opacity-90' => $p->type === \App\Enums\TypePublication::Formation,
-            ])>Voir plus<span aria-hidden="true">→</span><span class="sr-only"> : {{ $titre }}</span></a>
+            ])>@if ($estDemande)Je suis disponible @else Voir plus @endif<span aria-hidden="true">→</span><span class="sr-only"> : {{ $titre }}</span></a>
         </div>
     </footer>
 </article>

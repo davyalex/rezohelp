@@ -162,7 +162,7 @@
                                 </details>
                             @endif
                             <form method="POST" action="{{ route('espace.publications.destroy', $publication->id) }}"
-                                  x-data @submit="confirm('Supprimer cette publication ?') || $event.preventDefault()">
+                                  data-confirmer="Supprimer cette publication ?" data-detail="Elle disparaîtra du fil et de vos publications. Les réponses reçues ne seront plus accessibles." data-bouton="Supprimer" data-danger>
                                 @csrf
                                 @method('DELETE')
                                 <x-bouton variante="lien" class="min-h-11 text-sm text-red-700">Supprimer</x-bouton>

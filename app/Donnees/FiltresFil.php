@@ -2,6 +2,7 @@
 
 namespace App\Donnees;
 
+use App\Enums\SousTypeService;
 use App\Enums\TypeContrat;
 use App\Enums\TypePublication;
 use Illuminate\Support\Carbon;
@@ -23,6 +24,8 @@ final readonly class FiltresFil
         public ?TypeContrat $typeContrat = null,
         public bool $aujourdhui = false,
         public ?string $recherche = null,
+        // Offres ou demandes de service (« Demandes » : ceux qui cherchent un prestataire).
+        public ?SousTypeService $sousType = null,
     ) {}
 
     /**
@@ -36,6 +39,7 @@ final readonly class FiltresFil
             $this->typeContrat?->value,
             $this->aujourdhui ? Carbon::today()->toDateString() : null,
             $this->recherche !== null ? mb_strtolower($this->recherche) : null,
+            $this->sousType?->value,
         ])), 0, 12);
     }
 
@@ -52,22 +56,32 @@ final readonly class FiltresFil
             'contrat' => $this->typeContrat?->value,
             'aujourdhui' => $this->aujourdhui ? '1' : null,
             'q' => $this->recherche,
+            'sous_type' => $this->sousType?->value,
         ], fn (?string $valeur): bool => $valeur !== null && $valeur !== '');
     }
 
     /**
      * URL du fil avec certains filtres modifiés (null retire le filtre).
-     * Changer de type retire la catégorie et le contrat, propres à un type.
+     * Changer de type retire la catégorie et le contrat, propres à un type ; le sous-type
+     * (demandes de service) change avec l'onglet.
      *
      * @param  array<string, string|null>  $modifications
      */
-    public function url(array $modifications = [], ?TypePublication $type = null, bool $changerType = false): string
+    public function url(array $modifications = [], ?TypePublication $type = null, bool $changerType = false, ?SousTypeService $sousType = null): string
     {
         $typeCible = $changerType ? $type : $this->type;
+        $sousTypeCible = $changerType ? $sousType : $this->sousType;
         $parametres = $this->parametres();
+        unset($parametres['sous_type']);
 
         if ($changerType && $typeCible !== $this->type) {
             unset($parametres['categorie'], $parametres['contrat']);
+        }
+
+        // Les demandes ont leur propre page (/demandes) ; les offres seules se filtrent par paramètre.
+        $demandes = $typeCible === TypePublication::Service && $sousTypeCible === SousTypeService::Demande;
+        if ($typeCible === TypePublication::Service && $sousTypeCible === SousTypeService::Offre) {
+            $parametres['sous_type'] = SousTypeService::Offre->value;
         }
 
         $parametres = array_filter(
@@ -77,7 +91,7 @@ final readonly class FiltresFil
 
         $route = match ($typeCible) {
             TypePublication::Emploi => 'fil.emplois',
-            TypePublication::Service => 'fil.services',
+            TypePublication::Service => $demandes ? 'fil.demandes' : 'fil.services',
             TypePublication::Formation => 'fil.formations',
             null => isset($parametres['q']) ? 'fil.recherche' : 'fil.index',
         };
@@ -85,8 +99,11 @@ final readonly class FiltresFil
         return route($route, $parametres);
     }
 
+    /**
+     * Un filtre secondaire est actif (le sous-type est porté par l'onglet « Demandes »).
+     */
     public function estFiltre(): bool
     {
-        return $this->parametres() !== [];
+        return array_diff_key($this->parametres(), ['sous_type' => true]) !== [];
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Donnees\SalveFil;
+use App\Enums\SousTypeService;
 use App\Enums\TypePublication;
 use App\Http\Requests\FilRequest;
 use App\Jobs\EnregistrerRecherche;
@@ -29,9 +30,9 @@ class FilController extends Controller
         private readonly EmplacementsSponsorises $emplacements,
     ) {}
 
-    public function index(FilRequest $request, ?string $type = null): View
+    public function index(FilRequest $request, ?string $type = null, ?string $sousType = null): View
     {
-        $filtres = $request->filtres(TypePublication::tryFrom((string) $type));
+        $filtres = $request->filtres(TypePublication::tryFrom((string) $type), SousTypeService::tryFrom((string) $sousType));
         $salve = $this->fil->salve($filtres, $request->curseur());
 
         if ($filtres->recherche !== null && $request->curseur() === null) {
@@ -56,6 +57,7 @@ class FilController extends Controller
             'offresParContrat' => $this->fil->offresParContrat(),
             'nombresParCategorie' => $this->fil->nombresParCategorie(),
             'formationsRecentes' => $this->fil->formationsRecentes(),
+            'demandesRecentes' => $this->fil->demandesRecentes(),
         ]);
     }
 

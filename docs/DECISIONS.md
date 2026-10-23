@@ -275,3 +275,19 @@
 ### D-068 · 2026-10-23 · Budget JS, inscriptions et filtres accessibles
 - **Choix** : (1) le budget JS public de 50 Ko (CLAUDE.md, CONTEXTE §8) se mesure **compressé en gzip**, comme il transite sur le réseau : `npm run budget-js` additionne l'entrée `resources/js/app.js` et ses imports statiques (22 Ko gzip, 62 Ko non compressé), échoue au-delà de 50 Ko et si une bibliothèque du back-office (jQuery, DataTables, Select2, SweetAlert2) apparaît dans le JS public ; l'étape tourne en CI après le build. (2) Inscription limitée à `max_inscriptions_par_heure` comptes par heure depuis une même IP (10 par défaut, 0 = sans limite) ; seules les inscriptions réussies comptent. La limite reste large parce que de nombreux abonnés mobiles partagent une même IP publique. (3) Les puces de filtre du fil sont des liens : leur état actif s'annonce par `aria-current="true"` ; `aria-pressed` reste réservé aux vrais boutons (J'aime, Enregistrer).
 - **Raison** : Alpine, imposé par la stack, pèse à lui seul environ 44 Ko non compressé, donc un budget de 50 Ko non compressé serait intenable. L'inscription était la seule entrée anonyme sans limite de débit (Fortify n'en prévoit pas). `aria-pressed` sur un lien faisait échouer l'audit Lighthouse `aria-allowed-attr`.
+
+### D-069 · 2026-10-23 · Demandes de prestation visibles, longueurs libres, confirmations du site, source en lien
+- **Choix** :
+  1. **Demandes de prestation** :
+     - nouvel onglet « Demandes » et page `/demandes` (`fil.demandes`, filtre `sous_type=demande`, index `type, sous_type, statut, tri_le, id`), avec un bandeau qui explique comment répondre ou publier son besoin ;
+     - encadré « Ils cherchent un prestataire » (3 dernières demandes et leur nombre) sur « Tout » et « Home service » : dans la colonne de droite, et dans le fil après la 2e carte sur mobile ;
+     - carte d'une demande : bordure orange, pastille pleine « Demande de prestation » et bouton « Je suis disponible » vers la réponse.
+  2. **Titre et description sans contrainte de longueur** :
+     - plus de minimum, à la demande d'Alex (le CONTEXTE §11.4 prévoyait 10–100 et 80–3 000 caractères) ;
+     - seuls des plafonds techniques restent, sans compteur : 255 caractères pour le titre (colonne élargie de 150 à 255), 15 000 pour la description ;
+     - même règle dans l'édition du back-office ; un titre long est coupé à 3 lignes sur la carte.
+  3. **Confirmation des suppressions** sur le site public : boîte du site (`<dialog>`, `resources/js/confirmation.js`, attribut `data-confirmer`) au lieu de la boîte du navigateur ; le back-office garde SweetAlert2.
+  4. **Origine d'une annonce de la veille** :
+     - sur la carte, un lien « Voir l'offre sur Educarrière ↗ » ouvre directement l'annonce source ;
+     - sur la page détail, le nom de la source est un lien, et le bouton principal devient « Postuler sur Educarrière ».
+- **Raison** : demandes d'Alex. Les demandes, peu nombreuses, se perdaient parmi les offres de services.

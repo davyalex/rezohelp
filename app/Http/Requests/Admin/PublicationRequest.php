@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Http\Requests\Publication\PublierPublicationRequest;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -22,8 +23,8 @@ class PublicationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'titre' => ['required', 'string', 'min:10', 'max:100'],
-            'contenu' => ['required', 'string', 'min:80', 'max:3000'],
+            'titre' => ['required', 'string', 'max:'.PublierPublicationRequest::TITRE_MAX],
+            'contenu' => ['required', 'string', 'max:'.PublierPublicationRequest::CONTENU_MAX],
             'categorie_id' => ['required', 'integer', Rule::exists('categories', 'id')],
             'commune_id' => ['nullable', 'integer', Rule::exists('communes', 'id')],
             'expire_le' => ['nullable', 'date'],

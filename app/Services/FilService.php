@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Donnees\FiltresFil;
 use App\Donnees\SalveFil;
+use App\Enums\SousTypeService;
 use App\Enums\TypeContrat;
 use App\Enums\TypePublication;
 use App\Models\Publication;
@@ -30,7 +31,7 @@ class FilService
     public const array COLONNES_CARTE = [
         'id', 'type', 'sous_type', 'statut', 'titre', 'slug', 'extrait', 'categorie_id', 'commune_id',
         'auteur_id', 'entreprise_id', 'auteur_nom_affiche', 'auteur_avatar_url', 'auteur_verifie', 'auteur_badge',
-        'faits_cles', 'image_url', 'image_largeur', 'image_hauteur', 'source', 'source_nom',
+        'faits_cles', 'image_url', 'image_largeur', 'image_hauteur', 'source', 'source_nom', 'source_url',
         'nb_jaime', 'nb_commentaires', 'publiee_le', 'tri_le', 'code_court', 'modifie_le',
     ];
 
@@ -73,6 +74,7 @@ class FilService
         return Publication::query()
             ->publiees()
             ->when($filtres->type !== null, fn (Builder $requete) => $requete->where('type', $filtres->type?->value))
+            ->when($filtres->sousType !== null, fn (Builder $requete) => $requete->where('sous_type', $filtres->sousType?->value))
             ->when($filtres->communeId !== null, fn (Builder $requete) => $requete->where('commune_id', $filtres->communeId))
             ->when($filtres->categorieIds !== [], fn (Builder $requete) => $requete->whereIn('categorie_id', $filtres->categorieIds))
             ->when($filtres->typeContrat !== null, fn (Builder $requete) => $requete->where('type_contrat', $filtres->typeContrat?->value))
@@ -156,6 +158,35 @@ class FilService
             ->get(['titre', 'slug'])
             ->map(fn (object $ligne): array => ['titre' => (string) $ligne->titre, 'slug' => (string) $ligne->slug])
             ->all());
+    }
+
+    /**
+     * Dernières demandes de prestation en ligne, mises en avant dans le fil (D-069), et leur nombre.
+     *
+     * @return array{nombre: int, demandes: list<array{titre: string, slug: string, commune_id: ?int, publiee_le: ?string}>}
+     */
+    public function demandesRecentes(int $nombre = 3): array
+    {
+        return $this->cache->compteurs('demandes-recentes', function () use ($nombre): array {
+            $requete = Publication::query()->publiees()
+                ->where('type', TypePublication::Service->value)
+                ->where('sous_type', SousTypeService::Demande->value);
+
+            return [
+                'nombre' => (clone $requete)->count(),
+                'demandes' => $requete->orderByDesc('tri_le')->orderByDesc('id')
+                    ->limit($nombre)
+                    ->toBase()
+                    ->get(['titre', 'slug', 'commune_id', 'publiee_le'])
+                    ->map(fn (object $ligne): array => [
+                        'titre' => (string) $ligne->titre,
+                        'slug' => (string) $ligne->slug,
+                        'commune_id' => $ligne->commune_id !== null ? (int) $ligne->commune_id : null,
+                        'publiee_le' => $ligne->publiee_le !== null ? (string) $ligne->publiee_le : null,
+                    ])
+                    ->all(),
+            ];
+        });
     }
 
     /**

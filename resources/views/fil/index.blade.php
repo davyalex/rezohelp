@@ -1,6 +1,7 @@
 @extends('layouts.public')
 
 @php
+    use App\Enums\SousTypeService;
     use App\Enums\TypeContrat;
     use App\Enums\TypePublication;
 
@@ -9,6 +10,8 @@
         ['type' => null, 'libelle' => 'Tout', 'icone' => '✨'],
         ['type' => TypePublication::Emploi, 'libelle' => 'Emplois', 'icone' => '💼'],
         ['type' => TypePublication::Service, 'libelle' => 'Home service', 'icone' => '🔧'],
+        // Demandes de prestation (D-069) : un onglet à part pour qu'elles ne se perdent pas parmi les offres.
+        ['type' => TypePublication::Service, 'sous_type' => SousTypeService::Demande, 'libelle' => 'Demandes', 'icone' => '🙋'],
         ['type' => TypePublication::Formation, 'libelle' => 'Formations', 'icone' => '🎓'],
     ];
     // Couleur de chaque type (tokens @theme) : classes écrites en entier pour que Tailwind les détecte.
@@ -24,11 +27,13 @@
         ? 'Résultats pour « '.$filtres->recherche.' »'
         : match ($filtres->type) {
             TypePublication::Emploi => 'Offres d’emploi à Abidjan',
-            TypePublication::Service => 'Home service et petits métiers à Abidjan',
+            TypePublication::Service => $filtres->sousType === SousTypeService::Demande ? 'Demandes de prestation à Abidjan' : 'Home service et petits métiers à Abidjan',
             TypePublication::Formation => 'Formations à Abidjan',
             null => 'Le fil',
         };
     $premiere = $salve->publications->first();
+    // Demandes mises en avant sur « Tout » et « Home service » (pas sur leur propre onglet ni hors des services).
+    $afficherDemandes = $demandesRecentes['demandes'] !== [] && $filtres->sousType === null && in_array($filtres->type, [null, TypePublication::Service], true);
 @endphp
 
 @section('titre', $titrePage)
@@ -44,7 +49,7 @@
                     {{-- Vue « Tout » : catégories regroupées par type, chaque groupe se déroule. --}}
                     <div class="mt-2 space-y-1">
                         @foreach ($onglets as $onglet)
-                            @continue($onglet['type'] === null)
+                            @continue($onglet['type'] === null || isset($onglet['sous_type']))
                             @php($cle = $onglet['type']->value)
                             @php($categories = $groupesCategories->get($cle, collect()))
                             @php($total = $categories->sum(fn (array $c): int => $nombresParCategorie[$c['id']] ?? 0))
@@ -114,9 +119,9 @@
                 <nav aria-label="Types de publication" class="-mx-4 px-4 sm:mx-0 sm:px-0">
                     <ul class="sans-barre flex snap-x gap-2 overflow-x-auto py-1">
                         @foreach ($onglets as $onglet)
-                            @php($actif = $filtres->type === $onglet['type'])
+                            @php($actif = $filtres->type === $onglet['type'] && $filtres->sousType === ($onglet['sous_type'] ?? null))
                             <li class="shrink-0 snap-start">
-                                <a href="{{ $filtres->url([], $onglet['type'], true) }}" @if ($actif) aria-current="page" @endif
+                                <a href="{{ $filtres->url([], $onglet['type'], true, $onglet['sous_type'] ?? null) }}" @if ($actif) aria-current="page" @endif
                                    class="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-sm font-semibold transition-colors {{ $actif ? 'bg-brand text-white shadow-sm' : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50' }}">
                                     <span aria-hidden="true">{{ $onglet['icone'] }}</span>{{ $onglet['libelle'] }}
                                 </a>
@@ -124,6 +129,14 @@
                         @endforeach
                     </ul>
                 </nav>
+
+                @if ($filtres->sousType === SousTypeService::Demande)
+                    {{-- Onglet « Demandes » : ce qu'on y trouve, et comment y répondre ou publier. --}}
+                    <div class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl bg-service-clair px-4 py-3 ring-1 ring-service/30">
+                        <p class="min-w-0 flex-1 text-sm text-slate-900"><span aria-hidden="true">🙋</span> Des particuliers et des entreprises cherchent un prestataire. Artisans : ouvrez une demande et répondez « Je suis disponible ».</p>
+                        <a href="{{ route('publier.formulaire', 'service-demande') }}" class="inline-flex min-h-11 items-center rounded-lg bg-service px-3 text-sm font-semibold text-white hover:opacity-90">Publier mon besoin</a>
+                    </div>
+                @endif
 
                 <div class="flex items-center gap-2">
                     {{-- Commune : liste déroulante compacte plutôt qu'une rangée de 13 puces. --}}
@@ -221,8 +234,14 @@
 
             @if ($salve->publications->isEmpty())
                 <div class="rounded-2xl bg-white p-6 text-center shadow-sm ring-1 ring-slate-200/70">
-                    <p class="text-lg font-semibold">Aucune publication ne correspond pour le moment.</p>
-                    <p class="mt-1 text-slate-600">Essayez une autre commune ou une autre catégorie.</p>
+                    @if ($filtres->sousType === SousTypeService::Demande && ! $filtres->estFiltre())
+                        <p class="text-lg font-semibold">Aucune demande de prestation pour le moment.</p>
+                        <p class="mt-1 text-slate-600">Vous cherchez un plombier, une nounou, un chauffeur ? Décrivez votre besoin : les artisans vous répondent.</p>
+                        <a href="{{ route('publier.formulaire', 'service-demande') }}" class="mt-4 inline-flex min-h-11 items-center rounded-lg bg-service px-4 font-semibold text-white hover:opacity-90">Publier mon besoin</a>
+                    @else
+                        <p class="text-lg font-semibold">Aucune publication ne correspond pour le moment.</p>
+                        <p class="mt-1 text-slate-600">Essayez une autre commune ou une autre catégorie.</p>
+                    @endif
                     @if ($filtres->estFiltre())
                         <x-bouton :href="$filtres->url(['commune' => null, 'categorie' => null, 'contrat' => null, 'aujourdhui' => null, 'q' => null])" variante="secondaire" class="mt-4">Retirer les filtres</x-bouton>
                     @endif
@@ -239,6 +258,9 @@
                             {!! $rendu->rendreMiseEnAvant($sponsorisees[$loop->index]) !!}
                         @endisset
                         <li data-carte>{!! $rendu->rendre($publication) !!}</li>
+                        @if ($afficherDemandes && $loop->iteration === min(2, $loop->count))
+                            <li class="lg:hidden">@include('fil._bloc-demandes', ['contexte' => 'fil'])</li>
+                        @endif
                         @if ($loop->iteration === min(5, $loop->count))
                             <li>@include('fil._bloc-alerte')</li>
                         @endif
@@ -268,6 +290,9 @@
 
         {{-- Colonne droite (desktop) --}}
         <aside class="hidden space-y-4 lg:block" aria-label="À découvrir">
+            @if ($afficherDemandes)
+                @include('fil._bloc-demandes', ['contexte' => 'colonne'])
+            @endif
             @include('fil._bloc-alerte')
             @if ($offresParContrat !== [])
                 @php($maxContrat = max(array_column($offresParContrat, 'nombre')))

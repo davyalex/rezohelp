@@ -23,6 +23,11 @@ abstract class PublierPublicationRequest extends FormRequest
 {
     public const int TAILLE_PHOTO_KO = 5120;
 
+    /** Garde-fous techniques seulement (taille des colonnes), sans minimum : l'auteur écrit librement (D-069). */
+    public const int TITRE_MAX = 255;
+
+    public const int CONTENU_MAX = 15000;
+
     abstract public function parcours(): ParcoursPublication;
 
     /**
@@ -62,10 +67,10 @@ abstract class PublierPublicationRequest extends FormRequest
 
         return array_merge([
             'action' => ['nullable', Rule::in(['publier', 'brouillon'])],
-            'titre' => ['required', 'string', 'min:10', 'max:100'],
+            'titre' => ['required', 'string', 'max:'.self::TITRE_MAX],
             'categorie_id' => ['required', 'integer', Rule::exists('categories', 'id')->where('type', $type)->where('actif', true)],
             'commune_id' => ['required', 'integer', Rule::exists('communes', 'id')->where('actif', true)],
-            'contenu' => ['required', 'string', 'min:80', 'max:3000'],
+            'contenu' => ['required', 'string', 'max:'.self::CONTENU_MAX],
             'photos' => ['nullable', 'array', 'max:'.$photosMax],
             'photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:'.self::TAILLE_PHOTO_KO],
             'expire_le' => ['nullable', 'date', 'after:today', 'before_or_equal:'.now()->addDays($dureeMax)->toDateString()],

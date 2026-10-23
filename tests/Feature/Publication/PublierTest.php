@@ -3,6 +3,7 @@
 use App\Enums\ConfianceUtilisateur;
 use App\Enums\StatutPublication;
 use App\Events\PublicationPubliee;
+use App\Http\Requests\Publication\PublierPublicationRequest;
 use App\Jobs\EnrichirPublicationIA;
 use App\Models\Commune;
 use App\Models\Entreprise;
@@ -162,8 +163,8 @@ it('enregistre un brouillon sans consommer de quota ni passer en modération', f
 
 it('valide les champs communs et propres au parcours', function () {
     $this->actingAs($this->membre)->post('/publier/emploi', donneesEmploi([
-        'titre' => 'Court',
-        'contenu' => 'Trop court.',
+        'titre' => '',
+        'contenu' => '   ',
         'type_contrat' => 'inconnu',
         'salaire_min' => 400000,
         'salaire_max' => 100000,
@@ -209,8 +210,8 @@ it('limite les envois du formulaire à max_envois_par_heure', function () {
     parametre('max_envois_par_heure', '2');
     $this->actingAs($this->membre);
 
-    $this->post('/publier/emploi', donneesEmploi(['titre' => 'Court']))->assertStatus(302);
-    $this->post('/publier/emploi', donneesEmploi(['titre' => 'Court']))->assertStatus(302);
+    $this->post('/publier/emploi', donneesEmploi(['titre' => '']))->assertStatus(302);
+    $this->post('/publier/emploi', donneesEmploi(['titre' => '']))->assertStatus(302);
     $this->post('/publier/emploi', donneesEmploi())->assertStatus(429);
 });
 
@@ -308,4 +309,25 @@ it('refuse un fichier qui n’est pas une image', function () {
     $this->actingAs($this->membre)->post('/publier/service-offre', donneesServiceOffre([
         'photos' => [UploadedFile::fake()->create('virus.php', 10, 'application/x-php')],
     ]))->assertSessionHasErrors('photos.0');
+});
+
+it('laisse l’auteur écrire librement : titre et description courts ou longs (D-069)', function () {
+    Queue::fake();
+    $this->actingAs($this->membre);
+
+    $this->post('/publier/service-demande', donneesServiceDemande(['titre' => 'Plombier', 'contenu' => 'Fuite urgente.']))->assertSessionHasNoErrors();
+    $this->post('/publier/emploi', donneesEmploi([
+        'titre' => 'Commercial terrain '.str_repeat('pour la distribution de boissons ', 6),
+        'contenu' => str_repeat('Prospection, suivi des clients, encaissement et reporting chaque semaine. ', 120),
+    ]))->assertSessionHasNoErrors();
+
+    expect(Publication::query()->count())->toBe(2)
+        ->and(mb_strlen((string) Publication::query()->where('type', 'emploi')->value('contenu')))->toBeGreaterThan(8000);
+});
+
+it('garde seulement un plafond technique sur la longueur du titre et de la description', function () {
+    $this->actingAs($this->membre)->post('/publier/emploi', donneesEmploi([
+        'titre' => str_repeat('a', PublierPublicationRequest::TITRE_MAX + 1),
+        'contenu' => str_repeat('a', PublierPublicationRequest::CONTENU_MAX + 1),
+    ]))->assertSessionHasErrors(['titre', 'contenu']);
 });

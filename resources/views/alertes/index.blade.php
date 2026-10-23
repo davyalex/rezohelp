@@ -55,7 +55,7 @@
                                 @csrf
                                 <x-bouton variante="secondaire" class="text-sm">{{ $alerte->active ? 'Mettre en pause' : 'Reprendre' }}</x-bouton>
                             </form>
-                            <form method="POST" action="{{ route('alertes.destroy', $alerte->id) }}" x-data @submit="confirm('Supprimer cette alerte ?') || $event.preventDefault()">
+                            <form method="POST" action="{{ route('alertes.destroy', $alerte->id) }}" data-confirmer="Supprimer l’alerte « {{ $alerte->nom }} » ?" data-detail="Vous ne serez plus prévenu des nouvelles offres correspondantes." data-bouton="Supprimer" data-danger>
                                 @csrf
                                 @method('DELETE')
                                 <x-bouton variante="lien" class="text-sm text-red-700">Supprimer</x-bouton>

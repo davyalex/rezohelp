@@ -27,7 +27,8 @@
     @if ($p->source === \App\Enums\SourcePublication::VeilleIa && $p->source_url)
         @if ($p->statut === StatutPublication::Publiee)
             <x-bouton :href="$p->source_url" target="_blank" rel="noopener nofollow" @class(['w-full sm:w-auto', 'bg-emploi' => $emploi, 'bg-formation' => $formation])>
-                {{ match (true) { (bool) $emploi => 'Voir l’annonce et postuler', (bool) $formation => 'Voir l’annonce et s’inscrire', default => 'Voir l’annonce' } }}
+                @php($surSource = $p->source_nom ? ' sur '.$p->source_nom : '')
+                {{ match (true) { (bool) $emploi => 'Postuler'.$surSource, (bool) $formation => 'S’inscrire'.$surSource, default => 'Voir l’annonce'.$surSource } }}
                 <span aria-hidden="true">↗</span>
             </x-bouton>
             <p class="text-sm text-slate-600">Annonce repérée par notre veille{{ $p->source_nom ? ' sur '.$p->source_nom : '' }} : ce résumé ne remplace pas l’annonce d’origine, qui s’ouvre dans un nouvel onglet.</p>

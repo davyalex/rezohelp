@@ -28,6 +28,8 @@ Route::get('/', [FilController::class, 'index'])->name('fil.index');
 Route::get('/emplois', [FilController::class, 'index'])->defaults('type', 'emploi')->name('fil.emplois');
 Route::get('/services', [FilController::class, 'index'])->defaults('type', 'service')->name('fil.services');
 Route::get('/formations', [FilController::class, 'index'])->defaults('type', 'formation')->name('fil.formations');
+// Demandes de prestation : ceux qui cherchent un artisan ou un prestataire (D-069).
+Route::get('/demandes', [FilController::class, 'index'])->defaults('type', 'service')->defaults('sousType', 'demande')->name('fil.demandes');
 Route::get('/recherche', [FilController::class, 'index'])->name('fil.recherche');
 Route::get('/fil/suite', [FilController::class, 'suite'])->name('fil.suite');
 Route::get('/fil/nouvelles', [FilController::class, 'nouvelles'])->middleware('throttle:30,1')->name('fil.nouvelles');

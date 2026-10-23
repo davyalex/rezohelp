@@ -28,8 +28,9 @@ it('met en tête la date limite, le contrat et le lien pour postuler', function 
 
     $this->get(route('publications.show', $publication->slug))
         ->assertOk()
-        ->assertSeeInOrder(['Date limite de candidature', now()->addDays(10)->translatedFormat('l j F Y'), '(encore 10 jours)', 'Contrat', 'CDD', 'Voir l’annonce et postuler', 'Description', 'centre d’appels à Angré'])
-        ->assertSee('via Emploi.ci');
+        ->assertSeeInOrder(['Date limite de candidature', now()->addDays(10)->translatedFormat('l j F Y'), '(encore 10 jours)', 'Contrat', 'CDD', 'Postuler sur Emploi.ci', 'Description', 'centre d’appels à Angré'])
+        // Origine en lien direct vers l'annonce source.
+        ->assertSee('href="'.e($publication->source_url).'" target="_blank"', false);
 });
 
 it('n’affiche jamais les notes de la veille ni des informations vides', function () {
@@ -54,7 +55,7 @@ it('n’invite plus à postuler à une annonce expirée', function () {
     $this->get(route('publications.show', $publication->slug))
         ->assertSee('(clôturée)')
         ->assertSee('Cette annonce n’accepte plus de candidatures.')
-        ->assertDontSee('Voir l’annonce et postuler');
+        ->assertDontSee('Postuler sur Emploi.ci');
 });
 
 it('distingue le bouton « Publier une annonce » de la recherche dans l’en-tête', function () {

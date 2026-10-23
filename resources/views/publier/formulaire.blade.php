@@ -83,16 +83,16 @@
                     <x-liste name="commune_id" label="{{ $parcours === ParcoursPublication::Formation ? 'Commune (sauf formation en ligne)' : 'Commune' }}"
                              :options="$communes" :valeur="$v('commune_id')" vide="Choisir une commune" />
 
-                    <x-champ name="titre" label="Titre" :valeur="$v('titre')" maxlength="100" required @input="titreModifie = true"
+                    <x-champ name="titre" label="Titre" :valeur="$v('titre')" :maxlength="\App\Http\Requests\Publication\PublierPublicationRequest::TITRE_MAX" required @input="titreModifie = true"
                              :aide="match ($parcours) {
-                                 ParcoursPublication::Emploi => 'Ex. : Comptable confirmé (CDI). Entre 10 et 100 caractères.',
-                                 ParcoursPublication::ServiceOffre => 'Ex. : Électricien disponible à Cocody. Entre 10 et 100 caractères.',
+                                 ParcoursPublication::Emploi => 'Ex. : Comptable confirmé (CDI).',
+                                 ParcoursPublication::ServiceOffre => 'Ex. : Électricien disponible à Cocody.',
                                  ParcoursPublication::ServiceDemande => 'Ex. : Cherche plombier pour une fuite à Yopougon.',
                                  ParcoursPublication::Formation => 'Ex. : Bootcamp développeur web.',
                              }" />
 
                     <x-zone-texte name="contenu" label="{{ $parcours === ParcoursPublication::ServiceDemande ? 'Décrivez votre besoin' : 'Description' }}"
-                                  :valeur="$v('contenu')" :min="80" :max="3000" :lignes="6" required />
+                                  :valeur="$v('contenu')" :lignes="8" aide="Écrivez librement : tâches, profil, horaires, conditions…" required />
                 </div>
             </details>
 

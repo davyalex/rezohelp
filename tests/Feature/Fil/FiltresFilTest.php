@@ -139,3 +139,12 @@ it('annonce le filtre actif par aria-current : aria-pressed est réservé aux bo
     expect(preg_match('/<a\s[^>]*aria-pressed/', $html))->toBe(0)
         ->and(substr_count($html, 'aria-current="true"'))->toBeGreaterThanOrEqual(2);
 });
+
+it('met en lien l’origine d’une annonce de la veille, pour l’ouvrir directement sur le site source', function () {
+    $annonce = Publication::factory()->emploi()->veille()->publiee()->create(['source_nom' => 'Educarrière']);
+
+    $this->get('/')
+        ->assertOk()
+        ->assertSee('href="'.e($annonce->source_url).'" target="_blank" rel="noopener nofollow"', false)
+        ->assertSee('Voir l’offre sur Educarrière');
+});

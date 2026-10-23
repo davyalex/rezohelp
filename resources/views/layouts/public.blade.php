@@ -77,6 +77,19 @@
         <button type="button" data-installer class="min-h-11 rounded-lg bg-brand px-3 text-sm font-semibold text-white hover:bg-brand-fonce">Installer</button>
     </aside>
 
+    {{-- Confirmation des actions destructives (resources/js/confirmation.js) : remplace la boîte du navigateur. --}}
+    <dialog id="dialogue-confirmation" aria-labelledby="dialogue-confirmation-titre" aria-describedby="dialogue-confirmation-detail"
+            class="m-auto w-[calc(100%-2rem)] max-w-sm rounded-2xl bg-white p-0 shadow-xl backdrop:bg-slate-900/50">
+        <form method="dialog" class="p-5" data-sans-spinner>
+            <p id="dialogue-confirmation-titre" data-titre class="text-lg font-bold text-slate-900"></p>
+            <p id="dialogue-confirmation-detail" data-detail class="mt-2 text-sm text-slate-700"></p>
+            <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <button type="submit" value="annuler" class="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-50">Annuler</button>
+                <button type="submit" value="confirmer" data-confirmer class="inline-flex min-h-11 items-center justify-center rounded-lg bg-brand px-4 font-semibold text-white hover:bg-brand-fonce">Confirmer</button>
+            </div>
+        </form>
+    </dialog>
+
     {{-- Navigation basse (mobile) --}}
     <nav aria-label="Navigation principale" class="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white lg:hidden">
         <ul class="mx-auto flex max-w-md justify-around">
