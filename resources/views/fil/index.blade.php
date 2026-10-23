@@ -44,7 +44,7 @@
     <div class="-mx-4 mt-3 overflow-x-auto px-4" role="group" aria-label="Filtres">
         <ul class="flex gap-2">
             <li>
-                <a href="{{ $filtres->url(['aujourdhui' => $filtres->aujourdhui ? null : '1']) }}" aria-pressed="{{ $filtres->aujourdhui ? 'true' : 'false' }}"
+                <a href="{{ $filtres->url(['aujourdhui' => $filtres->aujourdhui ? null : '1']) }}" @if ($filtres->aujourdhui) aria-current="true" @endif
                    class="inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-3 text-sm {{ $filtres->aujourdhui ? 'bg-brand-clair font-semibold text-brand-fonce ring-1 ring-brand' : 'bg-white text-slate-700 ring-1 ring-slate-200' }}">
                     Aujourd’hui
                 </a>
@@ -53,7 +53,7 @@
                 @foreach (TypeContrat::cases() as $contrat)
                     @php($actif = $filtres->typeContrat === $contrat)
                     <li>
-                        <a href="{{ $filtres->url(['contrat' => $actif ? null : $contrat->value]) }}" aria-pressed="{{ $actif ? 'true' : 'false' }}"
+                        <a href="{{ $filtres->url(['contrat' => $actif ? null : $contrat->value]) }}" @if ($actif) aria-current="true" @endif
                            class="inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-3 text-sm {{ $actif ? 'bg-emploi-clair font-semibold text-emploi ring-1 ring-emploi' : 'bg-white text-slate-700 ring-1 ring-slate-200' }}">
                             {{ $contrat->libelle() }}
                         </a>
@@ -63,7 +63,7 @@
             @foreach ($referentiels->communes() as $commune)
                 @php($actif = $filtres->communeId === $commune['id'])
                 <li>
-                    <a href="{{ $filtres->url(['commune' => $actif ? null : $commune['slug']]) }}" aria-pressed="{{ $actif ? 'true' : 'false' }}"
+                    <a href="{{ $filtres->url(['commune' => $actif ? null : $commune['slug']]) }}" @if ($actif) aria-current="true" @endif
                        class="inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-3 text-sm {{ $actif ? 'bg-brand-clair font-semibold text-brand-fonce ring-1 ring-brand' : 'bg-white text-slate-700 ring-1 ring-slate-200' }}">
                         {{ $commune['nom'] }}
                     </a>

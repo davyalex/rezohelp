@@ -63,6 +63,7 @@ class ParametresSeeder extends Seeder
             'jours_expiration_defaut' => [TypeParametre::Entier, 30, 'Durée de publication par défaut (jours)'],
             'max_publications_par_jour' => [TypeParametre::Entier, 5, 'Publications maximales par compte et par jour'],
             'max_envois_par_heure' => [TypeParametre::Entier, 10, 'Envois de formulaire de publication maximal par heure'],
+            'max_inscriptions_par_heure' => [TypeParametre::Entier, 10, 'Comptes créés au plus par heure depuis une même connexion (0 = sans limite)'],
             'jours_doublon' => [TypeParametre::Entier, 7, 'Fenêtre de détection des doublons (jours)'],
             'seuil_similarite_doublon' => [TypeParametre::Entier, 90, 'Similarité de titre considérée comme doublon (%)'],
             'max_prolongations' => [TypeParametre::Entier, 3, 'Nombre maximal de prolongations d’une publication'],

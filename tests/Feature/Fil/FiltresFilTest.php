@@ -129,3 +129,13 @@ it('accepte le type d’un onglet en paramètre pour les fragments', function ()
 
     expect($html)->toContain('Bootcamp')->not->toContain('Comptable');
 });
+
+it('annonce le filtre actif par aria-current : aria-pressed est réservé aux boutons', function () {
+    Publication::factory()->count(2)->emploi()->publiee()->create();
+
+    $html = (string) $this->get('/emplois?contrat=cdi&aujourdhui=1')->assertOk()->getContent();
+
+    // Les deux filtres actifs (CDI, Aujourd'hui) sont annoncés ; aucun lien ne porte aria-pressed.
+    expect(preg_match('/<a\s[^>]*aria-pressed/', $html))->toBe(0)
+        ->and(substr_count($html, 'aria-current="true"'))->toBeGreaterThanOrEqual(2);
+});

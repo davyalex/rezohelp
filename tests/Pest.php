@@ -59,9 +59,9 @@ function parametre(string $cle, string $valeur): void
 }
 
 /**
- * Pays et rôles nécessaires à l'inscription.
+ * Pays, rôles et paramètres nécessaires à l'inscription.
  */
 function referentielsAuth(): void
 {
-    test()->seed([PaysSeeder::class, RolesEtPermissionsSeeder::class]);
+    test()->seed([PaysSeeder::class, RolesEtPermissionsSeeder::class, ParametresSeeder::class]);
 }

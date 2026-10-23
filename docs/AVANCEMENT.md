@@ -499,8 +499,38 @@
 - **Sécurité** : revue des Policies sur toutes les routes, tests d'accès croisé sur chaque ressource d'un membre, envois de fichiers (types et tailles), limites de débit.
 - **Tests** : accès croisé (publications, réponses, alertes, notifications, commentaires, reçus, commandes), en-têtes de sécurité présents, `no-store` sur « Mon espace », manifeste et service worker servis, nombre de requêtes du fil.
 
-### Point de reprise (22/10/2026)
+### Fait
 
-**Fait** (Pint, Larastan, 689 tests verts) : PWA (`vite-plugin-pwa`, service worker `/sw.js` portée `/`, précache des assets publics et de `/hors-ligne`, stale-while-revalidate sur `/fil/suite`, network-first sur les pages, rien en cache pour `/mon-espace`, `/admin`, `/paiements`, `/publier` et l'authentification, manifeste statique `public/manifest.webmanifest`, icônes 192 / 512 / maskable, invitation à installer après 2 visites, jeton CSRF de la page imposé aux envois) ; middleware `EnTetesSecurite` (CSP avec nonce Vite, HSTS en HTTPS, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy, COOP) ; `no-store` sur toutes les pages connectées ; tests `tests/Feature/Securite/EnTetesEtPwaTest.php` (10).
+- **PWA** : `vite-plugin-pwa` (Workbox) ; service worker `/sw.js` (portée `/`) ; précache des assets publics et de `/hors-ligne` ; *stale-while-revalidate* sur `/fil/suite`, *network-first* sur les pages ; rien en cache pour `/mon-espace`, `/admin`, `/paiements`, `/publier` et l'authentification ; manifeste statique `public/manifest.webmanifest`, icônes 192 / 512 / maskable ; invitation à installer à partir de la 2e visite ; jeton CSRF de la page imposé aux envois.
+- **En-têtes** : middleware `EnTetesSecurite` (CSP avec nonce Vite, HSTS en HTTPS, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, COOP) ; `Cache-Control: no-store` sur toutes les pages connectées.
+- **Performance** :
+  - nombre de requêtes du fil, de sa suite et de la page détail indépendant du nombre de cartes ou de commentaires (tests) ;
+  - `EXPLAIN` des requêtes du fil sur la base réelle : 5 à 6 requêtes par page. L'accueil et `/fil/suite` utilisent `publications_statut_tri_le_id_index`, `/emplois` et `/services` `publications_type_statut_tri_le_id_index`, le filtre commune `publications_commune_id_statut_tri_le_id_index`, toujours en *Backward index scan* sans tri en mémoire. Seule la recherche plein texte trie en mémoire, ce qui est attendu pour un index FULLTEXT.
+  - budget JS vérifié par `npm run budget-js` en local et en CI (D-068) : 22 Ko gzip.
+- **Sécurité** :
+  - accès croisé testé sur chaque ressource d'un membre : publications (modifier, clôturer, prolonger, dupliquer, supprimer, remonter, confirmation), réponses reçues, alertes, notifications, commentaires, reçus, suivi et simulation de paiement, achat, essai et publication au nom de l'entreprise d'un autre, contenu de « Mon espace » ;
+  - envois de fichiers : photo de plus de 5 Mo, SVG, fichier PHP renommé en `.jpg` (type lu dans le contenu) et GIF refusés ; logo et photo de profil limités à 2 Mo, sans SVG ;
+  - limite de débit ajoutée sur l'inscription (D-068).
+- **Accessibilité** : puces de filtre en `aria-current` (D-068) ; texte indicatif de la recherche assombri (contraste ≥ 4,5:1 sur fond gris).
+- **Lighthouse mobile** (base locale, 294 annonces réelles, `php artisan serve`, assets compilés) :
+  - `/` : Performance 94, Accessibilité 100, Bonnes pratiques 100, SEO 100 ;
+  - page détail : 99, 100, 100, 100.
 
-**Reste à faire** : tests d'accès croisé sur chaque ressource du membre ; nombre de requêtes du fil borné (test) et `EXPLAIN` des requêtes du fil ; revue accessibilité du parcours public ; script de budget JS en CI ; Lighthouse mobile ; docs (Fait, tests, écarts, À vérifier, décisions D-062 et suivantes) ; commit « lot 9 » et tag.
+### Tests ajoutés (56 tests, 6 fichiers)
+
+- `tests/Feature/Securite/EnTetesEtPwaTest.php` (10 : en-têtes, HSTS et `upgrade-insecure-requests` en HTTPS, `no-store` sur « Mon espace » et la publication, page hors ligne sans donnée de compte, manifeste et icônes)
+- `tests/Feature/Securite/AccesCroiseTest.php` (28 : 20 routes essayées par un intrus, ressources intactes après les tentatives, achat et essai au nom d'une autre entreprise, publication au nom d'une autre entreprise, 5 pages de « Mon espace » sans donnée d'un autre membre)
+- `tests/Feature/Securite/EnvoisFichiersTest.php` (11) · `tests/Feature/Securite/LimitesDebitTest.php` (2) · `tests/Feature/Fil/PerformanceFilTest.php` (4) · `tests/Feature/Fil/FiltresFilTest.php` (+1 : filtres en `aria-current`)
+
+### Écarts avec le CONTEXTE
+
+- Décisions D-062 (CSP et Alpine) et D-068 (budget JS mesuré en gzip, limite des inscriptions, filtres accessibles).
+- Nouveau paramètre `max_inscriptions_par_heure` : après un déploiement, lancer `php artisan db:seed --class=ParametresSeeder --force`, qui ajoute les nouvelles clés sans écraser les valeurs modifiées dans l'admin. Un paramètre absent lève une erreur, volontairement.
+- Cinq actions de « Mon espace » n'ont pas de limite de débit propre (clôturer, prolonger, dupliquer une publication, mettre en pause une alerte, « tout marquer comme lu ») : elles sont réservées au propriétaire connecté et sans effet hors de son compte.
+
+### À vérifier par Alex
+
+- [ ] Installer l'application sur un téléphone Android (Chrome → « Installer l'application ») : icône, ouverture plein écran.
+- [ ] En mode avion, rouvrir l'application : la page « Vous êtes hors connexion » s'affiche ; « Mon espace » n'est jamais servi depuis le cache.
+- [ ] Lighthouse mobile sur `/` et sur une page détail en préproduction (HTTPS, Memcached) : Performance ≥ 90, Accessibilité ≥ 95, Bonnes pratiques ≥ 95, SEO ≥ 95.
+- [ ] `npm run build && npm run budget-js` : moins de 50 Ko gzip.

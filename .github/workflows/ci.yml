@@ -65,6 +65,9 @@ jobs:
           npm ci
           npm run build
 
+      - name: Budget JS public (< 50 Ko gzip, sans bibliothèque du back-office)
+        run: npm run budget-js
+
       - name: Pint
         run: ./vendor/bin/pint --test
 
