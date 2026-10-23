@@ -118,7 +118,9 @@ class EmplacementsSponsorises
     private function actives(TypeMiseEnAvant $type, FiltresFil $filtres): Builder
     {
         $avecPublication = fn (Builder $publication) => $publication->where('statut', StatutPublication::Publiee->value)
-            ->when($filtres->type !== null, fn (Builder $requete) => $requete->where('type', $filtres->type?->value));
+            ->when($filtres->type !== null, fn (Builder $requete) => $requete->where('type', $filtres->type?->value))
+            // Onglet « Demandes » : jamais une offre de service sponsorisée au milieu des demandes.
+            ->when($filtres->sousType !== null, fn (Builder $requete) => $requete->where('sous_type', $filtres->sousType?->value));
 
         return MiseEnAvant::query()
             ->where('type', $type->value)

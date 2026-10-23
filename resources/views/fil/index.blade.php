@@ -301,10 +301,11 @@
 
         {{-- Colonne droite (desktop) --}}
         <aside class="hidden space-y-4 lg:block" aria-label="À découvrir">
+            {{-- L'alerte d'abord (premier plan), puis les demandes de prestation. --}}
+            @include('fil._bloc-alerte')
             @if ($demandesColonne)
                 @include('fil._bloc-demandes', ['contexte' => 'colonne'])
             @endif
-            @include('fil._bloc-alerte')
             @if ($offresParContrat !== [])
                 @php($maxContrat = max(array_column($offresParContrat, 'nombre')))
                 <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70">

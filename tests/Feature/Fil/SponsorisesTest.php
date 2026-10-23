@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\SousTypeService;
 use App\Enums\StatutPublication;
 use App\Enums\TypeMiseEnAvant;
 use App\Models\Commune;
@@ -173,4 +174,18 @@ it('ignore les clics sur une mise en avant terminée', function () {
     $this->artisan('mises-en-avant:compter');
 
     expect($mise->refresh()->nb_clics)->toBe(0);
+});
+
+it('ne glisse jamais une offre de service sponsorisée dans l’onglet « Demandes »', function () {
+    Publication::factory()->publiee()->create(['type' => 'service', 'sous_type' => SousTypeService::Demande, 'titre' => 'Cherche plombier à Yopougon']);
+    sponsoriser(Publication::factory()->serviceOffre()->publiee()->create(['titre' => 'Plombier sponsorisé']));
+
+    $this->get('/demandes')->assertOk()->assertSee('Cherche plombier à Yopougon')->assertDontSee('Plombier sponsorisé');
+    $this->get('/services')->assertSee('Plombier sponsorisé');
+});
+
+it('met le bloc « Ne ratez plus une offre » en tête de la colonne de droite, avant les demandes', function () {
+    Publication::factory()->publiee()->create(['type' => 'service', 'sous_type' => SousTypeService::Demande]);
+
+    $this->get('/')->assertOk()->assertSeeInOrder(['Ne ratez plus une offre', 'Ils cherchent un prestataire']);
 });
