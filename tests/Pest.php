@@ -25,6 +25,9 @@ pest()->extend(NavigateurTestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Browser');
 
+// Attente maximale d'un élément ou d'une page : 15 s, car la suite parallèle et la CI sont plus lentes qu'un poste seul.
+pest()->browser()->timeout(15_000);
+
 // Recherche FULLTEXT : InnoDB n'indexe les lignes qu'au COMMIT, donc pas de transaction ici.
 pest()->extend(TestCase::class)
     ->use(DatabaseTruncation::class)

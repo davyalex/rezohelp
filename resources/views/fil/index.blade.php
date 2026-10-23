@@ -116,8 +116,9 @@
         <section aria-labelledby="titre-fil" class="min-w-0">
             {{-- Onglets et filtres, alignés sur les cartes du fil --}}
             <div class="mb-4 space-y-2">
+                {{-- Rangée défilante : doigt sur mobile, flèches et molette sur ordinateur (5 onglets ne tiennent pas toujours). --}}
                 <nav aria-label="Types de publication" class="-mx-4 px-4 sm:mx-0 sm:px-0">
-                    <ul class="sans-barre flex snap-x gap-2 overflow-x-auto py-1">
+                    <x-rangee-defilante libelle="Types de publication">
                         @foreach ($onglets as $onglet)
                             @php($actif = $filtres->type === $onglet['type'] && $filtres->sousType === ($onglet['sous_type'] ?? null))
                             <li class="shrink-0 snap-start">
@@ -127,7 +128,7 @@
                                 </a>
                             </li>
                         @endforeach
-                    </ul>
+                    </x-rangee-defilante>
                 </nav>
 
                 @if ($filtres->sousType === SousTypeService::Demande)

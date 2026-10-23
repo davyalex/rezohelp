@@ -59,6 +59,21 @@ export function defilementHorizontal() {
             this.gauche = zone.scrollLeft > 4;
             this.droite = zone.scrollLeft + zone.clientWidth < zone.scrollWidth - 4;
         },
+        // Molette verticale de la souris : fait défiler la rangée à l'horizontale tant qu'il reste de la place,
+        // puis rend la main au défilement de la page.
+        molette(evenement) {
+            const zone = this.$refs.zone;
+            if (Math.abs(evenement.deltaY) <= Math.abs(evenement.deltaX)) {
+                return;
+            }
+            const peutDefiler = evenement.deltaY > 0
+                ? zone.scrollLeft + zone.clientWidth < zone.scrollWidth - 1
+                : zone.scrollLeft > 0;
+            if (peutDefiler) {
+                evenement.preventDefault();
+                zone.scrollLeft += evenement.deltaY;
+            }
+        },
         defiler(sens) {
             const zone = this.$refs.zone;
             const reduit = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
