@@ -187,9 +187,9 @@
                                      :options="['aujourdhui' => 'Aujourd’hui', 'semaine' => 'Cette semaine', 'date' => 'À une date précise', 'flexible' => 'Dès que possible']" />
                             <x-champ name="date_souhaitee" type="date" label="Date précise (si besoin)" :valeur="$v('date_souhaitee')" />
                             <x-champ name="budget" type="number" label="Budget (FCFA, facultatif)" :valeur="$v('budget')" min="0" inputmode="numeric" />
-                            <x-champ name="telephone_contact" type="tel" label="Votre numéro (pour être appelé)" :valeur="$v('telephone_contact')" inputmode="tel" autocomplete="tel-national" />
-                            <x-case name="afficher_telephone" label="Donner mon numéro aux prestataires qui répondent « Je suis disponible »" :coche="$v('afficher_telephone', true)" />
-                            <x-message type="info">Votre numéro n’est jamais affiché publiquement : seul un prestataire connecté qui vous répond le voit, pour vous appeler. Vous recevez aussi ses coordonnées.</x-message>
+                            <x-champ name="telephone_contact" type="tel" label="Votre numéro de téléphone" :valeur="$v('telephone_contact')" inputmode="tel" autocomplete="tel-national" />
+                            <x-case name="afficher_telephone" label="Les prestataires qui répondent à ma demande peuvent m’appeler" :coche="$v('afficher_telephone', true)" />
+                            <x-message type="info">Votre numéro n’apparaît pas sur votre demande. Quand un prestataire clique sur « Je suis disponible », il voit votre numéro et peut vous appeler. De votre côté, vous voyez qui vous a répondu dans « Mes publications ».</x-message>
                             @break
 
                         @case(ParcoursPublication::Formation)
