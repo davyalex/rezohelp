@@ -53,6 +53,7 @@ return [
 
         'abonnements.gerer' => ['groupe' => 'Monétisation', 'libelle' => 'Gérer plans, produits et abonnements', 'roles' => ['administrateur']],
         'paiements.voir' => ['groupe' => 'Monétisation', 'libelle' => 'Voir les commandes et les revenus', 'roles' => ['administrateur']],
+        'publicites.gerer' => ['groupe' => 'Monétisation', 'libelle' => 'Gérer les publicités (bannières) et voir leurs statistiques', 'roles' => ['administrateur']],
 
         'referentiels.gerer' => ['groupe' => 'Configuration', 'libelle' => 'Gérer catégories, communes et pays', 'roles' => ['administrateur']],
         'parametres.gerer' => ['groupe' => 'Configuration', 'libelle' => 'Modifier les paramètres et vider le cache', 'roles' => ['administrateur']],

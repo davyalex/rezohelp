@@ -77,6 +77,8 @@ class ParametresSeeder extends Seeder
             'max_cartes_une' => [TypeParametre::Entier, 2, 'Cartes « À la une » affichées au-dessus d’un fil filtré'],
             'heures_entre_remontees' => [TypeParametre::Entier, 24, 'Délai minimal entre deux remontées d’une publication (heures)'],
             'mentions_legales_recu' => [TypeParametre::Html, '<p>Rezohelp — raison sociale, RCCM, NCC et adresse à compléter.</p>', 'Mentions légales imprimées sur les reçus'],
+            'publicites_actives' => [TypeParametre::Booleen, 1, 'Publicités affichées sur le site (bannières et « Annoncez ici »)'],
+            'publicite_contact' => [TypeParametre::Texte, '', 'Lien du bouton « Annoncez ici » : mailto:adresse, https://page ou /chemin (vide = page Tarifs)'],
 
             // Contenus et maintenance
             'contenu_cgu' => [TypeParametre::Html, '<p>Conditions générales d’utilisation à compléter.</p>', 'Conditions générales d’utilisation'],

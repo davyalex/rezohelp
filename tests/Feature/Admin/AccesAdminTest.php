@@ -38,6 +38,8 @@ dataset('pages', [
     'offrir' => ['admin.abonnements.create', false],
     'commandes' => ['admin.commandes.index', false],
     'revenus' => ['admin.revenus', false],
+    'publicités' => ['admin.publicites.index', false],
+    'nouvelle publicité' => ['admin.publicites.create', false],
 ]);
 
 it('ouvre chaque page à l’administrateur, sans cache', function (string $route) {
@@ -85,5 +87,5 @@ it('sert les listes DataTables en JSON côté serveur', function (string $route)
 })->with([
     'admin.moderation.index', 'admin.publications.index', 'admin.signalements.index', 'admin.utilisateurs.index',
     'admin.entreprises.index', 'admin.veille.imports.index', 'admin.veille.sources.index', 'admin.communes.index',
-    'admin.pays.index', 'admin.plans.index', 'admin.produits.index', 'admin.abonnements.index', 'admin.commandes.index',
+    'admin.pays.index', 'admin.plans.index', 'admin.produits.index', 'admin.abonnements.index', 'admin.commandes.index', 'admin.publicites.index',
 ]);

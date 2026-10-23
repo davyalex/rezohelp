@@ -16,6 +16,7 @@ use App\Http\Controllers\FilController;
 use App\Http\Controllers\InteractionController;
 use App\Http\Controllers\PaiementController;
 use App\Http\Controllers\PublicationController;
+use App\Http\Controllers\PubliciteController;
 use App\Http\Controllers\PublierController;
 use App\Http\Controllers\ReferencementController;
 use App\Http\Controllers\ReponseController;
@@ -34,6 +35,10 @@ Route::get('/recherche', [FilController::class, 'index'])->name('fil.recherche')
 Route::get('/fil/suite', [FilController::class, 'suite'])->name('fil.suite');
 Route::get('/fil/nouvelles', [FilController::class, 'nouvelles'])->middleware('throttle:30,1')->name('fil.nouvelles');
 Route::post('/mises-en-avant/{miseEnAvant}/clic', [FilController::class, 'clic'])->middleware('throttle:30,1')->name('mises-en-avant.clic');
+
+// Publicités (D-074) : clic compté puis redirection ; impressions vues signalées par le navigateur.
+Route::get('/pub/{publicite}', [PubliciteController::class, 'clic'])->middleware(['throttle:60,1', PasDeCache::class])->name('publicites.clic');
+Route::post('/pub/vues', [PubliciteController::class, 'vues'])->middleware('throttle:60,1')->name('publicites.vues');
 
 // Publications
 Route::get('/publication/{slug}', [PublicationController::class, 'show'])->name('publications.show');

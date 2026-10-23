@@ -7,6 +7,7 @@ import { formulairePublication } from './publication';
 import { demarrerPwa } from './pwa';
 import { activerSpinners, enregistrerComposants } from './interface';
 import { demarrerConfirmations } from './confirmation';
+import { suivrePublicites } from './publicites';
 
 enregistrerComposants(Alpine);
 Alpine.data('formulairePublication', formulairePublication);
@@ -68,4 +69,5 @@ demarrerConfirmations();
 activerSpinners();
 demarrerFil();
 suivreMisesEnAvant();
+suivrePublicites();
 demarrerPwa();

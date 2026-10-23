@@ -25,7 +25,11 @@ class RolesEtPermissionsSeeder extends Seeder
     {
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
+        $nouvelles = [];
         foreach (PermissionsAdmin::cles() as $cle) {
+            if (! Permission::query()->where('name', $cle)->where('guard_name', Administrateur::GARDE)->exists()) {
+                $nouvelles[] = $cle;
+            }
             Permission::findOrCreate($cle, Administrateur::GARDE);
         }
 
@@ -33,8 +37,11 @@ class RolesEtPermissionsSeeder extends Seeder
         Role::findOrCreate(PermissionsAdmin::ROLE_SUPER, Administrateur::GARDE)->syncPermissions(PermissionsAdmin::cles());
 
         // Permissions par défaut des autres rôles livrés : config/admin.php (« roles » de chaque permission).
-        $this->creerSiAbsent(PermissionsAdmin::ROLE_ADMIN, PermissionsAdmin::parDefaut(PermissionsAdmin::ROLE_ADMIN));
-        $this->creerSiAbsent(PermissionsAdmin::ROLE_MODERATEUR, PermissionsAdmin::parDefaut(PermissionsAdmin::ROLE_MODERATEUR));
+        // Rôle déjà créé : on ne touche pas aux réglages faits dans l'admin, on lui donne seulement
+        // les permissions qui viennent d'être ajoutées au catalogue.
+        foreach ([PermissionsAdmin::ROLE_ADMIN, PermissionsAdmin::ROLE_MODERATEUR] as $nom) {
+            $this->creerOuCompleter($nom, PermissionsAdmin::parDefaut($nom), $nouvelles);
+        }
 
         foreach (self::ROLES_MEMBRES as $role) {
             Role::findOrCreate($role, 'web');
@@ -44,15 +51,23 @@ class RolesEtPermissionsSeeder extends Seeder
     }
 
     /**
-     * @param  list<string>  $permissions
+     * @param  list<string>  $parDefaut  permissions par défaut du rôle
+     * @param  list<string>  $nouvelles  permissions créées pendant ce passage
      */
-    private function creerSiAbsent(string $nom, array $permissions): void
+    private function creerOuCompleter(string $nom, array $parDefaut, array $nouvelles): void
     {
         $existe = Role::query()->where('name', $nom)->where('guard_name', Administrateur::GARDE)->exists();
         $role = Role::findOrCreate($nom, Administrateur::GARDE);
 
         if (! $existe) {
-            $role->syncPermissions($permissions);
+            $role->syncPermissions($parDefaut);
+
+            return;
+        }
+
+        $aAjouter = array_values(array_intersect($parDefaut, $nouvelles));
+        if ($aAjouter !== []) {
+            $role->givePermissionTo($aAjouter);
         }
     }
 }

@@ -275,6 +275,10 @@
                         @if ($loop->iteration === min(5, $loop->count))
                             <li>@include('fil._bloc-alerte')</li>
                         @endif
+                        {{-- Bannière publicitaire entre la 8e et la 9e carte de la salve (rien si aucune annonce). --}}
+                        @if ($loop->iteration === 8)
+                            <li><x-publicite emplacement="fil_entre_cartes" /></li>
+                        @endif
                     @endforeach
                 </ol>
 
@@ -306,6 +310,8 @@
             @if ($demandesColonne)
                 @include('fil._bloc-demandes', ['contexte' => 'colonne'])
             @endif
+            <x-publicite emplacement="colonne_fil" />
+
             @if ($offresParContrat !== [])
                 @php($maxContrat = max(array_column($offresParContrat, 'nombre')))
                 <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70">

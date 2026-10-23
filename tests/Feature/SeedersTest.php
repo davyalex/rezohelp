@@ -59,6 +59,8 @@ it('crée les rôles et les permissions du §13.2 sur la garde de l’équipe, e
 
 it('crée une permission ajoutée dans config/admin.php, donnée au super administrateur et aux rôles indiqués', function () {
     $this->seed(DatabaseSeeder::class);
+    // Réglage fait dans l'admin : le modérateur n'a plus « statistiques.voir ». Il doit le rester.
+    Role::findByName('moderateur', 'admin')->revokePermissionTo('statistiques.voir');
     // Clé avec un point : on remplace le tableau entier (la notation pointée créerait une sous-clé).
     config(['admin.permissions' => [
         ...config('admin.permissions'),
@@ -69,6 +71,10 @@ it('crée une permission ajoutée dans config/admin.php, donnée au super admini
 
     expect(Permission::query()->where('name', 'journal.voir')->where('guard_name', 'admin')->exists())->toBeTrue()
         ->and(Role::findByName('super_administrateur', 'admin')->hasPermissionTo('journal.voir'))->toBeTrue()
+        // Rôle existant : il reçoit la nouvelle permission, sans retrouver celle retirée dans l'admin.
+        ->and(Role::findByName('moderateur', 'admin')->hasPermissionTo('journal.voir'))->toBeTrue()
+        ->and(Role::findByName('moderateur', 'admin')->hasPermissionTo('statistiques.voir'))->toBeFalse()
+        ->and(Role::findByName('administrateur', 'admin')->hasPermissionTo('journal.voir'))->toBeFalse()
         ->and(PermissionsAdmin::libelle('journal.voir'))->toBe('Voir le journal');
 });
 

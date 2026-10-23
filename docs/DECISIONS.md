@@ -318,3 +318,34 @@
 - **Raison** : le besoin est souvent urgent (fuite, panne), et l'appel direct est le plus simple à Abidjan.
 - **Risque accepté** : un numéro public peut être relevé par des robots ou des arnaqueurs. Le formulaire le dit clairement, et la case permet de le masquer.
 - **Écart** : CLAUDE.md et CONTEXTE §11.4 / §11.8 décrivent encore l'ancienne règle (« jamais affiché »). Ils sont à mettre à jour avec l'accord d'Alex.
+
+### D-073 · 2026-10-23 · Publicités des marges latérales et fond du site
+- **Choix** : (1) Sur grand écran (≥ 1536 px), les marges libres à gauche et à droite du site accueillent chacune un emplacement publicitaire vertical, collé sous l'en-tête au défilement : 160 × 600, ou 300 × 600 à partir de 1800 px si l'annonce fournit cette image. Ces emplacements n'apparaissent que sur les pages de consultation (fil et ses onglets, recherche, page détail, tarifs) : jamais sur les formulaires, « Mon espace », l'administration ni sur mobile. (2) Chaque emplacement porte le libellé « Publicité » et ouvre son lien dans un nouvel onglet avec `rel="sponsored noopener"`. Sans annonce en cours, il affiche « Votre marque ici / Annoncez ici », qui mène au lien réglé dans l'admin, à défaut à la page Tarifs. (3) Les annonces se gèrent dans l'admin (D-074). (4) Fond du site : motif SVG très discret (porte-documents, outils, toque de diplômé, immeuble, ordinateur) dans la couleur de la marque, à environ 8 % d'opacité, en carreaux de 280 px ; les cartes restent blanches.
+- **Raison** : demande d'Alex. La gestion des annonces dans l'admin (envoi des images, dates, statistiques d'affichage et de clics) pourra remplacer le fichier de configuration sans changer les emplacements.
+
+### D-074 · 2026-10-23 · Publicités gérées dans l'admin, cinq emplacements
+- **Choix** : (1) Cinq emplacements, avec leur format fixé dans le code (enum `EmplacementPublicite`, car la mise en page en dépend) :
+  - **verticaux** : marge gauche et marge droite (160 × 600, ou 300 × 600 à partir de 1800 px, écrans de 1536 px et plus) ; colonne de droite du fil, sous « Créer une alerte » (250 × 250, écrans de 1024 px et plus) ;
+  - **horizontaux** : bannière dans le fil, entre la 8ᵉ et la 9ᵉ carte de chaque salve, y compris les salves chargées au défilement (640 × 160, ou 320 × 100 sur mobile) ; bannière de la page d'une offre, sous l'annonce et avant les commentaires (mêmes formats).
+
+  Un emplacement vertical vide affiche « Annoncez ici » ; une bannière horizontale vide n'affiche rien. Une bannière insérée dans le fil reste hors du curseur, comme les cartes sponsorisées.
+  (2) Les annonces se gèrent dans l'admin (Monétisation → Publicités, permission `publicites.gerer`), dans la table `publicites` :
+  - champs : annonceur, lien https, description de l'image, période facultative, activation, poids de rotation de 1 à 10 ;
+  - images dans la médiathèque, converties en WebP : une principale, obligatoire ; une secondaire facultative, pour le très grand écran ou le mobile ;
+  - les images trop petites ou aux mauvaises proportions (au-delà de 5 % d'écart) sont refusées ;
+  - un changement d'emplacement exige une nouvelle image ;
+  - chaque action est journalisée.
+
+  L'écran présente la carte des emplacements (format, annonces en cours, impressions, clics, bouton « Ajouter ici ») et la liste DataTables (aperçu, état, impressions, clics, taux de clic, menu « ⋯ »).
+  (3) Diffusion :
+  - annonces actives gardées en cache (`ref:publicites`, invalidé par `ReferentielObserver`) ;
+  - la période est vérifiée à chaque affichage : une campagne démarre et s'arrête d'elle-même ;
+  - une annonce est tirée au prorata du poids ;
+  - les liens passent par `/pub/{id}` : clic compté, redirection vers l'annonceur, `rel="sponsored"`, jamais mis en cache par le service worker.
+
+  (4) Mesure :
+  - une impression n'est comptée que si la moitié de la bannière reste visible une seconde (`resources/js/publicites.js`, envoi groupé par `sendBeacon`) : une bannière masquée sur mobile n'est donc pas comptée ;
+  - impressions et clics sont cumulés en cache (`differe:pub_impressions` et `differe:pub_clics`), puis reportés en base toutes les 5 min (`publicites:compter`).
+
+  (5) Aucun réglage dans un fichier : l'interrupteur général (`publicites_actives`) et le lien « Annoncez ici » (`publicite_contact`) sont des paramètres, modifiables sur la page Publicités et sur la page Paramètres. Seuls les liens `mailto:`, `tel:`, `https://` ou un chemin du site sont acceptés ; un lien invalide est refusé à la saisie et remplacé par la page Tarifs à l'affichage (jamais de `javascript:`). Le seeder des rôles donne désormais une permission nouvellement ajoutée au catalogue aux rôles livrés qui la prévoient, même s'ils existent déjà, sans toucher aux autres réglages faits dans l'admin.
+- **Raison** : demande d'Alex : des emplacements horizontaux et verticaux sur le site, gérés depuis le back-office.

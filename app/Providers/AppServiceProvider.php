@@ -19,6 +19,7 @@ use App\Models\Pays;
 use App\Models\Plan;
 use App\Models\Produit;
 use App\Models\Publication;
+use App\Models\Publicite;
 use App\Models\Reponse;
 use App\Models\Signalement;
 use App\Models\SourceVeille;
@@ -74,6 +75,7 @@ class AppServiceProvider extends ServiceProvider
             'commande' => Commande::class,
             'credit' => Credit::class,
             'mise_en_avant' => MiseEnAvant::class,
+            'publicite' => Publicite::class,
         ]);
 
         // Le super administrateur a tous les droits, y compris ceux ajoutés après le seeder (D-066).

@@ -46,9 +46,9 @@ export default defineConfig({
                         options: { cacheName: 'fil-suite', expiration: { maxEntries: 40, maxAgeSeconds: 10 * 60 } },
                     },
                     {
-                        // Espace membre, admin, publication, paiements, connexion : jamais en cache.
+                        // Espace membre, admin, clics publicitaires, publication, paiements, connexion : jamais en cache.
                         urlPattern: ({ request, url, sameOrigin }) => sameOrigin && request.mode === 'navigate'
-                            && /^\/(mon-espace|admin|paiements|publier|connexion|inscription|deconnexion|verification-telephone|changer-mot-de-passe|mot-de-passe-oublie|reinitialiser-mot-de-passe)(\/|$)/.test(url.pathname),
+                            && /^\/(mon-espace|admin|pub|paiements|publier|connexion|inscription|deconnexion|verification-telephone|changer-mot-de-passe|mot-de-passe-oublie|reinitialiser-mot-de-passe)(\/|$)/.test(url.pathname),
                         handler: 'NetworkOnly',
                         options: { precacheFallback: { fallbackURL: '/hors-ligne' } },
                     },

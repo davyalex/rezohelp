@@ -42,6 +42,7 @@
             ['route' => 'admin.abonnements.index', 'actif' => 'admin.abonnements.*', 'libelle' => 'Abonnements', 'icone' => 'carte', 'permission' => 'abonnements.gerer'],
             ['route' => 'admin.plans.index', 'actif' => 'admin.plans.*', 'libelle' => 'Plans', 'icone' => 'pile', 'permission' => 'abonnements.gerer'],
             ['route' => 'admin.produits.index', 'actif' => 'admin.produits.*', 'libelle' => 'Produits', 'icone' => 'cube', 'permission' => 'abonnements.gerer'],
+            ['route' => 'admin.publicites.index', 'actif' => 'admin.publicites.*', 'libelle' => 'Publicités', 'icone' => 'porte-voix', 'permission' => 'publicites.gerer'],
         ]],
         ['cle' => 'configuration', 'titre' => 'Configuration', 'entrees' => [
             ['route' => 'admin.categories.index', 'actif' => 'admin.categories.*', 'libelle' => 'Catégories', 'icone' => 'etiquette', 'permission' => 'referentiels.gerer'],

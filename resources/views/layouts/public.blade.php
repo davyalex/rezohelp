@@ -57,16 +57,30 @@
         </div>
     </header>
 
-    <main id="contenu" class="mx-auto max-w-6xl px-4 py-4 lg:py-6">
-        @if (session('statut'))
-            <x-message class="mb-4">{{ session('statut') }}</x-message>
-        @endif
-        @if (session('erreur'))
-            <x-message type="erreur" class="mb-4">{{ session('erreur') }}</x-message>
-        @endif
+    {{-- Grand écran (≥ 1536 px) : marges latérales occupées par deux emplacements publicitaires (D-073).
+         Le contenu reste en premier dans le code, les publicités sont placées par la grille. --}}
+    @php($avecPublicites = app(\App\Services\Publicites::class)->affichees(request()))
+    <div @class(['2xl:grid 2xl:grid-cols-[minmax(0,1fr)_minmax(0,72rem)_minmax(0,1fr)] 2xl:gap-x-6' => $avecPublicites])>
+        <main id="contenu" @class(['mx-auto max-w-6xl px-4 py-4 lg:py-6', '2xl:col-start-2 2xl:row-start-1 2xl:w-full' => $avecPublicites])>
+            @if (session('statut'))
+                <x-message class="mb-4">{{ session('statut') }}</x-message>
+            @endif
+            @if (session('erreur'))
+                <x-message type="erreur" class="mb-4">{{ session('erreur') }}</x-message>
+            @endif
 
-        @yield('contenu')
-    </main>
+            @yield('contenu')
+        </main>
+
+        @if ($avecPublicites)
+            <div class="hidden justify-self-end pt-6 2xl:col-start-1 2xl:row-start-1 2xl:block">
+                <div class="sticky top-20"><x-publicite emplacement="marge_gauche" /></div>
+            </div>
+            <div class="hidden justify-self-start pt-6 2xl:col-start-3 2xl:row-start-1 2xl:block">
+                <div class="sticky top-20"><x-publicite emplacement="marge_droite" /></div>
+            </div>
+        @endif
+    </div>
 
     {{-- Invitation à installer l'application (pwa.js), à partir de la 2e visite. --}}
     <aside id="invitation-installation" hidden aria-label="Installer l’application"

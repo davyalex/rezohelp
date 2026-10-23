@@ -116,6 +116,9 @@
             </div>
         </article>
 
+        {{-- Bannière publicitaire sous l'annonce (rien si aucune annonce). --}}
+        <x-publicite emplacement="detail_bas" class="mt-4" />
+
         {{-- Commentaires --}}
         <section id="commentaires" class="mt-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70 sm:p-6" aria-labelledby="titre-commentaires">
             <h2 id="titre-commentaires" class="text-lg font-bold">Commentaires ({{ $p->nb_commentaires }})</h2>

@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\PaysController;
 use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\ProduitController;
 use App\Http\Controllers\Admin\PublicationController;
+use App\Http\Controllers\Admin\PubliciteController as AdminPubliciteController;
 use App\Http\Controllers\Admin\RechercheController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SignalementController;
@@ -156,6 +157,13 @@ Route::middleware(['auth:'.Administrateur::GARDE, AuthenticateSession::class, Ad
         Route::post('/commandes/{commande}/rembourser', [CommandeController::class, 'rembourser'])->name('commandes.rembourser');
         Route::get('/revenus', [CommandeController::class, 'revenus'])->name('revenus');
         Route::get('/commandes/{commande}/recu/pdf', [CommandeController::class, 'recuPdf'])->name('commandes.recu-pdf');
+    });
+
+    // K — Publicités (bannières des emplacements du site, D-074)
+    Route::middleware('can:publicites.gerer')->group(function () {
+        Route::put('/publicites/reglages', [AdminPubliciteController::class, 'reglages'])->name('publicites.reglages');
+        Route::resource('publicites', AdminPubliciteController::class)->except(['show'])->parameters(['publicites' => 'publicite']);
+        Route::post('/publicites/{publicite}/basculer', [AdminPubliciteController::class, 'basculer'])->name('publicites.basculer');
     });
 
     // L — Équipe : comptes administrateurs, rôles et permissions (D-066)

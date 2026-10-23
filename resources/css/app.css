@@ -34,8 +34,12 @@
         -webkit-tap-highlight-color: transparent;
     }
 
+    /* Fond : motif très discret d'objets du travail (porte-documents, outils, toque, bureau), 3 Ko,
+       mis en cache comme les autres fichiers. Les cartes restent blanches : la lisibilité ne change pas. */
     body {
         @apply bg-fond text-slate-900 antialiased;
+        background-image: url('../images/fond-metiers.svg');
+        background-size: 280px 280px;
     }
 
     :focus-visible {

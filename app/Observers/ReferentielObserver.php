@@ -6,6 +6,7 @@ use App\Models\Categorie;
 use App\Models\Commune;
 use App\Models\Parametre;
 use App\Models\Pays;
+use App\Models\Publicite;
 use App\Services\CacheFil;
 use Illuminate\Database\Eloquent\Model;
 
@@ -33,6 +34,7 @@ class ReferentielObserver
             Commune::class => 'communes',
             Categorie::class => 'categories',
             Parametre::class => 'parametres',
+            Publicite::class => 'publicites',
             default => null,
         };
 
