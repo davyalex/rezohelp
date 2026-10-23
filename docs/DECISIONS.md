@@ -291,3 +291,12 @@
      - sur la carte, un lien « Voir l'offre sur Educarrière ↗ » ouvre directement l'annonce source ;
      - sur la page détail, le nom de la source est un lien, et le bouton principal devient « Postuler sur Educarrière ».
 - **Raison** : demandes d'Alex. Les demandes, peu nombreuses, se perdaient parmi les offres de services.
+
+### D-070 · 2026-10-23 · Tests de bout en bout
+- **Choix** :
+  1. **Outillage** : `pestphp/pest-plugin-browser` v4 (la v5 exige PHP 8.4) et Playwright avec Chromium, en dépendances de développement seulement, choisis par Alex. Le plugin demande l'extension PHP `sockets`, activée dans le `php.ini` de Laragon et dans la CI.
+  2. **Organisation** : tests dans `tests/Browser`, base `Tests\NavigateurTestCase` qui recharge le vrai build Vite (les autres tests s'en passent). La suite tourne avec le reste (`php artisan test --parallel`), après `npm run build`.
+  3. **Service worker** : il n'est pas enregistré quand le navigateur est piloté par un outil de test (`navigator.webdriver`), sinon il intercepte les navigations et bloque les tests. Un visiteur n'est jamais concerné.
+  4. **Envois multipart** : le serveur de test du plugin ne lit pas encore ces envois (« @TODO files »). Dans les parcours sans photo, le formulaire de publication est passé en urlencoded par un script ; les photos restent couvertes par les tests Feature.
+  5. **Clics** : sur un bouton ambigu, cibler un sélecteur précis (`form[action$="/valider"] button`) plutôt qu'un texte : un clic par texte peut attendre indéfiniment un élément masqué.
+- **Raison** : lot 10 du plan, avec les 5 parcours clés à tester dans un vrai navigateur.

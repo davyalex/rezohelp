@@ -38,7 +38,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: mbstring, intl, gd, pdo_mysql, bcmath, zip, exif, memcached
+          extensions: mbstring, intl, gd, pdo_mysql, bcmath, zip, exif, memcached, sockets
           coverage: none
 
       - uses: actions/setup-node@v4
@@ -67,6 +67,9 @@ jobs:
 
       - name: Budget JS public (< 50 Ko gzip, sans bibliothèque du back-office)
         run: npm run budget-js
+
+      - name: Navigateur des tests de bout en bout (Playwright, Chromium)
+        run: npx playwright install --with-deps chromium
 
       - name: Pint
         run: ./vendor/bin/pint --test

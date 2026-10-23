@@ -553,3 +553,40 @@
 - [ ] À vérifier par Alex : supprimer une alerte depuis « Mon espace » ouvre la boîte de confirmation du site (Annuler / Supprimer).
 - [ ] À vérifier par Alex : sur le fil, « Voir l'offre sur Educarrière » ouvre l'annonce d'origine dans un nouvel onglet.
 - Après déploiement : `php artisan migrate --force`, puis vider le cache applicatif. Les cartes déjà en cache garderaient sinon l'ancien gabarit pendant 24 h.
+
+---
+
+## Lot 10 — Recette finale et mise en production
+
+### Plan d'implémentation
+
+- Tests de bout en bout dans un vrai navigateur (Pest browser + Playwright, D-070) sur les 5 parcours du plan.
+- `docs/DEPLOIEMENT.md` : serveur, `.env` de production, premier déploiement, cron, worker, mise à jour, sauvegardes, retour arrière, vérifications.
+- `docs/RECETTE.md` : la liste unique à cocher, reprenant les critères d'acceptation de tous les lots, mise à jour selon l'état actuel du site.
+
+### Fait
+
+- `tests/Browser` (6 tests, Chromium) :
+  - **Visiteur** (2) : fil → onglet Emplois → commune Cocody → détail → partage ; fil sur téléphone avec la navigation basse.
+  - **Alerte** : inscription → numéro normalisé → alerte « Emplois à Cocody » → offre correspondante → notification → ouverture de l'offre.
+  - **Publication d'artisan** : formulaire → en attente, absente du fil → connexion de la modératrice sur `/admin/connexion` → validation → annonce dans le fil.
+  - **Quota et achat** : quota atteint → « Publier 1 offre de plus » → guichet simulé → paiement confirmé → publication de l'offre.
+  - **Essai SMS** : alerte → essai 14 jours → fin de l'essai (`abonnements:traiter`, 15 jours plus tard) → achat du pass 30 jours → abonnement actif.
+- Aucune erreur JavaScript sur ces parcours, malgré la CSP stricte.
+- CI : extension `sockets`, installation de Chromium par Playwright ; les tests de bout en bout tournent avec la suite.
+- `docs/DEPLOIEMENT.md` et `docs/RECETTE.md` rédigés.
+
+### Tests
+
+- Suite complète : 848 tests verts (dont 6 de bout en bout) avec `php artisan test --parallel`, Pint, Larastan niveau 6.
+
+### Écarts avec le CONTEXTE
+
+- Décision D-070. Le serveur de test du plugin ne lit pas les envois multipart : les photos sont testées hors navigateur.
+- Poste de développement : l'extension PHP `sockets` a été activée dans `C:\laragon\bin\php\php-8.3.7\php.ini`. Une sauvegarde du fichier d'origine se trouve à côté : `php.ini.avant-sockets-2026-10-23`.
+
+### À vérifier par Alex
+
+- [ ] Cocher `docs/RECETTE.md` en préproduction (critère d'acceptation du lot 10).
+- [ ] Choisir l'hébergement (VPS recommandé), le domaine, le fournisseur SMS, et finaliser le compte CinetPay (CONTEXTE §18), puis suivre `docs/DEPLOIEMENT.md`.
+- [ ] Après le prochain `git push`, vérifier que la CI GitHub passe, tests de bout en bout compris.

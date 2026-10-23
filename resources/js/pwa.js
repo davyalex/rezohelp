@@ -38,7 +38,9 @@ function compterVisite() {
 }
 
 export function demarrerPwa() {
-    if ('serviceWorker' in navigator && import.meta.env.PROD) {
+    // Pas de service worker dans un navigateur piloté par un outil de test (navigator.webdriver) :
+    // il intercepterait les navigations des tests de bout en bout. Toujours faux pour un visiteur.
+    if ('serviceWorker' in navigator && import.meta.env.PROD && !navigator.webdriver) {
         window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {}));
     }
 

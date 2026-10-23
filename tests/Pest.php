@@ -10,6 +10,7 @@ use Database\Seeders\PlansSeeder;
 use Database\Seeders\RolesEtPermissionsSeeder;
 use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\NavigateurTestCase;
 use Tests\Support\FournisseurSmsEnMemoire;
 use Tests\TestCase;
 
@@ -18,6 +19,11 @@ require_once __DIR__.'/Support/donnees-publication.php';
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature', 'Unit');
+
+// Bout en bout (lot 10) : vrai navigateur et vrai build Vite.
+pest()->extend(NavigateurTestCase::class)
+    ->use(RefreshDatabase::class)
+    ->in('Browser');
 
 // Recherche FULLTEXT : InnoDB n'indexe les lignes qu'au COMMIT, donc pas de transaction ici.
 pest()->extend(TestCase::class)
